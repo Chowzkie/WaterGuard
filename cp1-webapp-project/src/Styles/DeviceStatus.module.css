@@ -1,0 +1,74 @@
+.device-status{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 300px; /* allow flexible width but minimum 300px */
+    margin: 15px;
+    max-width: 600px;
+}
+.testing-device-table{
+    background-color: #FFFFFF;
+    border: 2px solid #767676;
+    flex-grow: 1;
+    min-height: 500px;
+    width: 100%;
+}
+.table-title{
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+.table-title p{
+    font-size: 1em;
+    font-weight: bold;
+    color: hsl(0, 0%, 23%);
+}
+.table-icon{
+    padding-top: 20px;
+}
+.table-icon .material-symbols-outlined{
+    cursor: pointer;
+}
+.device-table{
+    height: 85%;
+    width: 100%;
+    overflow: scroll;
+    background-color: #FFFFFF;
+}
+.device-table table{
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+}
+.device-table table th , td{
+    border-bottom: 1px solid #4A4A4A;
+    padding: 10px 0;
+    text-align: center;
+}
+.device-table table th{
+    color: hsla(0, 0%, 18%, 0.603);
+    font-size: 1rem;
+}
+.device-table table td{
+    font-size: 1rem
+}
+.logs-container{
+    background-color: #ffffff;
+    border: 2px solid #767676;
+    border-radius: 7px;
+    text-align: center;
+    margin-top: 20px;
+    padding: 20px;
+}
+.logs-container button{
+    border-radius: 20px;
+    border: none;
+    background-color: #50AE5B;
+    color: #FFFFFF;
+    width: 30%;
+    height: 40px;
+     transition: 0.3s ease;
+    box-shadow: 0 2px 10px #363636;
+}
+.logs-container button:hover{
+    background-color: #6cbb76;
+}

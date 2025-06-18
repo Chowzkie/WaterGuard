@@ -1,0 +1,568 @@
+/* --- Main component wrapper and card styles --- */
+.component-wrapper-mapapi {
+  width: 100%; /* Fill the width of the grid cell */
+  height: 100%; /* Fill the height of the grid cell */
+  /* REMOVE these lines as the parent grid now handles sizing and position */
+  /* max-width: 700px; */ 
+  /* height: 330px; */
+  /* margin-left: 40px
+  position: relative; 
+
+  /* Add this to make the inner card also fill the space */
+  display: flex;
+  flex-direction: column;
+}
+
+.map-api-card {
+  width: 100%;
+  /* Make the card grow to fill the available space */
+  height: 340px;
+  flex-grow: 1; 
+  position: relative;
+  overflow: hidden;
+  border: 1px solid hsla(0, 0%, 46%, 0.5);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+
+  /* No need for margin-top if the parent grid has a 'gap' */
+  /* margin-top: 5px; */
+}
+
+/* --- REMOVE the media query from this file --- */
+/* The parent Overview.css now handles all layout changes. */
+
+.leaflet-container {
+    height: 100%;
+    width: 100%;
+}
+
+/* --- Hamburger Menu & Sidebar Styles --- */
+.map-menu-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 800;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.map-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 210px;
+    height: 100%;
+    background: white;
+    z-index: 900;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.35s ease-in-out;
+}
+
+.map-sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #448bff;
+}
+
+.sidebar-close-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.sidebar-device-list {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.sidebar-device-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.device-name-button {
+    flex-grow: 1;
+    padding: 12px 16px;
+    font-size: 14px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #334155;
+    transition: background-color 0.2s;
+}
+
+.device-name-button:hover {
+    background-color: #f8fafc;
+    color: #3b82f6;
+}
+
+.device-delete-button {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.device-delete-button:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.add-device-button {
+    width: 100%;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b82f6;
+    background-color: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.add-device-button:hover {
+    background-color: #dbeafe;
+}
+
+
+/* --- Styles for Modals (Add, Confirm, Error) --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(9, 30, 66, 0.54);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.add-device-form-content,
+.confirmation-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    animation: zoomIn 0.2s ease-out;
+}
+
+.add-device-form-content {
+    padding: 24px;
+}
+
+.confirmation-modal-content {
+    padding: 24px;
+    text-align: center;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.modal-close-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    text-align: left;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.button-secondary,
+.button-primary,
+.danger-button,
+.warning-button { /* Renamed 'error-button' for clarity */
+    flex-grow: 1;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.button-secondary { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+.button-primary { background-color: #3b82f6; color: white; }
+.danger-button { background-color: #dc2626; color: white; }
+.danger-button:hover { background-color: #b91c1c; }
+
+
+/* --- Confirmation/Error Modal Styles --- */
+.confirmation-modal-content {
+    max-width: 360px; /* Smaller max-width */
+}
+.confirmation-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    border: none;
+    padding: 0;
+    margin-bottom: 12px;
+}
+
+.confirmation-icon {
+    /* Set a default color */
+    color: #64748b;
+}
+.confirmation-header h3 {
+    font-size: 1.1rem; /* Smaller header text */
+}
+
+.confirmation-message {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0 0 24px 0; /* Adjusted margin */
+}
+
+.confirmation-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+.confirmation-actions .button-primary,
+.confirmation-actions .button-secondary {
+    flex-grow: 0; /* Prevent buttons from stretching */
+    min-width: 100px;
+}
+
+.error-modal .confirmation-icon {
+    color: #f59e0b; /* Amber/Yellow for validation warning */
+}
+.error-modal .button-primary {
+    background-color: #f59e0b;
+}
+.error-modal .button-primary:hover {
+    background-color: #d97706;
+}
+
+/* Delete confirmation modal styling */
+.confirmation-modal-content:not(.error-modal) .confirmation-icon {
+    color: #dc2626; /* Red for delete confirmation */
+}
+.confirmation-modal-content:not(.error-modal) .danger-button {
+    background-color: #dc2626;
+}
+
+
+/* --- Marker and Zoom Styles --- */
+
+.custom-marker {
+    position: relative;
+    width: 0;
+    height: 0;
+}
+
+.marker-pin {
+    position: absolute;
+    bottom: 0;
+    left: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #16a34a;
+    border: 2px solid white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+}
+
+.marker-pin::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #16a34a;
+    animation: pulse 1.75s infinite ease-in-out;
+}
+
+.marker-label {
+    position: absolute;
+    bottom: 32px;
+    left: 5%;
+    transform: translateX(-50%);
+    background-color: #2c3e50;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.marker-label::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #2c3e50;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.leaflet-top.leaflet-right {
+    z-index: 888;
+    top: 120px;
+   
+}
+
+
+/* --- Kebab Menu Styles --- */
+.kebab-menu-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.kebab-menu-button {
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+}
+.kebab-menu-button:hover {
+    background-color: #f8fafc;
+    color: #334155;
+}
+
+.kebab-menu-options {
+    position: absolute;
+    top: 40px; 
+    right: 16px;
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 901;
+    width: 120px;
+    overflow: hidden;
+    animation: fadeIn 0.1s ease-out;
+}
+
+.kebab-menu-options button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 13px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #334155;
+}
+.kebab-menu-options button:hover {
+    background-color: #f8fafc;
+}
+.kebab-menu-options .delete-option {
+    color: #ef4444;
+}
+.kebab-menu-options .delete-option:hover {
+    background-color: #fee2e2;
+}
+
+/* --- Input with Prefix for Add Modal --- */
+.input-with-prefix {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+.input-with-prefix:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+.input-with-prefix span {
+    padding: 0 8px;
+    color: #64748b;
+    background-color: #f8fafc;
+}
+.input-with-prefix input {
+    border: none;
+    outline: none;
+    box-shadow: none;
+    flex-grow: 1;
+    padding: 8px 12px;
+}
+
+/* --- Device Info Modal --- */
+.info-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px; /* Added padding */
+}
+.info-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 8px;
+    font-size: 14px;
+}
+.info-row strong {
+    color: #475569;
+    font-weight: 500;
+}
+.info-row span {
+    color: #1e293b;
+    word-break: break-word;
+}
+.status-text.online {
+    color: #16a34a;
+    font-weight: 500;
+}
+.status-text.offline {
+    color: #ef4444;
+    font-weight: 500;
+}
+
+/* Style for Online pins (the existing green color) */
+.marker-pin.online {
+    background: #16a34a;
+}
+.marker-pin.online::after {
+    background-color: #16a34a;
+    animation: pulse 1.75s infinite ease-in-out;
+}
+
+/* New style for Offline pins */
+.marker-pin.offline {
+    background: #ef4444; /* Red color */
+}
+
+/* This stops the pulsing animation for offline pins */
+.marker-pin.offline::after {
+    animation: none;
+    display: none;
+}

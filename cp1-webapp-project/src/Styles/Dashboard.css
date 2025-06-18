@@ -1,0 +1,9 @@
+.component-wrapper-dashboard{
+
+  height: calc(100vh - 100px); /* Adjust 100px to match your header/nav height */
+  width: 100%;
+  background-color: #EFEFEF;
+  box-sizing: border-box; 
+
+
+}

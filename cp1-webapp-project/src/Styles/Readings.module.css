@@ -1,0 +1,50 @@
+
+.readings-container{
+    display: flex;
+    flex-wrap: wrap;
+    align-content: space-evenly;
+    justify-content: space-around;
+    height: 75vh;
+    width: 59vw;
+    padding: 0 20px 5px;
+}
+.readings{
+    display: flex;
+    flex-direction: column;
+    background-color: #FFFFFF;
+    border: 2px solid #767676;
+    border-radius: 7px;
+    width: 29vw;
+    height: 35vh;
+    margin: 0;
+}
+.readings-title{
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+.readings-title p{
+    font-size: 1rem;
+}
+.readings-title a{
+    padding-top: 10px;
+    text-decoration: none;
+    color: #000000;
+}
+.readings-diagram{
+    background-color: cyan;
+    height: 25vh;
+    width: 25vw;
+    align-self: center;
+    text-align: center;
+}
+.min-max{
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+.min-max p{
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4A4A4A;
+}

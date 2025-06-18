@@ -1,0 +1,37 @@
+.component-wrapper-overview {
+  height: calc(100vh - 100px); /* Adjust 100px to match your header/nav height */
+  width: 100%;
+  background-color: #EFEFEF;
+  box-sizing: border-box; 
+  padding: 5px 24px;
+  gap: 15px; /* The space between your components */
+
+  display: grid;
+  /* --- KEY CHANGE HERE --- */
+  /* This creates two proportional columns. The first is 20% larger than the second. */
+  /* This will scale perfectly on large monitors. */
+  grid-template-columns: 1.2fr 1fr; 
+
+  /* This creates two equal-height rows that fill the available space */
+  grid-template-rows: repeat(2, 1fr);
+}
+
+/* --- Media Query for Responsiveness (Tablets/Mobile) --- */
+/* This breakpoint can be adjusted, e.g., 1100px if the content feels cramped */
+@media (max-width: 1024px) {
+  .component-wrapper-overview {
+    /* Let the container grow vertically to fit all stacked components */
+    height: auto; 
+    
+    /* Switch to a single-column layout */
+    grid-template-columns: 1fr;
+
+    /* Let each component determine its own height */
+    grid-template-rows: auto;
+    
+    padding: 15px;
+    gap: 15px;
+  }
+}
+
+

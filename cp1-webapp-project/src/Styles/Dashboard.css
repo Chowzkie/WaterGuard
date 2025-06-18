@@ -4,6 +4,6 @@
   width: 100%;
   background-color: #EFEFEF;
   box-sizing: border-box; 
-
+  display: flex;
 
 }

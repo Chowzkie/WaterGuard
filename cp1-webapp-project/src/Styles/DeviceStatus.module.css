@@ -25,7 +25,11 @@
 .table-icon{
     padding-top: 20px;
 }
-.table-icon .material-symbols-outlined{
+.table-icon button{
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0 10px 0 0;
     cursor: pointer;
 }
 .device-table{

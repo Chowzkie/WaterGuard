@@ -1,4 +1,5 @@
 import StatusStyle from '../../Styles/DeviceStatus.module.css'
+import {Search, Menu} from 'lucide-react'
 // A function to apply styles based on the device status
 const getStatusStyle = (status) => {
   switch (status.toLowerCase()) {
@@ -25,9 +26,9 @@ const DeviceStatus = ({ devicesData }) => {
         <div className={StatusStyle["table-title"]}>
           <p>Testing Device</p>
           <div className={StatusStyle["table-icon"]}>
-            {/**Dito lagay yung Icon sa Lucide*/}
-            <span className="material-symbols-outlined">search</span>
-            <span className="material-symbols-outlined">menu</span>
+            {/**Make this Functional */}
+            <button ><Search /></button>
+            <Menu />
           </div>
         </div>
         <div className={StatusStyle["device-table"]}>

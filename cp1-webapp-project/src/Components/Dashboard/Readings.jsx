@@ -1,10 +1,12 @@
 import ReadingsStyle from '../../Styles/Readings.module.css'
+import {ChartColumnBig} from 'lucide-react'
+
 const ReadingCard = ({ title, value, min, max, unit }) => (
   <div className={ReadingsStyle.readings}>
     <div className={ReadingsStyle["readings-title"]}>
       <p>{title}</p>
       {/**Dito ipapalit icon sa Lucide */}
-      <a href="#"><span className="material-symbols-outlined">analytics</span></a>
+      <a href="#"><ChartColumnBig /></a>
     </div>
     {/* You can add a real diagram here later */}
     <div className={ReadingsStyle["readings-diagram"]}>

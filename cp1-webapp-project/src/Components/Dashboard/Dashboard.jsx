@@ -5,11 +5,12 @@ import Readings from './Readings'
 
 
 // --- MOCK DATA (In a real app, this would come from an API) ---
+// The color of the chart is inn here
 const initialReadings = [
-  { id: 1, title: 'Current pH', value: 7.2, min: 0, max: 14, unit: '' },
-  { id: 2, title: 'Current Turbidity', value: 3.5, min: 0, max: 10, unit: ' NTU' },
-  { id: 3, title: 'Current Temperature', value: 24, min: 0, max: 50, unit: '°C' },
-  { id: 4, title: 'Total Dissolved Solids', value: 350, min: 0, max: 1000, unit: ' ppm' },
+  { id: 1, title: 'Current pH', value: 9.2, min: 0, max: 14, unit: '' , color: '#FFA500'},
+  { id: 2, title: 'Current Turbidity', value: 3.5, min: 0, max: 10, unit: ' NTU', color: '#4CAF50'},
+  { id: 3, title: 'Current Temperature', value: 24, min: 0, max: 50, unit: '°C',  color: '#2196F3'},
+  { id: 4, title: 'Total Dissolved Solids', value: 350, min: 0, max: 1000, unit: ' ppm',  color: '#E91E63'},
 ];
 
 const initialDevices = [

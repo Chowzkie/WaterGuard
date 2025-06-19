@@ -1,9 +1,10 @@
 .component-wrapper-dashboard{
-
-  height: calc(100vh - 100px); /* Adjust 100px to match your header/nav height */
-  width: 100%;
-  background-color: #EFEFEF;
-  box-sizing: border-box; 
-  display: flex;
-
+display: grid;
+grid-template-columns: 2fr 1fr; /* First column takes twice as much space as the second */
+gap: 20px;
+padding: 20px;
+height: calc(100vh - 100px);
+width: 100%;
+background-color: #EFEFEF;
+box-sizing: border-box;
 }

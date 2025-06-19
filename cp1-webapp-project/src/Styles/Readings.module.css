@@ -1,12 +1,9 @@
 
 .readings-container{
-    display: flex;
-    flex-wrap: wrap;
-    align-content: space-evenly;
-    justify-content: space-around;
-    height: 75vh;
-    width: 59vw;
-    padding: 0 20px 5px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
 }
 .readings{
     display: flex;
@@ -14,8 +11,8 @@
     background-color: #FFFFFF;
     border: 2px solid #767676;
     border-radius: 7px;
-    width: 29vw;
-    height: 35vh;
+    width: 100%;
+    height: 100%;
     margin: 0;
 }
 .readings-title{

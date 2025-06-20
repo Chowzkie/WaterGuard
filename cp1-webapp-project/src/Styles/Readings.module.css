@@ -1,12 +1,9 @@
 
 .readings-container{
-    display: flex;
-    flex-wrap: wrap;
-    align-content: space-evenly;
-    justify-content: space-around;
-    height: 75vh;
-    width: 59vw;
-    padding: 0 20px 5px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
 }
 .readings{
     display: flex;
@@ -14,8 +11,8 @@
     background-color: #FFFFFF;
     border: 2px solid #767676;
     border-radius: 7px;
-    width: 29vw;
-    height: 35vh;
+    width: 100%;
+    height: 100%;
     margin: 0;
 }
 .readings-title{
@@ -32,7 +29,6 @@
     color: #000000;
 }
 .readings-diagram{
-    background-color: cyan;
     height: 25vh;
     width: 25vw;
     align-self: center;
@@ -47,4 +43,18 @@
     font-size: 1rem;
     font-weight: 600;
     color: #4A4A4A;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: bold;
 }

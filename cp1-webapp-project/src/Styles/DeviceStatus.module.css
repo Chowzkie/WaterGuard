@@ -1,20 +1,18 @@
 .device-status{
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 300px; /* allow flexible width but minimum 300px */
-    margin: 15px;
-    max-width: 600px;
+    display: grid;
+    grid-template-rows: 3fr 1fr;
 }
 .testing-device-table{
     background-color: #FFFFFF;
     border: 2px solid #767676;
     flex-grow: 1;
-    min-height: 500px;
+    min-height: 50%;
     width: 100%;
 }
 .table-title{
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 0 20px;
 }
 .table-title p{
@@ -24,13 +22,68 @@
 }
 .table-icon{
     padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
 }
 .table-icon button{
     background: none;
     border: none;
-    padding: 0;
-    margin: 0 10px 0 0;
+    padding: 0 10px 10px 0;
+    margin: 0;
     cursor: pointer;
+}
+.table-icon .Menu{
+    cursor: pointer;
+}
+.search-box {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  width: 15vw;
+  height: 3.5vh;
+}
+.menu-container {
+  position: relative;
+}
+.menu-icon {
+  cursor: pointer;
+}
+.menu-dropdown {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  padding: 10px;
+  z-index: 10;
+}
+.menu-option {
+  padding: 5px;
+  cursor: pointer;
+}
+#active{
+    color: #50AE5B;
+}
+#inactive{
+    color: #ff0000;
+}
+#maintenance{
+    color: #ffa500;
+}
+.menu-option:hover {
+  background-color: #f0f0f0;
+}
+
+.menu-option-clear {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.menu-option-clear:hover {
+  background-color: #f8d7da;
 }
 .device-table{
     height: 85%;
@@ -54,6 +107,22 @@
 }
 .device-table table td{
     font-size: 1rem
+}
+.label-button{
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+    font-size: 1em;
+    font-family: 'Poppins', sans-serif;
+}
+.active-button {
+    background-color: #cce5ff; /* Light blue when selected */
+    font-weight: bold;
+    width: 80%;
 }
 .logs-container{
     background-color: #ffffff;

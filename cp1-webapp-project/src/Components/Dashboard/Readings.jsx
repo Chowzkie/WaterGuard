@@ -1,6 +1,5 @@
 import React from 'react';
 import ReadingsStyle from '../../Styles/Readings.module.css';
-import { ChartColumnBig } from 'lucide-react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
@@ -26,25 +25,19 @@ const ReadingCard = ({ title, value, min, max, unit, color }) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false },
-    },
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
   };
 
   return (
     <div className={ReadingsStyle.readings}>
       <div className={ReadingsStyle["readings-title"]}>
         <p>{title}</p>
-        <a href="#"><ChartColumnBig /></a>
       </div>
 
       <div className={ReadingsStyle["readings-diagram"]}>
         <div className={ReadingsStyle["chart-container"]}>
           <Doughnut data={data} options={options} />
-          <div className={ReadingsStyle["chart-center-text"]}>
-            {value}{unit}
-          </div>
+          <div className={ReadingsStyle["chart-center-text"]}>{value}{unit}</div>
         </div>
 
         <div className={ReadingsStyle["min-max"]}>
@@ -55,10 +48,15 @@ const ReadingCard = ({ title, value, min, max, unit, color }) => {
     </div>
   );
 };
-const Readings = ({ readingsData }) => {
+
+const Readings = ({ selectedDevice }) => {
+  if (!selectedDevice) {
+    return <div>Please select a device to view readings.</div>;
+  }
+
   return (
     <div className={ReadingsStyle["readings-container"]}>
-      {readingsData.map((reading) => (
+      {selectedDevice.readings.map((reading) => (
         <ReadingCard
           key={reading.id}
           title={reading.title}

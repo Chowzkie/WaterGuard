@@ -108,6 +108,22 @@
 .device-table table td{
     font-size: 1rem
 }
+.label-button{
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+    font-size: 1em;
+    font-family: 'Poppins', sans-serif;
+}
+.active-button {
+    background-color: #cce5ff; /* Light blue when selected */
+    font-weight: bold;
+    width: 80%;
+}
 .logs-container{
     background-color: #ffffff;
     border: 2px solid #767676;

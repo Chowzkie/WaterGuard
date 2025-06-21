@@ -5,7 +5,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const ReadingCard = ({ title, value, min, max, unit, color }) => {
+const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice}) => {
   const normalizedValue = (value - min) / (max - min);
   const percentage = normalizedValue * 100;
 
@@ -31,7 +31,8 @@ const ReadingCard = ({ title, value, min, max, unit, color }) => {
   return (
     <div className={ReadingsStyle.readings}>
       <div className={ReadingsStyle["readings-title"]}>
-        <p>{title}</p>
+        <p><strong>{title}</strong></p>
+        <p><b>{selectedDevice}</b></p>
       </div>
 
       <div className={ReadingsStyle["readings-diagram"]}>
@@ -65,6 +66,7 @@ const Readings = ({ selectedDevice }) => {
           max={reading.max}
           unit={reading.unit}
           color={reading.color}
+          selectedDevice={selectedDevice.id}
         />
       ))}
     </div>

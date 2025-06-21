@@ -100,7 +100,7 @@
     font-size: 0.8rem;
     text-align: center;
     display: inline-block;
-    margin-left: 12px;
+    
 }
 
 .status-badge.on_going { /* Use underscore for css class from "On-going" */

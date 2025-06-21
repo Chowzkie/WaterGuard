@@ -1,40 +1,70 @@
-import ReadingsStyle from '../../Styles/Readings.module.css'
-import {ChartColumnBig} from 'lucide-react'
+import React from 'react';
+import ReadingsStyle from '../../Styles/Readings.module.css';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
-const ReadingCard = ({ title, value, min, max, unit }) => (
-  <div className={ReadingsStyle.readings}>
-    <div className={ReadingsStyle["readings-title"]}>
-      <p>{title}</p>
-      {/**Dito ipapalit icon sa Lucide */}
-      <a href="#"><ChartColumnBig /></a>
-    </div>
-    {/* You can add a real diagram here later */}
-    <div className={ReadingsStyle["readings-diagram"]}>
-        {/* Display the actual value dynamically */}
-        {/*Add style her module*/}
-        <div style={{ fontSize: '2rem', paddingTop: '20px' }}>
-          <strong>{value}{unit}</strong>
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+const ReadingCard = ({ title, value, min, max, unit, color }) => {
+  const normalizedValue = (value - min) / (max - min);
+  const percentage = normalizedValue * 100;
+
+  const data = {
+    datasets: [
+      {
+        data: [percentage, 100 - percentage],
+        backgroundColor: [color, '#eeeeee'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: 270,
+        cutout: '70%',
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+  };
+
+  return (
+    <div className={ReadingsStyle.readings}>
+      <div className={ReadingsStyle["readings-title"]}>
+        <p>{title}</p>
+      </div>
+
+      <div className={ReadingsStyle["readings-diagram"]}>
+        <div className={ReadingsStyle["chart-container"]}>
+          <Doughnut data={data} options={options} />
+          <div className={ReadingsStyle["chart-center-text"]}>{value}{unit}</div>
         </div>
+
         <div className={ReadingsStyle["min-max"]}>
-            <p>{min}{unit}</p>
-            <p>{max}{unit}</p>
+          <p>Min: {min}{unit}</p>
+          <p>Max: {max}{unit}</p>
         </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-// The main Readings component now maps over the data
-const Readings = ({ readingsData }) => {
+const Readings = ({ selectedDevice }) => {
+  if (!selectedDevice) {
+    return <div>Please select a device to view readings.</div>;
+  }
+
   return (
     <div className={ReadingsStyle["readings-container"]}>
-      {readingsData.map(reading => (
+      {selectedDevice.readings.map((reading) => (
         <ReadingCard
-          key={reading.id} // A unique key is crucial for list rendering in React
+          key={reading.id}
           title={reading.title}
           value={reading.value}
           min={reading.min}
           max={reading.max}
           unit={reading.unit}
+          color={reading.color}
         />
       ))}
     </div>

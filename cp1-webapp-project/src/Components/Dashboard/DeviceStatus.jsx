@@ -5,9 +5,9 @@ import { Search, Menu } from 'lucide-react';
 
 const getStatusStyle = (status) => {
   switch (status.toLowerCase()) {
-    case 'active': return { color: '#50AE5B', fontWeight: 'bold' };
-    case 'inactive': return { color: 'red', fontWeight: 'bold' };
-    case 'maintenance': return { color: 'orange', fontWeight: 'bold' };
+    case 'active': return { color: '#50AE5B', fontWeight: 600 };
+    case 'inactive': return { color: 'red', fontWeight: 600 };
+    case 'maintenance': return { color: 'orange', fontWeight: 600 };
     default: return {};
   }
 };

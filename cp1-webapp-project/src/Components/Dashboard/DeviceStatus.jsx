@@ -5,8 +5,8 @@ import { Search, Menu } from 'lucide-react';
 
 const getStatusStyle = (status) => {
   switch (status.toLowerCase()) {
-    case 'active': return { color: '#50AE5B', fontWeight: 600 };
-    case 'inactive': return { color: 'red', fontWeight: 600 };
+    case 'online': return { color: '#50AE5B', fontWeight: 600 };
+    case 'offline': return { color: 'red', fontWeight: 600 };
     case 'maintenance': return { color: 'orange', fontWeight: 600 };
     default: return {};
   }
@@ -45,9 +45,9 @@ const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) =>
               {showMenu && (
                 <div className={StatusStyle["menu-dropdown"]}>
                   <div onClick={() => setStatusFilter('')} className={StatusStyle["menu-option-clear"]}>Show All</div>
-                  <div onClick={() => setStatusFilter('active')} className={StatusStyle["menu-option"]}>Active</div>
-                  <div onClick={() => setStatusFilter('inactive')} className={StatusStyle["menu-option"]}>Inactive</div>
-                  <div onClick={() => setStatusFilter('maintenance')} className={StatusStyle["menu-option"]}>Maintenance</div>
+                  <div onClick={() => setStatusFilter('online')} className={StatusStyle["menu-option"]} id={StatusStyle['online']}>Online</div>
+                  <div onClick={() => setStatusFilter('offline')} className={StatusStyle["menu-option"]} id={StatusStyle['offline']}>Offline</div>
+                  <div onClick={() => setStatusFilter('maintenance')} className={StatusStyle["menu-option"]} id={StatusStyle['maintenance']}>Maintenance</div>
                 </div>
               )}
             </div>

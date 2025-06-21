@@ -64,10 +64,10 @@
   padding: 5px;
   cursor: pointer;
 }
-#active{
+#online{
     color: #50AE5B;
 }
-#inactive{
+#offline{
     color: #ff0000;
 }
 #maintenance{

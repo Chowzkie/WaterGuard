@@ -9,7 +9,7 @@ const initialDevices = [
   {
     id: 'PS01-DEV',
     location: 'Brgy. Burgos, Moncada, Tarlac',
-    status: 'Active',
+    status: 'Online',
     readings: [
       { id: 1, title: 'Current pH', value: 9.2, min: 0, max: 14, unit: '', color: '#FFA500' },
       { id: 2, title: 'Turbidity', value: 3.5, min: 0, max: 10, unit: ' NTU', color: '#4CAF50' },
@@ -20,7 +20,7 @@ const initialDevices = [
   {
     id: 'PS02-DEV',
     location: 'Brgy. Camposanto 1 Norte, Moncada Tarlac',
-    status: 'Inactive',
+    status: 'Offline',
     readings: [
       { id: 5, title: 'Current pH', value: 7.1, min: 0, max: 14, unit: '', color: '#FFA500' },
       { id: 6, title: 'Turbidity', value: 2.0, min: 0, max: 10, unit: ' NTU', color: '#4CAF50' },
@@ -31,7 +31,7 @@ const initialDevices = [
   {
     id: 'PS03-DEV',
     location: 'Brgy. San Roque, Moncada  Tarlac',
-    status: 'Active',
+    status: 'Online',
     readings: [
       { id: 9, title: 'Current pH', value: 6.8, min: 0, max: 14, unit: '', color: '#FFA500' },
       { id: 10, title: 'Turbidity', value: 1.2, min: 0, max: 10, unit: ' NTU', color: '#4CAF50' },
@@ -53,7 +53,7 @@ const initialDevices = [
   {
     id: 'PS05-DEV',
     location: 'Brgy. Sapang, Moncada Tarlac',
-    status: 'Inactive',
+    status: 'Offline',
     readings: [
       {id: 17, title: 'Current pH', value: 5, min: 0, max: 14, unit: '', color: '#FFA500'},
       {id: 18, title: 'Turbididty', value: 3, min: 0, max: 10, unit: ' NTU', color: '#4CAF50' },

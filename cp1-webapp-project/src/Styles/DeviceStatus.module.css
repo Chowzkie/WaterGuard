@@ -4,7 +4,7 @@
 }
 .testing-device-table{
     background-color: #FFFFFF;
-    border: 2px solid #767676;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     flex-grow: 1;
     min-height: 50%;
     width: 100%;
@@ -126,7 +126,7 @@
 }
 .logs-container{
     background-color: #ffffff;
-    border: 2px solid #767676;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     border-radius: 7px;
     text-align: center;
     margin-top: 20px;

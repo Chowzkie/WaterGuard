@@ -10,7 +10,7 @@
   /* --- KEY CHANGE HERE --- */
   /* This creates two proportional columns. The first is 20% larger than the second. */
   /* This will scale perfectly on large monitors. */
-  grid-template-columns: 1.2fr 1fr; 
+  grid-template-columns: 1fr 1fr; 
 
   /* This creates two equal-height rows that fill the available space */
   grid-template-rows: repeat(2, 1fr);

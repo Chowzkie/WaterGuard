@@ -16,11 +16,12 @@
 .map-api-card {
   width: 100%;
   /* Make the card grow to fill the available space */
+  padding: 5px;
   height: 340px;
   flex-grow: 1; 
   position: relative;
   overflow: hidden;
-  border: 1px solid hsla(0, 0%, 46%, 0.5);
+  background-color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
 
@@ -34,13 +35,14 @@
 .leaflet-container {
     height: 100%;
     width: 100%;
+    border-radius: 5px;
 }
 
 /* --- Hamburger Menu & Sidebar Styles --- */
 .map-menu-button {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 20px;
     z-index: 800;
     background: white;
     border: 1px solid #e2e8f0;
@@ -378,7 +380,7 @@
     transform: translateX(-50%);
     background-color: #2c3e50;
     color: white;
-    padding: 6px 10px;
+    padding: 3px 10px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 500;

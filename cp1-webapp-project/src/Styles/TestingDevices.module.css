@@ -1,0 +1,120 @@
+/*
+  This file is structured to be visually consistent with the other components
+  like AlertsHistory, using similar class names, colors, and layout rules.
+*/
+
+.devices-section {
+  background: white;
+  border-radius: 5px;
+  padding: 0 10px 10px 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.header-controls .icon {
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.header-controls .icon:hover {
+  color: #343a40;
+}
+
+/* === Table Layout === */
+.devices-table {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.devices-header-row {
+  font-weight: 500;
+  color: hsla(0, 0%, 18%, 0.8);
+  background: #f0f0f0;
+  display: grid;
+  /* Adjusted grid for 3 columns */
+  grid-template-columns: 1fr 1.5fr 1fr;
+  column-gap: 22px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.devices-body {
+  max-height: 260px; /* Adjust as needed */
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.devices-body::-webkit-scrollbar {
+  width: 6px;
+}
+.devices-body::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.devices-body::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
+}
+
+.devices-row {
+  display: grid;
+  /* Adjusted grid for 3 columns */
+  grid-template-columns: 1fr 1.5fr 1fr;
+  column-gap: 22px;
+  align-items: center;
+  padding: 8px 10px;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+}
+
+.devices-row:last-child {
+  border-bottom: none;
+}
+
+/* === Badge & Status Styling === */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  text-align: center;
+  min-width: 70px;
+  /* Specific styling for "Online" status */
+  background-color: #d4edda;
+  color: #2e7d32;
+}
+
+.no-devices {
+  padding: 10px;
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+}

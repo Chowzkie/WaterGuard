@@ -1,0 +1,26 @@
+/* src/Styles/Alerts.module.css */
+
+.component-wrapper-alerts {
+    height: calc(100vh - 100px);
+    width: 100%;
+    background-color: #EFEFEF;
+    box-sizing: border-box;
+    padding: 5px 24px;
+    display: flex;
+    gap: 20px;
+}
+
+.alerts-column {
+    flex: 4;
+    display: flex;
+    flex-direction: column; /* Stack tabs on top of history */
+    gap: 16px; /* Creates space between tabs and the history card */
+    min-width: 0;
+}
+
+.devices-column {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}

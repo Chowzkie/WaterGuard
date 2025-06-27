@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight } from 'lucide-react';
-import styles  from '../../Styles/Header.module.css';
+import styles from '../../Styles/Header.module.css';
 import ProfilePic from '../../assets/ProfilePic.png';
 import Logo from '../../assets/Logo.png';
 
-function Header() {
+function Header({ onLogout }) { // <-- Accept the onLogout function
 
-   const location = useLocation();
+  const navigate = useNavigate(); // <-- Add navigation for logout
+  const location = useLocation();
 
   // Route-to-title mapping
   const routeTitleMap = {
@@ -54,7 +55,6 @@ function Header() {
     );
   };
 
-
   const markAsRead = (index) => {
     const updated = [...notifications];
     updated[index].read = true;
@@ -67,6 +67,11 @@ function Header() {
       case 'success': return <CheckCircle className={`${styles.notifIcon} ${styles.success}`} />;
       default: return <Info className={`${styles.notifIcon} ${styles.info}`} />;
     }
+  };
+
+  const handleLogout = () => {
+    onLogout();           // Clear the auth state in App.jsx
+    navigate('/login');   // Redirect to login
   };
 
   return (
@@ -135,7 +140,8 @@ function Header() {
             <div className={`${styles.dropdownItemU} ${styles.manageProfile}`}>
               <Settings size={18} /> <p>Settings</p> <ChevronRight size={15} />
             </div>
-            <div className={`${styles.dropdownItemU} ${styles.logout}`}>
+            {/* Log Out Option */}
+            <div className={`${styles.dropdownItemU} ${styles.logout}`} onClick={handleLogout}>
               <LogOut size={16} /> <p>Log Out</p> <ChevronRight size={15} />
             </div>
           </div>

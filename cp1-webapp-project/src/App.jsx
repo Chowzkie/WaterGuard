@@ -2,12 +2,14 @@ import React, { useState, useEffect, useReducer, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
+import Login from './Components/Login';
 import Dashboard from './Components/Dashboard/Dashboard';
 import Header from './Components/Navigation-Header/Header';
 import Navigation from './Components/Navigation-Header/Navigation';
 import Overview from "./Components/Overview/Overview";
 import Alerts from './Components/Alerts/Alerts';
 import AlertsContext from './utils/AlertsContext';
+import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import { evaluateSensorReading } from './utils/SensorLogic';
 
 // --- MOCK DATA (No Changes) ---
@@ -106,6 +108,17 @@ function alertsReducer(state, action) {
 }
 
 function App() {
+  // Use to Authenticate the user when logging in
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
+
   const [alertsState, dispatch] = useReducer(alertsReducer, initialState);
   // --- UPDATED --- Destructure alertsHistory from our state
   const { activeAlerts, recentAlerts, alertsHistory } = alertsState;
@@ -188,15 +201,30 @@ function App() {
 
   return (
     <AlertsContext.Provider value={contextValue}>
-        <Header/>
-        <Navigation/>
+      {isAuthenticated && <Header onLogout={handleLogout} />}
+      {isAuthenticated && <Navigation />}
         <main>
-            <Routes>
-                <Route path="/" element={<Navigate to="/overview" replace />} />
-                <Route path="/overview" element={<Overview />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/alerts" element={<Alerts />}/>
-            </Routes>
+          <Routes>
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            
+            <Route
+              path="/overview"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Overview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/login" />} />
+          </Routes>
         </main>
     </AlertsContext.Provider>
   );

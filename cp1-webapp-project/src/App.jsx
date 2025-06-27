@@ -7,6 +7,7 @@ import Dashboard from './Components/Dashboard/Dashboard';
 import Header from './Components/Navigation-Header/Header';
 import Navigation from './Components/Navigation-Header/Navigation';
 import Overview from "./Components/Overview/Overview";
+import Devices from './Components/Devices/Devices'
 import Alerts from './Components/Alerts/Alerts';
 import AlertsContext from './utils/AlertsContext';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
@@ -220,6 +221,22 @@ function App() {
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+              <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Alerts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/devices"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Devices />
                 </ProtectedRoute>
               }
             />

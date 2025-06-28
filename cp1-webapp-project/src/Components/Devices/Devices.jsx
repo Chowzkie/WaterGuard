@@ -1,10 +1,13 @@
-
+import TestingDevice from "./TestingDevice";
+import ActiveAlerts from "./ActiveAlerts";
+import Style from '../../Styles/Device.module.css'
 function Devices(){
 
 
     return(
-        <div className='Wrapper'>
-            <p>Hello World</p>
+        <div className={Style['wrapper']}>
+            <TestingDevice />
+            <ActiveAlerts />
         </div>
     )
 }

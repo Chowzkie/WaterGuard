@@ -1,7 +1,7 @@
 // DeviceStatus.jsx
 import React, { useState, useEffect } from 'react';
 import StatusStyle from '../../Styles/DeviceStatus.module.css';
-import { Search, Menu } from 'lucide-react';
+import {  Menu } from 'lucide-react';
 
 const getStatusStyle = (status) => {
   switch (status.toLowerCase()) {
@@ -57,7 +57,11 @@ const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) =>
         <div className={StatusStyle["device-table"]}>
           <table>
             <thead>
-              <tr><th>Label</th><th>Location</th><th>Status</th></tr>
+              <tr>
+                <th>Label</th>
+                <th>Location</th>
+                <th>Status</th>
+              </tr>
             </thead>
             <tbody>
               {filteredDevices.length === 0 ? (

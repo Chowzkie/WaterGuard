@@ -1,4 +1,9 @@
 .wrapper{
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 2fr 1fr; 
+    padding: 15px;
+    height: calc(100vh - 100px);
+    width: 100%;
+    background-color: #EFEFEF;
+    box-sizing: border-box;
 }

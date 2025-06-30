@@ -1,0 +1,84 @@
+.container {
+    padding: 5px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.table{
+    width: 100%;
+}
+.table-title{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.3rem;
+    margin-top: 10px;
+}
+.table-title p{
+    color: hsl(0, 0%, 23%);
+    margin: 0;
+    padding-left: 10px;
+}
+.right-pane{
+    display: flex;
+    justify-content: space-between;
+    padding-right: 10px;
+}
+.search-box {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  width: 25vw;
+  height: 3.5vh;
+}
+.device-table{
+    height: 85%;
+    width: 100%;
+    overflow: scroll;
+    background-color: #FFFFFF;
+    margin: 0;
+}
+.device-table table{
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+}
+.device-table table th , td{
+    border-bottom: 1px solid #4A4A4A;
+    padding: 10px 0;
+    text-align: center;
+}
+.device-table table th{
+    color: hsla(0, 0%, 18%, 0.603);
+    font-size: 1rem;
+}
+.device-table table td{
+    font-size: 1rem;
+    padding: 0;
+}
+.device-table table th:nth-child(1),
+.device-table table td:nth-child(1) {
+    width: 20%; 
+}
+.device-table table th:nth-child(2),
+.device-table table td:nth-child(2) {
+    width: 50%; 
+}
+.device-table table th:nth-child(3),
+.device-table table td:nth-child(3) {
+    width: 20%; 
+}
+
+.device-table table th:nth-child(4),
+.device-table table td:nth-child(4) {
+    width: 10%; 
+}
+.icon-button{
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px 0;
+}

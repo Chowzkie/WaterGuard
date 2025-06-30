@@ -1,17 +1,21 @@
 import { Menu, SquarePen } from 'lucide-react';
+import Style from '../../Styles/DeviceTesting.module.css'
+
 function TestingDevice(){
     return(
-        <div className="Container">
-            <div className="Table">
-                <div className="Table-title">
+        <div className={Style['container']}>
+            <div className={Style['table']}>
+                <div className={Style['table-title']}>
                     <p>Testing Device</p>
-                    <div className="right-pane">
-                        <input type="text" placeholder="Search" className="Search-box" /> {/**Not yet Functional */}
-                        <div className="menu-container"><Menu size={32}/></div> {/**Make the Menu dropdown to Filter the status*/}
+                    <div className={Style['right-pane']}>
+                        <input type="text" placeholder="Search" className={Style['search-box']} /> {/**Not yet Functional */}
+                        <div className={Style['menu-container']}>
+                            <div className={Style["menu-icon"]}><Menu size={32}/></div>
+                        </div> {/**Make the Menu dropdown to Filter the status*/}
                     </div>
                 </div>
                 {/**Table */}
-                <div className="device-table">
+                <div className={Style['device-table']}>
                     <table>
                         <thead>
                             <tr>
@@ -27,8 +31,8 @@ function TestingDevice(){
                                 <td></td>
                                 <td></td>
                                 <td>
-                                    <button>
-                                        <SquarePen color="#080808" strokeWidth={1} />
+                                    <button className={Style['icon-button']}>
+                                        <SquarePen color="#080808" strokeWidth={1} size={32} />{/**Display the other component */}
                                     </button>
                                 </td>
                             </tr>

@@ -34,6 +34,52 @@
   width: 25vw;
   height: 3.5vh;
 }
+.menu-container{
+    position: relative;
+}
+.menu-icon{
+    cursor: pointer;
+}
+.menu-dropdown {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  padding: 10px;
+  z-index: 10;
+}
+.menu-option {
+  padding: 5px;
+  cursor: pointer;
+  font-weight: 450;
+  font-size: 1rem;
+}
+#online{
+    color: #50AE5B;
+}
+#offline{
+    color: #ff0000;
+}
+#maintenance{
+    color: #ffa500;
+}
+.menu-option:hover {
+  background-color: #f0f0f0;
+}
+
+.menu-option-clear {
+  padding: 5px;
+  cursor: pointer;
+  font-weight: 450;
+  font-size: 1rem;
+}
+
+.menu-option-clear:hover {
+  background-color: #f8d7da;
+}
 .device-table{
     height: 85%;
     width: 100%;
@@ -82,3 +128,4 @@
     cursor: pointer;
     padding: 5px 0;
 }
+

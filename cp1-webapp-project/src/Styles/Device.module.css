@@ -6,4 +6,5 @@
     width: 100%;
     background-color: #EFEFEF;
     box-sizing: border-box;
+    gap: 15px;
 }

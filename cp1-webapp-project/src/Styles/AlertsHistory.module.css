@@ -1,12 +1,7 @@
-/*
-  This file is structured to be visually identical to ActiveAlerts.module.css
-  by using the same class names, colors, padding, and layout rules.
-*/
 
 .alerts-section {
   background: white;
   border-radius: 5px;
-  /* Matching padding from ActiveAlerts */
   padding: 0 10px 10px 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   font-family: 'Poppins', sans-serif;
@@ -18,7 +13,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* ActiveAlerts has no bottom margin here, handled by padding on the container */
 }
 
 .section-header h3 {
@@ -27,21 +21,44 @@
   color: #333;
 }
 
-/* This replaces the '.device-filter-group' */
+/* This is the only necessary modification to an existing class */
 .header-controls {
+
   display: flex;
   align-items: center;
   gap: 18px; /* A bit more space for icons */
+  position: relative; /* This is needed to position the filter panel correctly */
+
+  flex-shrink: 0;
 }
 
-.header-controls .icon {
+.filter-icon{
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.filter-icon:hover{
+  color: #1f96f8;
+}
+
+.trash-icon{
   color: #6c757d;
   cursor: pointer;
   transition: color 0.2s;
 }
 
-.header-controls .icon:hover {
-  color: #343a40;
+.trash-icon:hover{
+  color: rgb(245, 70, 70);
+}
+
+.download-icon{
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.download-icon:hover{
+  color: rgb(28, 170, 40);
 }
 
 /* === Table Layout (Identical structure) === */
@@ -60,7 +77,7 @@
   background: #f0f0f0;
   display: grid;
   /* Using the exact grid layout from ActiveAlerts */
-  grid-template-columns: 1.2fr 1fr 1.8fr 1.2fr 1.2fr;
+  grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr;
   column-gap: 22px;
   padding: 8px 10px;
   font-size: 13px;
@@ -68,7 +85,7 @@
 
 .alerts-body {
   /* Matching max-height and overflow */
-  max-height: 260px; /* Adjust if your history list should be taller */
+  max-height: 352px; /* Adjust if your history list should be taller */
   overflow-y: auto;
   flex-grow: 1; /* Allow it to grow if max-height isn't reached */
 }
@@ -87,7 +104,7 @@
 
 .alerts-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.8fr 1.2fr 1.2fr;
+  grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr;
   column-gap: 22px;
   align-items: center;
   padding: 8px 10px;
@@ -101,7 +118,6 @@
     border-bottom: none;
 }
 
-/* Hover effect is not needed as rows aren't clickable, but can be added */
 .alerts-row:hover {
   background-color: #f5f5f5;
 }
@@ -113,7 +129,6 @@
   font-weight: 500;
 }
 
-/* === Badge & Status Styling (Identical) === */
 .severity-badge {
   padding: 4px 10px;
   border-radius: 12px;
@@ -138,7 +153,6 @@
   color: #2e7d32;
 }
 
-/* Custom status for "Acknowledged" to differentiate from "Active" */
 .status-acknowledged {
   font-weight: 500;
   color: #6c757d; /* Muted gray color */
@@ -150,3 +164,532 @@
   color: #888;
   text-align: center;
 }
+
+/* Styles for the new Action column text */
+.action-acknowledged {
+  font-weight: 500;
+  color: #099268; /* A pleasant green */
+}
+
+.action-unacknowledged {
+  font-weight: 500;
+  color: #c92a2a; /* A noticeable red */
+}
+
+/*
+ ===================================================================
+  NEW STYLES for the 2-Column Compact Filter Panel
+ ===================================================================
+*/
+
+.icon-button {
+    background: none;
+    border: none;
+    padding: 0;
+    line-height: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+/* The main panel container: Made slightly narrower */
+.filter-panel {
+    position: absolute;
+    top: 1%;
+    right: 0;
+    width: 580px; /* <-- UPDATED from 600px */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #dee2e6;
+    z-index: 20;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+
+    animation: fadeInDown 0.2s ease-out;
+}
+
+/* Header of the panel: Reduced vertical padding */
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px; /* <-- UPDATED from 16px */
+    border-bottom: 1px solid #e9ecef;
+}
+
+.filter-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.close-filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 4px;
+    line-height: 0;
+    border-radius: 50%;
+}
+
+.close-filter-btn:hover {
+    background-color: #f1f3f5;
+}
+
+/* Body of the panel: Reduced padding and gap between rows */
+.filter-body {
+    padding: 20px; /* <-- UPDATED from 24px */
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* <-- UPDATED from 20px */
+}
+
+/* Each row in the filter panel (Label + Control) */
+.filter-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: start;
+    gap: 12px; /* <-- UPDATED from 16px */
+}
+
+/* Label for each filter group: Reduced top padding */
+.filter-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #495057;
+    padding-top: 5px; /* <-- UPDATED from 6px to better align with pills */
+}
+
+.filter-control {
+    position: relative;
+}
+
+.pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f1f3f5;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+    border-color: #adb5bd;
+}
+
+.filter-pill.selected {
+    background-color: #46d0e9;
+    color: white;
+    border-color: #26b7c2;
+}
+
+.type-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    cursor: text;
+    box-sizing: border-box;
+    
+    /* --- ADD THESE NEW PROPERTIES --- */
+    max-height: 85px; /* Sets a max height equivalent to about two rows of pills */
+    overflow-y: auto; /* Adds a vertical scrollbar ONLY when content exceeds the max-height */
+}
+
+.type-input-container:focus-within {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.type-placeholder {
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.type-pill {
+    display: flex;
+    align-items: center;
+    background-color: #e7f5ff;
+    color: #0056b3;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+.type-pill span {
+    margin-right: 6px;
+}
+
+.type-pill button {
+    background: none;
+    border: none;
+    padding: 0;
+    line-height: 0;
+    cursor: pointer;
+    color: #0056b3;
+}
+
+.type-input-field {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    min-width: 100px;
+    padding: 2px;
+    background: transparent;
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.type-dropdown-list, .assignee-dropdown-list {
+    position: absolute;
+    width: 100%;
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    margin-top: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+    /* --- ADD THIS LINE --- */
+    animation: fadeInDown 0.2s ease-out;
+}
+
+.type-dropdown-item, .dropdown-item {
+    padding: 10px 12px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.type-dropdown-item:hover, .dropdown-item:hover {
+    background-color: #f1f3f5;
+}
+
+.custom-dropdown {
+    position: relative;
+    max-width: 300px;
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.dropdown-header span {
+    flex-grow: 1;
+}
+
+.dropdown-chevron {
+    margin-left: auto;
+}
+
+/* The footer of the panel: Reduced vertical padding */
+.filter-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 12px 20px; /* <-- UPDATED from 16px */
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+.clear-btn, .apply-btn {
+    padding: 8px 20px;
+    border: 1px solid;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-btn {
+    background-color: #fff;
+    border-color: #ced4da;
+    color: #495057;
+}
+
+.clear-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.apply-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.apply-btn:hover {
+    background-color: #0056b3;
+}
+
+/* ADD THESE NEW STYLES for the Date Range filter */
+
+.date-range-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-range-group span {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.date-input {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    color: #495057;
+}
+
+/* For better cross-browser placeholder color on date inputs */
+.date-input:invalid {
+    color: #6c757d;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* --- ADD THESE NEW STYLES for the Delete functionality --- */
+
+
+/* Container for the delete mode UI */
+.delete-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* The slider for choosing delete mode */
+.delete-slider {
+    display: flex;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.delete-slider button {
+    padding: 4px 12px;
+    border: none;
+    background-color: transparent;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #495057;
+}
+
+.delete-slider button.active {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: #0056b3;
+}
+
+/* Text showing number of selected items */
+.delete-controls span {
+    font-size: 13px;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Main delete button */
+.delete-button {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #fa5252;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #e03131;
+}
+
+/* Cancel button for delete mode */
+.delete-cancel-button {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #495057;
+}
+.delete-cancel-button:hover {
+    background-color: #f1f3f5;
+}
+
+
+/* Styles for the new checkbox column */
+.select-delete-grid {
+    /* Add an 'auto' column at the end for the checkbox */
+    grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr auto; 
+}
+
+.checkbox-cell-header, .checkbox-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-right: 10px;
+}
+
+.checkbox-cell input, .checkbox-cell-header input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+
+/* Styles for the confirmation modal */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.confirmation-modal {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 400px;
+    text-align: center;
+}
+
+.confirmation-modal h4 {
+    margin-top: 0;
+    font-size: 1.25rem;
+}
+
+.confirmation-modal p {
+    margin: 8px 0 24px;
+    color: #495057;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.button-secondary {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    background-color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+.button-secondary:hover {
+    background-color: #f1f3f5;
+}
+
+.button-danger {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background-color: #e03131;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+.button-danger:hover {
+    background-color: #c92a2a;
+}
+
+
+/* Styles for the Undo Toast */
+.undo-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    background-color: #343a40;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 110;
+    transform: translateY(150%);
+    opacity: 0;
+    transition: all 0.4s ease-in-out;
+}
+
+.undo-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.undo-toast button {
+    background: none;
+    border: none;
+    color: #4dabf7;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+}
+.undo-toast button:hover {
+    text-decoration: underline;
+}
+

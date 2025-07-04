@@ -102,7 +102,7 @@
   color: hsla(0, 0%, 18%, 0.8);
   background: #f0f0f0;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.8fr 1.2fr 1.2fr;
+  grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr;
   column-gap: 22px;
   padding: 8px 10px;
   font-size: 13px;
@@ -126,7 +126,7 @@
 
 .alerts-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.8fr 1.2fr 1.2fr;
+  grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr;
   column-gap: 22px;
   align-items: center;
   padding: 8px 10px;
@@ -135,6 +135,10 @@
   background: #fff;
   cursor: pointer;
   transition: background 0.2s ease, opacity 0.3s ease; /* Added opacity transition */
+}
+
+.Icons{
+  margin-left: 7px;
 }
 
 /* NEW STYLE: This class will be applied to alerts with the `acknowledged: true` flag.
@@ -233,31 +237,37 @@
   text-align: center;
 }
 
-/* Find and replace the existing @keyframes bounceIn */
-@keyframes bounceIn {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.7;
-    /* START with a noticeable highlight color */
-    background-color: #e7f5ff; /* A light, attention-grabbing blue */
+/* NEW ANIMATION: Option 1 - Slide, Fade & Highlight
+  Replace your old @keyframes bounceIn with this.
+*/
+@keyframes slideFadeInHighlight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+    background-color: #e0f2fe; /* A modern, light cyan/blue highlight */
   }
-  50% {
-    transform: scale(1.02);
+  to {
     opacity: 1;
-    /* HOLD the highlight color through the "bounce" */
-    background-color: #e7f5ff;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-    /* FADE back to the default white background */
-    background-color: #fff;
+    transform: translateX(0);
+    background-color: #fff; /* The default row color */
   }
 }
 
-/* Find and replace the existing .new-alert class */
+/* Replace your old .new-alert class with this. 
+  The ease-out curve makes the end of the animation smooth.
+*/
+
 .new-alert {
-  /* We make the animation slightly longer so the color change is easy to see */
-  animation: bounceIn 1.2s ease-out;
+  animation: slideFadeInHighlight 1.2s ease-out;
 }
-/* REMOVED: The entire @keyframes bounceOut and .bounce-out class are gone. */
+
+/* Styles for the new Action column text */
+.action-acknowledged {
+  font-weight: 500;
+  color: #099268; /* A pleasant green */
+}
+
+.action-unacknowledged {
+  font-weight: 500;
+  color: #c92a2a; /* A noticeable red */
+}

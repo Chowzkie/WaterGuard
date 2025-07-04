@@ -49,7 +49,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
 }
 
 .devices-header-row {
@@ -58,7 +57,7 @@
   background: #f0f0f0;
   display: grid;
   /* Adjusted grid for 3 columns */
-  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-columns: 1fr 1.2fr 1fr;
   column-gap: 22px;
   padding: 8px 10px;
   font-size: 13px;
@@ -84,7 +83,7 @@
 .devices-row {
   display: grid;
   /* Adjusted grid for 3 columns */
-  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-columns: 1fr 1.2fr 1fr;
   column-gap: 22px;
   align-items: center;
   padding: 8px 10px;
@@ -98,7 +97,7 @@
 }
 
 /* === Badge & Status Styling === */
-.status-badge {
+.status-badge.online {
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 10px;
@@ -112,9 +111,45 @@
   color: #2e7d32;
 }
 
+.status-badge.offline{
+   padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  text-align: center;
+  min-width: 70px;
+  color: #d60000;
+  background-color: #f8d7da;
+}
+
 .no-devices {
   padding: 10px;
   font-size: 13px;
   color: #888;
   text-align: center;
+}
+
+
+/* --- ADD THESE NEW STYLES --- */
+
+/* Make the rows interactive */
+.devices-row {
+    cursor: pointer;
+    /* ADD transform and box-shadow to the transition for the lift effect */
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.devices-row:hover {
+    background-color: #f8f9fa; /* A light hover effect */
+}
+
+/* Style for the selected device row */
+.devices-row.selected {
+    background-color: #e7f5ff;
+
+    /* --- ADD THESE NEW PROPERTIES for the lift effect --- */
+    transform: translateY(-2px); /* Lifts the row up by 2 pixels */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Adds a subtle shadow */
 }

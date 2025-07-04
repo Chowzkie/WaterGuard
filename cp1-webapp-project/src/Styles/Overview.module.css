@@ -4,6 +4,7 @@
   background-color: #EFEFEF;
   box-sizing: border-box; 
   padding: 5px 24px;
+  margin-top: 15px;
   gap: 15px; /* The space between your components */
 
   display: grid;

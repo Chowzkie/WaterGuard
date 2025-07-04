@@ -1,60 +1,99 @@
-
-.readings-container{
+/* Main grid container for all reading cards */
+.readings-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    height: 100%;
 }
-.readings{
+
+/* Styling for each individual reading card */
+.readings {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     background-color: #FFFFFF;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border-radius: 7px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Header section of the card */
+.readings-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
-    height: 100%;
+}
+
+.readings-title p {
     margin: 0;
-}
-.readings-title{
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-}
-.readings-title p{
     font-size: 1rem;
+    color: #333;
 }
-.readings-title a{
-    padding-top: 10px;
-    text-decoration: none;
-    color: #000000;
+
+.readings-title p:last-child {
+    font-size: 0.9rem;
+    color: #666;
 }
-.readings-diagram{
-    height: 25vh;
-    width: 25vw;
-    align-self: center;
-    text-align: center;
-}
-.min-max{
+
+/* Container for the chart diagram */
+.readings-diagram {
     display: flex;
-    justify-content: space-between;
-    padding: 0 10px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 10px 0;
 }
-.min-max p{
-    font-size: 1rem;
-    font-weight: 600;
-    color: #4A4A4A;
-}
+
+/* This container holds the chart canvas and the center text */
 .chart-container {
     position: relative;
     width: 100%;
-    height: 100%;
+    max-width: 220px;
+    aspect-ratio: 2 / 1;
 }
 
+/* --- CORRECTED PART --- */
+/* This rule now correctly centers the text block inside the arc */
 .chart-center-text {
     position: absolute;
-    top: 50%;
+    top: 65%; /* Positions the text block vertically */
     left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 2rem;
+    transform: translate(-50%, -50%); /* Centers the block on the position */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1; /* Adjusts line spacing */
+    width: 100%;
+}
+
+/* Style for the main value (e.g., "9.2") */
+.value {
+    font-size: 2.2rem;
     font-weight: bold;
+    color: #333;
+}
+
+/* Style for the unit (e.g., "NTU") */
+.unit {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #444;
+}
+/* --- END OF CORRECTION --- */
+
+/* Footer section for Min and Max values */
+.min-max {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 5px;
+}
+
+.min-max p {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #555;
 }

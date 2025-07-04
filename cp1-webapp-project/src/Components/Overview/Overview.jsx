@@ -7,7 +7,7 @@ import styles from '../../Styles/Overview.module.css';
 import { useAlerts } from '../../utils/AlertsContext';
 
 const Overview = () => {
-    // --- Get everything needed from the central context ---
+    // --- MODIFIED --- Get newlyAddedId from context
     const {
         activeAlerts,
         recentAlerts,
@@ -23,10 +23,11 @@ const Overview = () => {
         onSelectMapDevice,
         onAddDevice,
         onDeleteDevice,
-        onSaveStations
+        onSaveStations,
+        newlyAddedId, // <-- ADD THIS
+        onAnimationComplete
     } = useAlerts();
 
-    // The component just renders UI and passes props down.
     return (
         <div className={styles['component-wrapper-overview']}>
             <InteractiveMap
@@ -43,7 +44,9 @@ const Overview = () => {
                 selectedDevice={activeFilterDevice}
                 onDeviceFilterChange={handleActiveFilterChange}
                 onAcknowledgeAlert={onAcknowledgeAlert}
-                showFilter ={true}
+                showFilter={true}
+                newlyAddedId={newlyAddedId} // <-- PASS IT AS A PROP
+                onAnimationComplete={onAnimationComplete}
             />
             <PumpingStatus
                 stations={pumpingStations}

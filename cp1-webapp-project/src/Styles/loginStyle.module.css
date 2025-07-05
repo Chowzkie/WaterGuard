@@ -178,4 +178,8 @@
     .button-box {
         margin-top: 40px; /* More space above the button */
     }
+
+    .logo span{
+    top: 110px;
+    }
 }

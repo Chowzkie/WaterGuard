@@ -38,13 +38,18 @@ const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice}) => 
       <div className={ReadingsStyle["readings-diagram"]}>
         <div className={ReadingsStyle["chart-container"]}>
           <Doughnut data={data} options={options} />
-          <div className={ReadingsStyle["chart-center-text"]}>{value}{unit}</div>
+          {/* --- CORRECTED PART --- */}
+          {/* The value and unit are now in separate spans for proper styling */}
+          <div className={ReadingsStyle["chart-center-text"]}>
+            <span className={ReadingsStyle["value"]}>{value}</span>
+            {unit && <span className={ReadingsStyle["unit"]}>{unit}</span>}
+          </div>
+          {/* --- END OF CORRECTION --- */}
         </div>
-
-        <div className={ReadingsStyle["min-max"]}>
-          <p>Min: {min}{unit}</p>
-          <p>Max: {max}{unit}</p>
-        </div>
+      </div>
+      <div className={ReadingsStyle["min-max"]}>
+        <p>Min: {min}{unit}</p>
+        <p>Max: {max}{unit}</p>
       </div>
     </div>
   );

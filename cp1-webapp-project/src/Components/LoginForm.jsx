@@ -24,7 +24,7 @@ function LoginForm({ onLogin }) {
       setMessage('Invalid Username and Password!');
       setIsError(true);
       setShake(true);
-      setTimeout(() => setShake(false), 500); // remove shake after animation
+      setTimeout(() => setShake(false), 500);
     }
   };
 
@@ -32,6 +32,10 @@ function LoginForm({ onLogin }) {
     <div className={loginStyle['Container']}>
       <div className={loginStyle['logo']}>
         <img src={Logo} alt="WaterGuard Logo" />
+        <span>
+          <p className={loginStyle['p1']}>Water</p>
+          <p className={loginStyle['p2']}>Guard</p>
+        </span>
       </div>
 
       <div className={`${loginStyle['message-box']} ${isError ? loginStyle['error'] : ''} ${shake ? loginStyle['shake'] : ''}`}>

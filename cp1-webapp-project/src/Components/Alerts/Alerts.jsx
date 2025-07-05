@@ -9,31 +9,75 @@ import TestingDevices from './TestingDevices';
 import Tabs from './Tabs';
 
 const Alerts = () => {
-    // --- UPDATED --- Destructure alertsHistory from the context
+    // --- Get all data from the central context ---
     const {
         activeAlerts,
         recentAlerts,
-        alertsHistory, // <-- Get here
+        alertsHistory,
         devices,
-        activeFilterDevice,
-        handleActiveFilterChange,
-        recentFilterDevice,
-        handleRecentFilterChange,
-        onAcknowledgeAlert
+        onAcknowledgeAlert,
+        // CHANGE: Get delete and restore functions from context
+        onDeleteHistoryAlerts,
+        onRestoreHistoryAlerts,
+        newlyAddedId,
+        onAnimationComplete
     } = useAlerts();
 
-    const [activeTab, setActiveTab] = useState('Active');
+    // --- MODIFIED ---
+    // Add new state to track which device is selected for viewing.
+    // `null` will represent the "All Devices" view.
+    const [viewedDeviceId, setViewedDeviceId] = useState(null);
+
+    const [activeTab, setActiveTab] = useState('History');
     const tabItems = ['Active', 'Recent', 'History'];
+
+    // --- MODIFIED ---
+    // This new handler will be called by the TestingDevices component.
+    // It also allows deselecting a device by clicking it again.
+    const handleDeviceSelect = (deviceId) => {
+        setViewedDeviceId(prevId => (prevId === deviceId ? null : deviceId));
+    };
+
+    // --- MODIFIED ---
+    // Filter the alert lists based on the selected device before rendering.
+    const filteredActiveAlerts = viewedDeviceId ? activeAlerts.filter(a => a.originator === viewedDeviceId) : activeAlerts;
+    const filteredRecentAlerts = viewedDeviceId ? recentAlerts.filter(r => r.originator === viewedDeviceId) : recentAlerts;
+    const filteredHistoryAlerts = viewedDeviceId ? alertsHistory.filter(h => h.originator === viewedDeviceId) : alertsHistory;
+
 
     const renderActiveComponent = () => {
         switch (activeTab) {
             case 'Active':
-                return ( <ActiveAlerts activeAlerts={activeAlerts} devices={devices} selectedDevice={activeFilterDevice} onDeviceFilterChange={handleActiveFilterChange} onAcknowledgeAlert={onAcknowledgeAlert} showFilter={false} /> );
+                return (
+                    <ActiveAlerts
+                        // Pass the pre-filtered list
+                        activeAlerts={filteredActiveAlerts}
+                        devices={devices}
+                        onAcknowledgeAlert={onAcknowledgeAlert}
+                        showFilter={false} // Correctly hides the internal filter
+                        newlyAddedId={newlyAddedId}
+                        onAnimationComplete={onAnimationComplete}
+                    />
+                );
             case 'Recent':
-                return ( <RecentAlerts recentAlerts={recentAlerts} devices={devices} selectedDevice={recentFilterDevice} onDeviceFilterChange={handleRecentFilterChange} showFilter={false} /> );
+                return (
+                    <RecentAlerts
+                        // Pass the pre-filtered list
+                        recentAlerts={filteredRecentAlerts}
+                        devices={devices}
+                        showFilter={false} // Correctly hides the internal filter
+                    />
+                );
             case 'History':
-                // --- UPDATED --- Pass the history data as a prop
-                return <AlertsHistory historyAlerts={alertsHistory} />;
+                return (
+                    <AlertsHistory
+                        // Pass the pre-filtered list
+                        historyAlerts={filteredHistoryAlerts}
+                        // CHANGE: Pass delete and restore functions down as props
+                        onDeleteHistoryAlerts={onDeleteHistoryAlerts}
+                        onRestoreHistoryAlerts={onRestoreHistoryAlerts}
+                    />
+                );
             default:
                 return null;
         }
@@ -50,7 +94,12 @@ const Alerts = () => {
                 {renderActiveComponent()}
             </div>
             <div className={styles['devices-column']}>
-                <TestingDevices devices={devices} />
+                {/* --- MODIFIED --- Pass new props to make it a navigation menu */}
+                <TestingDevices
+                    devices={devices}
+                    selectedDeviceId={viewedDeviceId}
+                    onDeviceSelect={handleDeviceSelect}
+                />
             </div>
         </div>
     );

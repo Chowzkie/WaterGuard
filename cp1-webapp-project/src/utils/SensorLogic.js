@@ -10,26 +10,24 @@
 
 const THRESHOLDS = {
   pH: {
-    CRITICAL_LOW: 6.0,
-    WARNING_LOW: 6.4,
-    NORMAL_MIN: 6.5,
-    NORMAL_MAX: 8.5,
-    WARNING_HIGH: 8.6,
-    CRITICAL_HIGH: 9.0,
+    critical: { low: 6.0, high: 9.0 }, // Critical if < 6.0 or > 9.0
+    warning: { low: [6.0, 6.4], high: [8.6, 9.0] },
+    normal: [6.5, 8.5],
   },
   turbidity: { // Unit: NTU
-    NORMAL_MAX: 5,
-    WARNING_MAX: 10,
-    CRITICAL_MIN: 10.01,
+    critical: 10, // Critical if > 10
+    warning: [5, 10], // Warning if > 5 and <= 10
+    normal: [0, 5],
+  },
+  tds: { // Unit: mg/L
+    critical: 1000, // Critical if > 1000
+    warning: [500, 1000], // Warning if > 500 and <= 1000
+    normal: [0, 500],
   },
   temp: { // Unit: °C
-    NORMAL_MAX: 35,
-    WARNING_MIN: 35.01,
-  },
-  tds: { // Unit: ppm
-    NORMAL_MAX: 999,
-    WARNING_MAX: 1200,
-    CRITICAL_MIN: 1200.01,
+    critical: { low: 5, high: 35 }, // Critical if < 5 or > 35
+    warning: { low: [5, 9], high: [31, 35] },
+    normal: [10, 30],
   },
 };
 
@@ -48,34 +46,44 @@ const evaluateParameter = (parameter, value) => {
 
   switch (parameter) {
     case 'pH':
-      if (value < rules.CRITICAL_LOW || value > rules.CRITICAL_HIGH) {
-        result = { severity: 'Critical', message: `Critical pH level detected (${value})` };
-        note = 'Value shut off';
-      } else if ((value >= rules.CRITICAL_LOW && value <= rules.WARNING_LOW) || (value >= rules.WARNING_HIGH && value <= rules.CRITICAL_HIGH)) {
+      if (value < rules.critical.low) {
+        result = { severity: 'Critical', message: `Critical Low pH level detected (${value})` };
+        note = 'Valve shut off';
+      } else if (value > rules.critical.high) {
+        result = { severity: 'Critical', message: `Critical High pH level detected (${value})` };
+        note = 'Valve shut off';
+      } else if ((value >= rules.warning.low[0] && value <= rules.warning.low[1]) || (value >= rules.warning.high[0] && value <= rules.warning.high[1])) {
         result = { severity: 'Warning', message: `pH level is nearing critical levels (${value})` };
       }
       break;
 
     case 'turbidity':
-      if (value >= rules.CRITICAL_MIN) {
+      if (value > rules.critical) {
         result = { severity: 'Critical', message: `Critical turbidity level detected (${value} NTU)` };
-        note = 'Value shut off';
-      } else if (value > rules.NORMAL_MAX && value < rules.CRITICAL_MIN) {
+        note = 'Valve shut off';
+      } else if (value > rules.normal[1] && value <= rules.warning[1]) {
         result = { severity: 'Warning', message: `High turbidity detected (${value} NTU)` };
       }
       break;
 
-    case 'temp':
-      if (value >= rules.WARNING_MIN) {
-        result = { severity: 'Warning', message: `High temperature detected (${value}°C)` };
+    case 'tds':
+      if (value > rules.critical) {
+        result = { severity: 'Critical', message: `Critical TDS level detected (${value} mg/L)` };
+        note = 'Valve shut off';
+      } else if (value > rules.normal[1] && value <= rules.warning[1]) {
+        result = { severity: 'Warning', message: `High TDS detected (${value} mg/L)` };
       }
       break;
 
-    case 'tds':
-      if (value >= rules.CRITICAL_MIN) {
-        result = { severity: 'Critical', message: `Critical TDS level detected (${value} ppm)` };
-      } else if (value > rules.NORMAL_MAX && value <= rules.WARNING_MAX) {
-        result = { severity: 'Warning', message: `High TDS detected (${value} ppm)` };
+    case 'temp':
+      if (value < rules.critical.low) {
+        result = { severity: 'Critical', message: `Critical Low Temperature detected (${value}°C)` };
+      } else if (value > rules.critical.high) {
+        result = { severity: 'Critical', message: `Critical High Temperature detected (${value}°C)` };
+      } else if (value >= rules.warning.low[0] && value <= rules.warning.low[1]) {
+        result = { severity: 'Warning', message: `Low Temperature detected (${value}°C)` };
+      } else if (value >= rules.warning.high[0] && value <= rules.warning.high[1]) {
+        result = { severity: 'Warning', message: `High Temperature detected (${value}°C)` };
       }
       break;
 

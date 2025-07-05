@@ -104,7 +104,7 @@
   color: hsla(0, 0%, 18%, 0.8);
   background: #f0f0f0;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.8fr 1.2fr 1.2fr;
+  grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr;
   column-gap: 22px;
   padding: 8px 10px;
   font-size: 13px;
@@ -127,7 +127,7 @@
 /* Rows */
 .alerts-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1.8fr 1.2fr 1.2fr;
+  grid-template-columns: 1.2fr 1fr 1.8fr 1fr 1fr 1fr;
   column-gap: 22px;
   align-items: center;
   padding: 8px 10px;
@@ -135,6 +135,10 @@
   border-bottom: 1px solid #eee;
   transition: background 0.2s ease;
   background: #fff;
+}
+
+.Icons{
+  margin-left: 7px;
 }
 
 .alerts-row:hover {
@@ -187,20 +191,13 @@
   text-align: center;
 }
 
-@keyframes bounceIn {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-  }
+/* Styles for the new Action column text */
+.action-acknowledged {
+  font-weight: 500;
+  color: #099268; /* A pleasant green */
 }
 
-.new-alert {
-  animation: bounceIn 0.5s ease-out;
+.action-unacknowledged {
+  font-weight: 500;
+  color: #c92a2a; /* A noticeable red */
 }

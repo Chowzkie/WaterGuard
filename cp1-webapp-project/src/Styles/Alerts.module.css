@@ -6,15 +6,16 @@
     background-color: #EFEFEF;
     box-sizing: border-box;
     padding: 5px 24px;
+    margin-top: 15px;
     display: flex;
-    gap: 20px;
+    gap: 16px;
 }
 
 .alerts-column {
     flex: 4;
     display: flex;
     flex-direction: column; /* Stack tabs on top of history */
-    gap: 16px; /* Creates space between tabs and the history card */
+    gap: 10px; /* Creates space between tabs and the history card */
     min-width: 0;
 }
 

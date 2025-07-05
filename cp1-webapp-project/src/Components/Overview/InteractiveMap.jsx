@@ -148,10 +148,19 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
                             <span>-DEV</span>
                         </div>
                     </div>
-                    <div className="form-group"><label htmlFor="address">Address</label><input id="address" type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="e.g., Brgy. San Nicolas, Gerona" /></div>
-                    <div className="form-group"><label htmlFor="lat">Latitude</label><input id="lat" type="text" value={lat} onChange={e => setLat(e.target.value)} placeholder="e.g., 15.63" /></div>
-                    <div className="form-group"><label htmlFor="lng">Longitude</label><input id="lng" type="text" value={lng} onChange={e => setLng(e.target.value)} placeholder="e.g., 120.61" /></div>
-                    <div className="form-actions"><button type="button" onClick={onCancel} className="button-secondary">Cancel</button><button type="submit" className="button-primary">Add Pin</button></div>
+                    <div className="form-group">
+                        <label htmlFor="address">Address</label>
+                        <input id="address" type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="e.g., Brgy. San Nicolas, Gerona" />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="lat">Latitude</label><input id="lat" type="text" value={lat} onChange={e => setLat(e.target.value)} placeholder="e.g., 15.63" />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="lng">Longitude</label><input id="lng" type="text" value={lng} onChange={e => setLng(e.target.value)} placeholder="e.g., 120.61" />
+                    </div>
+                        <div className="form-actions"><button type="button" onClick={onCancel} className="button-secondary">Cancel</button>
+                        <button type="submit" className="button-primary">Add Pin</button>
+                    </div>
                 </form>
             </div>
         </div>

@@ -1,3 +1,8 @@
+/*Para mahati yung paglalagyan nung testing device at yung view*/
+.device-status-wrapper{
+    display: grid;
+    grid-template-rows: 3fr 1fr;
+}
 .devices-section {
     background: white;
     border-radius: 5px;
@@ -7,13 +12,7 @@
     display: flex;
     flex-direction: column;
 
-    height: 370px;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    height: 100% /*Eto naman para kunin lahat ni Testing device yung size na 3fr na nabigay sakanya*/
 }
 
 .section-header h3 {

@@ -9,7 +9,6 @@ const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) =>
                 <div className={styles['section-header']}>
                     <h3>Testing Devices</h3>
                 </div>
-
                 <div className={styles['devices-table']}>
                     <div className={styles['devices-header-row']}>
                         <div>Label</div>

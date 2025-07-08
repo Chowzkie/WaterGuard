@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import TestingDevice from "./TestingDevice";
-import ActiveAlerts from "./ActiveAlerts";
 import Style from '../../Styles/Device.module.css'
 
 // MOCK DATA
@@ -69,7 +68,6 @@ function Devices(){
     return(
         <div className={Style['wrapper']}>
             <TestingDevice deviceData={devices}/>
-            <ActiveAlerts />
         </div>
     )
 }

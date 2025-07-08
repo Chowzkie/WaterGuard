@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, SquarePen } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Style from '../../Styles/DeviceTesting.module.css'
 
-const getStatusStyle = (status) => {
-    switch(status.toLowerCase()){
-        case 'online': return {color: '#50AE5B', fontWeight: 600 };
-        case 'offline': return { color: 'red', fontWeight: 600 };
-        case 'maintenance': return { color: 'orange', fontWeight: 600 };
-        default: return{};
-    }
-}
 
 function TestingDevice({deviceData}){
 
@@ -32,7 +24,7 @@ function TestingDevice({deviceData}){
                 <div className={Style['table-title']}>
                     <p>Testing Device</p>
                     <div className={Style['right-pane']}>
-                        <input type="text" placeholder="Search" className={Style['search-box']} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/> {/**Not yet Functional */}
+                        <input type="text" placeholder="Search" className={Style['search-box']} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/> 
                         <div className={Style['menu-container']}>
                             <div onClick={() => setShowMenu(!showMenu)} className={Style["menu-icon"]}><Menu size={32}/></div>
                             {showMenu && (
@@ -48,34 +40,28 @@ function TestingDevice({deviceData}){
                 </div>
                 {/**Table */}
                 <div className={Style['device-table']}>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Label</th>
-                                <th>Location</th>
-                                <th>Status</th>
-                                <th> </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filterDevice.length === 0 ? (
-                                <tr><td colSpan = '4'>No device found</td></tr>
-                            ) : (
-                                filterDevice.map(device => (
-                                    <tr key={device.id}>
-                                        <td>{device.id}</td>
-                                        <td>{device.location}</td>
-                                        <td style={getStatusStyle(device.status)}>{device.status}</td>
-                                        <td>
-                                            <button className={Style['icon-button']}>
-                                                <SquarePen color="#080808" strokeWidth={1} size={32} />{/**Display the other component */}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                    <div className={Style['devices-header-row']}>
+                        <div>Label</div>
+                        <div>Location</div>
+                        <div>Status</div>
+                    </div>
+
+                    <div className={Style['device-body']}>
+                        {filterDevice.length === 0 ? (
+                            <div className={Style['no-devices']}>No devices found.</div>
+                        ) : (
+                            filterDevice.map(device => (
+                                <div key={device.id} 
+                                    className={Style['devices-row']}
+                                    
+                                    >{/**in the device-row this is where i want to put the other component it will render this component and move to SpecificDevice.jsx */}
+                                        <div>{device.id}</div>
+                                        <div>{device.location}</div>
+                                        <div className={`${Style['status-badge']} ${Style[device.status.toLowerCase()]}`}>{device.status}</div>
+                                    </div>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

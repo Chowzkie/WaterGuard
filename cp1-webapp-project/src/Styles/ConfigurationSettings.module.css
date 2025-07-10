@@ -1,0 +1,321 @@
+/* =================================================
+   Styles/ConfigurationSettings.module.css (Final)
+   ================================================= */
+.settings-wrapper {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.back-button, .save-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-button {
+    background-color: #fff;
+    border-color: #d1d5db;
+    color: #374151;
+}
+
+.back-button:hover {
+    background-color: #f9fafb;
+}
+
+.save-button {
+    background-color: #2563eb;
+    color: white;
+}
+
+.save-button:hover {
+    background-color: #1d4ed8;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to one column */
+    gap: 20px;
+}
+
+.left-column, .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (min-width: 1100px) {
+    .settings-grid {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.settings-panel {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.settings-panel h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 10px;
+}
+
+.threshold-group {
+    margin-bottom: 20px;
+}
+
+.threshold-group:last-child {
+    margin-bottom: 0;
+}
+
+.threshold-group > label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 10px;
+}
+
+/* --- NEW: A container for multiple rows of inputs --- */
+.input-rows-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* This creates space between the rows of inputs */
+}
+
+/* --- REMOVED: The generic .input-row is replaced by specific ones below --- */
+
+/* --- NEW: Specific grid layouts for input rows --- */
+.input-row-4-col {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.input-row-2-col {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+/* --- This handles the single-column layout for select fields gracefully --- */
+.threshold-group .select-field {
+    max-width: 250px; /* Prevents select from becoming too wide */
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-field label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.input-field input {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    transition: border-color 0.2s;
+    background-color: #f9fafb;
+}
+
+.input-field input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background-color: #fff;
+}
+
+.select-field {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    background-color: #f9fafb;
+    width: 100%;
+}
+
+.view-logs-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #28a745;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.view-logs-button:hover {
+    background-color: #218838;
+}
+
+/* Add these styles to your existing ConfigurationSettings.module.css file */
+
+/* ============================================= */
+/* == CONFIRMATION MODAL (for Unsaved Changes) == */
+/* ============================================= */
+
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.confirmationModalBackdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1001;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.confirmationModalContent {
+  max-width: 420px;
+  text-align: center;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+}
+
+.icon {
+  margin: 0 auto 1rem auto;
+  color: #f59e0b; /* A yellow-orange warning color */
+}
+
+.confirmationModalContent h4 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.confirmationModalContent p {
+  font-size: 1rem;
+  margin: 0 0 1.5rem 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: center; /* Center buttons in confirmation modal */
+  padding-top: 1rem; /* Add padding to the top */
+  border-top: 1px solid #e5e7eb;
+  gap: 0.75rem;
+}
+
+/* Button styles, now part of the module */
+.buttonPrimary, .buttonSecondary, .buttonTertiary {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.buttonPrimary {
+  background-color: #3b82f6; /* Blue */
+  color: white;
+}
+.buttonPrimary:hover {
+  background-color: #2563eb;
+}
+
+.buttonSecondary {
+  background-color: #f3f4f6; /* Light Gray */
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+.buttonSecondary:hover {
+  background-color: #e5e7eb;
+}
+
+.buttonTertiary {
+    background-color: transparent;
+    color: #4b5563;
+    box-shadow: none;
+}
+.buttonTertiary:hover {
+    background-color: #f3f4f6;
+}
+
+/*NEW----*/
+
+/* Add this to ConfigurationSettings.module.css */
+
+.save-button.save-success {
+  background-color: #22c55e; /* A success green color */
+  border-color: #16a34a;
+  color: white;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.save-button:disabled {
+    cursor: not-allowed;
+    background-color: #d1d5db; /* A light gray for disabled */
+    border-color: #9ca3af;
+    color: #4b5563;
+}
+

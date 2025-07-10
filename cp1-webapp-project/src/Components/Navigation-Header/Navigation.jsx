@@ -42,12 +42,12 @@ function Navigation() {
             </NavLink>
 
             <NavLink 
-                to="/settings" 
+                to="/configurations" 
                 className={({ isActive }) =>
                     `${styles['nav-link']} ${isActive ? styles.active : ''}`
                 }
             >
-                <div className={styles.navigation}>Settings</div>
+                <div className={styles.navigation}>Configuration</div>
             </NavLink>
 
         </div>

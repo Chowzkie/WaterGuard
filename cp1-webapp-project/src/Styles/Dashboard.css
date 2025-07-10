@@ -6,9 +6,10 @@
   gap: 24px;
   padding: 5px 24px;
   margin-top: 15px;
-  background-color: #EFEFEF;
+  background-color: #f0f2f5;
   font-family: 'Poppins', sans-serif;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 /* Responsive layout for smaller screens */
@@ -16,4 +17,22 @@
   .component-wrapper-dashboard {
     grid-template-columns: 1fr; /* Stack components on top of each other */
   }
+}
+
+@media (max-width: 1399px) {
+  .component-wrapper-dashboard{
+    gap: 15px;
+  }
+}
+
+/* Exact scrollbar styling */
+.component-wrapper-dashboard::-webkit-scrollbar {
+  width: 6px;
+}
+.component-wrapper-dashboard::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.component-wrapper-dashboard::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
 }

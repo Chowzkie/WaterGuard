@@ -1,10 +1,11 @@
 html, body, #root {
-  height: 100%;
+  height: auto;
   margin: 0;
   padding: 0;
   font-family: 'Poppins', sans-serif;
-  background-color: #EFEFEF;
+  background-color: #f0f2f5;
   box-sizing: border-box;
+  overflow-y: hidden;
 }
 
 *, *::before, *::after {

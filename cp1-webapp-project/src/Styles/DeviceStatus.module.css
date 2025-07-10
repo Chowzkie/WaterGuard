@@ -2,7 +2,14 @@
 .device-status-wrapper{
     display: grid;
     grid-template-rows: 3fr 1fr;
+    animation: fadeIn 0.5s ease-in-out;
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .devices-section {
     background: white;
     border-radius: 5px;
@@ -102,32 +109,51 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* === Badge & Status Styling === */
-.status-badge {
-    padding: 4px 10px;
+/* --- NEW: Styles for the status indicator --- */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
     border-radius: 12px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    display: inline-block;
-    text-align: center;
-    min-width: 70px;
 }
 
-.status-badge.online {
-    background-color: #d4edda;
-    color: #2e7d32;
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
-.status-badge.offline {
-    color: #d60000;
-    background-color: #f8d7da;
+.status-indicator.online {
+    color: #166534;
+    background-color: #dcfce7;
+    width: 80px;
+}
+
+.status-indicator.online .status-dot {
+    background-color: #22c55e;
+}
+
+.status-indicator.offline {
+    color: #991b1b;
+    background-color: #fee2e2;
+    width: 80px;
+}
+
+.status-indicator.offline .status-dot {
+    background-color: #ef4444;
 }
 
 /* Added style for maintenance status */
-.status-badge.maintenance {
+.status-indicator.maintenance {
     background-color: #fff3cd;
     color: #856404;
+}
+
+.status-indicator.maintenance .status-dot {
+    background-color: #dfab0f;
 }
 
 .no-devices {
@@ -140,11 +166,11 @@
 
 .logs-container{
     background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     border-radius: 7px;
     text-align: center;
     margin-top: 20px;
     padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .logs-container button{
     border-radius: 20px;
@@ -153,10 +179,21 @@
     color: #FFFFFF;
     width: 30%;
     height: 40px;
-     transition: 0.3s ease;
+    transition: 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
 }
 .logs-container button:hover{
     transform: scale(1.05);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 1399px) {
+    .device-status-wrapper{
+        height: 0;
+    }
+
+    .logs-container{
+        margin-top: 15px;
+    }
 }

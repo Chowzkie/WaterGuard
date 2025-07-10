@@ -96,32 +96,41 @@
   border-bottom: none;
 }
 
-/* === Badge & Status Styling === */
-.status-badge.online {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  display: inline-block;
-  text-align: center;
-  min-width: 70px;
-  /* Specific styling for "Online" status */
-  background-color: #d4edda;
-  color: #2e7d32;
+/* --- NEW: Styles for the status indicator --- */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 12px;
+    
+    width: 80px;
 }
 
-.status-badge.offline{
-   padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  display: inline-block;
-  text-align: center;
-  min-width: 70px;
-  color: #d60000;
-  background-color: #f8d7da;
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    color: #166534;
+    background-color: #dcfce7;
+}
+
+.status-indicator.online .status-dot {
+    background-color: #22c55e;
+}
+
+.status-indicator.offline {
+    color: #991b1b;
+    background-color: #fee2e2;
+}
+
+.status-indicator.offline .status-dot {
+    background-color: #ef4444;
 }
 
 .no-devices {
@@ -130,9 +139,6 @@
   color: #888;
   text-align: center;
 }
-
-
-/* --- ADD THESE NEW STYLES --- */
 
 /* Make the rows interactive */
 .devices-row {

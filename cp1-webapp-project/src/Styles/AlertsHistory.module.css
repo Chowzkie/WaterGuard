@@ -600,7 +600,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1000;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .confirmation-modal {
@@ -610,8 +620,19 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     width: 400px;
     text-align: center;
+    animation: zoomIn 0.2s ease-out;
 }
 
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
 .confirmation-modal h4 {
     margin-top: 0;
     font-size: 1.25rem;
@@ -693,3 +714,50 @@
     text-decoration: underline;
 }
 
+/* ===================================================================
+  STYLES FOR ACKNOWLEDGEMENT DETAILS
+===================================================================
+*/
+
+/* --- Adds a pointer cursor to acknowledged rows to show they are clickable --- */
+.clickable-row {
+    cursor: pointer;
+}
+
+/* --- Container for the slide-out panel, hidden by default --- */
+.details-panel {
+    background-color: #f8f9fa; /* A slightly different background */
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out, padding 0.35s ease-in-out;
+    padding: 0 20px; /* Animate padding for a smoother effect */
+    /* This ensures the grid columns don't affect this panel */
+    grid-column: 1 / -1; 
+}
+
+/* --- Class to apply when the panel should be visible --- */
+.details-panel.expanded {
+    max-height: 100px; /* Adjust as needed */
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* --- Flex container for the content inside the panel --- */
+.details-content {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+/* --- Styling for each piece of info (icon + text) --- */
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.detail-item svg {
+    color: #007bff; /* An accent color for the icons */
+}

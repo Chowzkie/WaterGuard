@@ -4,6 +4,20 @@
     padding: 15px;
     height: calc(100vh - 100px);
     width: 100%;
+    background-color: #f0f2f5;
     box-sizing: border-box;
     gap: 15px;
+    overflow-y: auto;
+}
+
+/* Exact scrollbar styling */
+.wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.wrapper::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.wrapper::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
 }

@@ -12,6 +12,7 @@ import Alerts from './Components/Alerts/Alerts';
 import AlertsContext from './utils/AlertsContext';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import { evaluateSensorReading } from './utils/SensorLogic';
+import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 
 // =================================================================================
 // CONFIGURATION
@@ -515,6 +516,14 @@ function App() {
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated}>
                   <Devices />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/devices/:deviceId" // Define a route with a parameter for deviceId
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <SpecificDevice />
                 </ProtectedRoute>
               }
             />

@@ -1,0 +1,33 @@
+.container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  height: calc(100vh - 100px); /* Adjust 100px to match your header/nav height */
+  width: 100%;
+  gap: 10px; /* Added a gap for spacing between columns */
+  box-sizing: border-box;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Added a gap for spacing between the two right components */
+}
+
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    height: auto; /* Allow height to adjust based on content on smaller screens */
+  }
+
+  .left-column,
+  .right-column {
+    width: 100%;
+    gap: 5px;
+  }
+}

@@ -1,0 +1,116 @@
+/* SpecificReadings.module.css */
+.container {
+  display: flex;
+  flex-direction: column;
+  font-family: 'Poppins', sans-serif;
+  flex-grow: 1; /* Allows this component to fill available space in .right-column */
+  box-sizing: border-box;
+  margin-top: 20px;
+  margin-right: 20px;
+}
+
+.blockContainer {
+  background-color: #FFFFFF;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Fills the flex-grow space from the parent .container */
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Consistent shadow */
+  border: 1px solid #e0e0e0; /* Consistent border */
+}
+
+.blockTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px; /* Increased margin for better separation from cards */
+  padding-bottom: 10px; /* Add a bottom padding */
+  border-bottom: 1px solid #e5e7eb; /* Subtle separator */
+  color: #1f2937; /* Darker title color */
+  text-align: center;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 15px; /* Consistent gap between cards */
+  flex-grow: 1; /* Ensures the grid fills the space left by the title */
+}
+
+.reading-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 12px; /* Consistent border-radius */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  overflow: hidden; /* Ensure content stays within rounded corners */
+}
+
+.parameter {
+  font-size: 0.95rem; /* Slightly reduced font size */
+  font-weight: bold;
+  text-align: center;
+  padding: 12px 10px; /* Adjust padding */
+  border: 2px solid rgba(0, 0, 0, 0.05); /* Lighter border */
+  border-left: none;
+  width: 120px; /* Adjusted fixed width for parameter */
+  flex-shrink: 0; /* Prevent shrinking */
+  background-color: #f3f4f6; /* Subtle background for parameter label */
+}
+
+.value {
+  font-size: 2.2rem; /* Slightly reduced for better fit, still prominent */
+  font-weight: 700;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2937; /* Darker value text */
+  padding: 10px; /* Add padding for content */
+}
+
+.reading-card:hover {
+  transform: translateY(-3px); /* Changed to translateY for a subtle lift */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15); /* More pronounced shadow on hover */
+}
+
+/* Status-based colors */
+.safe {
+  background-color: #dcfce7; /* Lighter green */
+  color: #166534; /* Darker green text */
+}
+
+.medium {
+  background-color: #fffbe6; /* Lighter yellow */
+  color: #9a3412; /* Darker yellow text */
+}
+
+.high {
+  background-color: #fee2e2; /* Lighter red */
+  color: #991b1b; /* Darker red text */
+}
+
+.statusMessage {
+  padding: 25px; /* Increased padding */
+  margin-top: 20px;
+  background-color: #e2e8f0; /* Softer grey background */
+  border: 1px solid #cbd5e1; /* Softer grey border */
+  border-radius: 8px;
+  text-align: center;
+  color: #475569; /* Softer dark grey text */
+  font-size: 1em; /* Adjusted font size */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); /* Inner shadow for depth */
+}
+
+.statusMessage h3 {
+  color: #1e293b; /* Even darker heading */
+  margin-bottom: 12px; /* Adjusted margin */
+}
+
+.statusMessage p {
+  margin-top: 0;
+  line-height: 1.6;
+}

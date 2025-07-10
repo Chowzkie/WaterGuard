@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; 
 import Style from '../../Styles/DeviceTesting.module.css'
 
 
@@ -8,6 +9,7 @@ function TestingDevice({deviceData}){
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [showMenu, setShowMenu] = useState(false);
+    const navigate = useNavigate(); // Initialize useNavigate
 
     const filterDevice = deviceData.filter(device => {
         const matchSearch = 
@@ -17,6 +19,11 @@ function TestingDevice({deviceData}){
             statusFilter === '' || device.status.toLowerCase() === statusFilter.toLowerCase();
         return matchSearch && matchStatus;
     })
+
+    // New handler to navigate to the specific device page
+    const handleDeviceRowClick = (deviceId) => {
+        navigate(`/devices/${deviceId}`); // Navigate to the new route with the deviceId
+    };
 
     return(
         <div className={Style['container']}>
@@ -53,7 +60,7 @@ function TestingDevice({deviceData}){
                             filterDevice.map(device => (
                                 <div key={device.id} 
                                     className={Style['devices-row']}
-                                    
+                                    onClick={() => handleDeviceRowClick(device.id)}
                                     >{/**in the device-row this is where i want to put the other component it will render this component and move to SpecificDevice.jsx */}
                                         <div>{device.id}</div>
                                         <div>{device.location}</div>

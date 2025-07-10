@@ -1,140 +1,202 @@
+/* DeviceTesting.module.css */
+
+/* Overall Container */
 .container {
-    padding: 5px;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    padding: 20px; /* Increased padding for more breathing room */
+    background-color: #f9fafb; /* Light background for the whole container */
+    border: 1px solid #e0e0e0; /* Softer border */
+    border-radius: 12px; /* Rounded corners for a modern feel */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08); /* More pronounced, soft shadow */
+    font-family: 'Poppins', sans-serif; /* Consistent font family */
 }
-.table{
+
+/* Table Wrapper */
+.table {
     width: 100%;
+    display: flex;
+    flex-direction: column; /* Ensure vertical stacking of title and table */
+    gap: 10px; /* Space between title/controls and the table itself */
 }
-.table-title{
+
+/* Table Title Section */
+.table-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-weight: bold;
-    font-size: 2rem;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    font-weight: 600; /* Slightly bolder */
+    font-size: 1.8rem; /* Adjusted for better hierarchy, matches ParamChart blockTitle */
+    margin: 0; /* Remove default margins */
+    padding-bottom: 15px; /* Padding below title section */
+    border-bottom: 1px solid #e5e7eb; /* Subtle separator line */
 }
-.table-title p{
-    color: hsl(0, 0%, 23%);
+
+.table-title p {
+    color: #1f2937; /* Darker, more prominent text */
     margin: 0;
-    padding-left: 10px;
+    padding-left: 0; /* Remove padding-left as container has padding */
 }
-.right-pane{
+
+/* Right Pane (Search and Menu) */
+.right-pane {
     display: flex;
-    justify-content: space-between;
-    padding-right: 10px;
+    align-items: center; /* Vertically align search and menu icon */
+    gap: 15px; /* Gap between search box and menu */
 }
+
 .search-box {
-  padding: 5px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  margin-right: 10px;
-  margin-top: 5px;
-  width: 25vw;
-  height: 3.5vh;
-  font-size: 1rem;
-}
-.menu-container{
-    position: relative;
-}
-.menu-icon{
-    cursor: pointer;
+    padding: 8px 12px; /* Increased padding for better input area */
+    border-radius: 8px; /* More rounded corners */
+    border: 1px solid #d1d5db; /* Softer border color */
+    width: 200px; /* Fixed width for better control, or use max-width */
+    height: auto; /* Let padding define height */
+    font-size: 1rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
     transition: all 0.3s ease;
 }
-.menu-icon:hover{
-    transform: scale(1.1);
+
+.search-box:focus {
+    outline: none;
+    border-color: #3b82f6; /* Blue border on focus */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Blue glow on focus */
 }
+
+/* Menu Container */
+.menu-container {
+    position: relative;
+    display: flex; /* To center the icon if needed */
+    align-items: center;
+}
+
+.menu-icon {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 5px; /* Add padding around the icon for larger click area */
+    border-radius: 8px; /* Rounded background on hover */
+    display: flex; /* To center the SVG if it's a child */
+    align-items: center;
+    justify-content: center;
+    color: #4b5563; /* Default icon color */
+}
+
+.menu-icon:hover {
+    transform: scale(1.05); /* Slightly less aggressive scale */
+    background-color: #e5e7eb; /* Light background on hover */
+    color: #1f2937; /* Darker icon color on hover */
+}
+
+/* Menu Dropdown */
 .menu-dropdown {
-  position: absolute;
-  top: 30px;
-  right: 0;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  padding: 10px;
-  z-index: 10;
+    position: absolute;
+    top: calc(100% + 10px); /* Position below the icon with some space */
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px; /* Consistent rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Softer shadow */
+    padding: 8px 0; /* Vertical padding, options handle horizontal */
+    z-index: 10;
+    min-width: 150px; /* Ensure options have enough width */
 }
-.menu-option {
-  padding: 5px;
-  cursor: pointer;
-  font-weight: 450;
-  font-size: 1rem;
+
+.menu-option,
+.menu-option-clear {
+    padding: 10px 15px; /* More padding for better click area */
+    cursor: pointer;
+    font-weight: 400; /* Standard font weight for options */
+    font-size: 0.95rem; /* Slightly smaller font for options */
+    color: #374151; /* Darker text for options */
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
-#online{
-    color: #50AE5B;
-}
-#offline{
-    color: #ff0000;
-}
-#maintenance{
-    color: #ffa500;
-}
+
 .menu-option:hover {
-  background-color: #f0f0f0;
+    background-color: #f3f4f6; /* Lighter hover background */
+    color: #1f2937;
 }
 
 .menu-option-clear {
-  padding: 5px;
-  cursor: pointer;
-  font-weight: 450;
-  font-size: 1rem;
+    border-bottom: 1px solid #e5e7eb; /* Separator for 'Show All' */
+    margin-bottom: 8px;
+    padding-bottom: 10px;
+    font-weight: 500; /* Slightly bolder for clarity */
 }
 
 .menu-option-clear:hover {
-  background-color: #f8d7da;
+    background-color: #ffebee; /* Light red hover for 'clear' */
+    color: #ef4444; /* Red text on hover */
 }
-/*Table*/
-.devices-table {
-    border: 1px solid #eee;
-    border-radius: 6px;
-    overflow: hidden;
+
+/* Specific Menu Option Colors (Status) */
+#online {
+    color: #22c55e; /* Vibrant green */
+}
+
+#offline {
+    color: #ef4444; /* Vibrant red */
+}
+
+#maintenance {
+    color: #f59e0b; /* Vibrant orange */
+}
+
+
+/* --- Table Styling --- */
+.device-table { /* Changed from .devices-table to .device-table to match JSX classname */
+    border: 1px solid #e0e0e0; /* Softer border */
+    border-radius: 8px; /* Consistent rounded corners */
+    overflow: hidden; /* Ensures rounded corners are applied */
     display: flex;
     flex-direction: column;
+    background-color: #fff; /* White background for the table itself */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle shadow for the table */
 }
 
 .devices-header-row {
-    font-weight: 500;
-    color: hsla(0, 0%, 18%, 0.8);
-    background: #f0f0f0;
+    font-weight: 600; /* Bolder header text */
+    color: #4b5563; /* Darker grey for headers */
+    background: #f8f9fa; /* Light grey background for header */
     display: grid;
-    grid-template-columns: 1fr 1.2fr 1fr;
-    column-gap: 22px;
-    padding: 8px 10px;
-    font-size: 1.2rem;
+    grid-template-columns: 1fr 1.2fr 1fr; /* Keep column distribution */
+    column-gap: 20px; /* Consistent gap */
+    padding: 12px 20px; /* More padding for headers */
+    font-size: 1rem; /* Slightly smaller font for headers for better fit */
+    border-bottom: 1px solid #e5e7eb; /* Separator for header */
 }
-
-.devices-body {
-    max-height: 260px; /* Adjust as needed */
+/*Use to align Status header to badge*/
+.devices-header-row > div:nth-child(3) {
+    text-align: center;
+}
+.device-body { /* Changed from .devices-body to .device-body to match JSX classname */
+    max-height: 300px; /* Adjusted max height to allow more rows, adapt as needed */
     overflow-y: auto;
-    flex-grow: 1;
+    flex-grow: 1; /* Allows the body to take available vertical space */
 }
 
-.devices-body::-webkit-scrollbar {
-    width: 6px;
+.device-body::-webkit-scrollbar {
+    width: 8px; /* Slightly wider scrollbar */
 }
-.devices-body::-webkit-scrollbar-track {
-    background: #f5f5f5;
+.device-body::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Lighter scrollbar track */
 }
-.devices-body::-webkit-scrollbar-thumb {
-    background-color: #bbb;
+.device-body::-webkit-scrollbar-thumb {
+    background-color: #c0c0c0; /* Slightly darker thumb */
     border-radius: 4px;
+    border: 2px solid #f1f1f1; /* Creates a subtle margin around the thumb */
+}
+.device-body::-webkit-scrollbar-thumb:hover {
+    background-color: #a0a0a0; /* Darker on hover */
 }
 
 .devices-row {
     display: grid;
     grid-template-columns: 1fr 1.2fr 1fr;
-    column-gap: 22px;
+    column-gap: 20px; /* Consistent gap */
     align-items: center;
-    padding: 8px 10px;
-    font-size: 1.2rem;
-    border-bottom: 1px solid #eee;
+    padding: 12px 20px; /* More padding for rows */
+    font-size: 0.95rem; /* Slightly smaller font for rows */
+    border-bottom: 1px solid #f3f4f6; /* Very light border between rows */
     background: #fff;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease; /* Removed transform as it might affect scroll positioning */
 }
 
 .devices-row:last-child {
@@ -142,43 +204,118 @@
 }
 
 .devices-row:hover {
-    background-color: #f8f9fa;
+    background-color: #f8faff; /* Very light blue on hover for better visibility */
+    box-shadow: inset 0 0 0 1px #e0e7ff; /* Subtle inner border on hover */
+}
+
+.devices-row > div {
+    /* Style for individual cells in the row */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #374151; /* Darker text for cell content */
 }
 
 
 /* === Badge & Status Styling === */
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
+    padding: 6px 12px; /* More padding for badges */
+    border-radius: 9999px; /* Fully rounded pill shape */
+    font-size: 0.8rem; /* Slightly smaller font for badge */
+    font-weight: 700; /* Bolder text for badges */
     text-transform: uppercase;
-    display: inline-block;
-    text-align: center;
-    width: 100%;
-    max-width: 150px;
+    display: inline-flex; /* Use inline-flex for better centering */
+    align-items: center;
+    justify-content: center;
+    min-width: 80px; /* Ensure a minimum width for badges */
+    width: fit-content; /* Adjust width to content */
+    margin: 0 auto; /* Center the badge within its grid cell */
+    letter-spacing: 0.05em; /* Slight letter spacing */
 }
 
 .status-badge.online {
-    background-color: #d4edda;
-    color: #2e7d32;
+    background-color: #dcfce7; /* Light green */
+    color: #15803d; /* Darker green text */
 }
 
 .status-badge.offline {
-    color: #d60000;
-    background-color: #f8d7da;
+    background-color: #fee2e2; /* Light red */
+    color: #dc2626; /* Darker red text */
 }
 
-/* Added style for maintenance status */
 .status-badge.maintenance {
-    background-color: #fff3cd;
-    color: #856404;
+    background-color: #ffedd5; /* Light orange */
+    color: #ea580c; /* Darker orange text */
 }
 
 .no-devices {
-    padding: 10px;
-    font-size: 1rem;
-    color: #888;
+    padding: 20px; /* More padding */
+    font-size: 1.1rem; /* Slightly larger font */
+    color: #6b7280; /* Softer grey */
     text-align: center;
+    background-color: #fefefe; /* Very light background for this message */
+    border-top: 1px solid #f3f4f6; /* Subtle border at top */
+    font-style: italic; /* Italic text for "no devices" */
 }
 
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-title {
+        flex-direction: column; /* Stack title and controls */
+        align-items: flex-start;
+        font-size: 1.5rem;
+        padding-bottom: 10px;
+    }
+
+    .right-pane {
+        width: 100%;
+        flex-direction: column; /* Stack search and menu */
+        align-items: stretch;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .search-box {
+        width: 100%; /* Full width search box */
+        margin-right: 0;
+    }
+
+    .menu-container {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end; /* Keep menu icon to the right */
+    }
+
+    .menu-dropdown {
+        top: calc(100% + 5px); /* Adjust dropdown position */
+        right: 0;
+        left: auto; /* Ensure it stays to the right */
+        min-width: unset;
+        width: 100%; /* Full width dropdown */
+    }
+
+    .devices-header-row,
+    .devices-row {
+        grid-template-columns: 1fr 1fr; /* Reduce to 2 columns on small screens */
+        font-size: 0.9rem;
+        padding: 10px 15px;
+        column-gap: 15px;
+    }
+
+    .devices-header-row div:nth-child(2), /* Hide location on small screens */
+    .devices-row div:nth-child(2) {
+        display: none;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+        min-width: 60px;
+    }
+}

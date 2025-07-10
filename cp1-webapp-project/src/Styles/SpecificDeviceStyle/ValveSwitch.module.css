@@ -1,0 +1,132 @@
+/* ValveSwitch.module.css */
+.valve-container {
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #FFFFFF; /* Changed to white background for consistency */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Consistent shadow */
+  border: 1px solid #e0e0e0; /* Consistent border */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-width: 320px;
+  box-sizing: border-box;
+  position: relative; /* IMPORTANT: For positioning the popup */
+  overflow: hidden; /* Ensures popup stays within bounds if it grows */
+  margin-right: 20px;
+}
+
+.valve-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 10px; /* Add some space below title */
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb; /* Subtle separator */
+  width: 100%;
+  text-align: center;
+}
+
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Increased gap for better spacing */
+  margin-top: 10px; /* Space from title */
+}
+
+.status-text {
+  font-size: 1.1rem; /* Slightly larger font */
+  font-weight: 500;
+  color: #374151;
+  min-width: 140px; /* Increased min-width for text */
+  text-align: right; /* Align text to the right of LED */
+}
+
+/* LED Indicator */
+.led-indicator {
+  width: 20px; /* Slightly larger LED */
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.led-green {
+  background-color: #34d399;
+  box-shadow: 0 0 12px #34d399; /* Stronger glow */
+}
+
+.led-red {
+  background-color: #f87171;
+  box-shadow: 0 0 12px #f87171; /* Stronger glow */
+}
+
+/* Switch Style */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 65px; /* Slightly wider switch */
+  height: 34px; /* Slightly taller switch */
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #d1d5db; /* Softer grey when off */
+  transition: 0.4s;
+  border-radius: 34px; /* Match height for perfect capsule */
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px; /* Slightly larger knob */
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Shadow for knob */
+}
+
+input:checked+.slider {
+  background-color: #10b981; /* Green when on */
+}
+
+input:checked+.slider:before {
+  transform: translateX(31px); /* Adjusted translation for larger knob */
+}
+
+/* Popup Styles */
+.valve-popup {
+  position: absolute;
+  bottom: 25px; /* Position slightly above the bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(30, 41, 59, 0.9); /* Dark blue-grey with slight transparency */
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 0.95rem; /* Slightly larger font */
+  white-space: nowrap;
+  z-index: 1000;
+  animation: fadeInOut 2.5s forwards;
+  pointer-events: none; /* Allows clicks to pass through if it overlaps other elements */
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Trash2, Download, ListFilter, X, Check, User, ChevronDown, Undo } from 'lucide-react';
+import { Trash2, Download, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
 import styles from '../../Styles/AlertsHistory.module.css';
 
 // The component now accepts onDeleteHistoryAlerts and onRestoreHistoryAlerts
@@ -30,6 +30,9 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
     const filterPanelRef = useRef(null);
     const typeDropdownRef = useRef(null);
     const assigneeDropdownRef = useRef(null);
+
+    // --- NEW: State to manage which alert detail panel is open ---
+    const [expandedAlertId, setExpandedAlertId] = useState(null);
 
     const uniqueAlertTypes = useMemo(() => {
         const types = new Set(historyAlerts.map(alert => alert.type.replace(/\s\(.+\)/, '')));
@@ -166,6 +169,14 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         if (isNaN(date)) return dateTimeStr;
         const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
         return date.toLocaleString('en-US', options);
+    };
+
+     // --- NEW: Handler to toggle the expanded/collapsed state of a row ---
+    const handleRowClick = (alertId, hasAcknowledgement) => {
+        // Only allow expanding if the alert has been acknowledged
+        if (hasAcknowledgement) {
+            setExpandedAlertId(prevId => (prevId === alertId ? null : alertId));
+        }
     };
 
     return (
@@ -337,28 +348,62 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                 <div className={styles['alerts-body']}>
                     {historyAlerts.length > 0 ? (
                         filteredDisplayAlerts.length > 0 ? (
-                            filteredDisplayAlerts.map(alert => (
-                                <div key={alert.id} className={`${styles['alerts-row']} ${deleteMode === 'select' ? styles['select-delete-grid'] : ''}`}>
-                                    <div>{formatDateTime(alert.dateTime)}</div>
-                                    <div>{alert.originator}</div>
-                                    <div>
-                                        {alert.type}
-                                        {alert.note && <div className={styles['alert-note']}>{alert.note}</div>}
-                                    </div>
-                                    <div><span className={`${styles['severity-badge']} ${getSeverityClass(alert.severity)}`}>{alert.severity}</span></div>
-                                    <div><span className={styles['status-acknowledged']}>{alert.status}</span></div>
-                                    <div><span className={alert.acknowledged ? styles['action-acknowledged'] : styles['action-unacknowledged']}>{alert.acknowledged ? 'Acknowledged' : 'Unacknowledged'}</span></div>
-                                    {deleteMode === 'select' && (
-                                        <div className={styles['checkbox-cell']}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedToDelete.includes(alert.id)} 
-                                                onChange={() => handleCheckboxChange(alert.id)} 
-                                            />
+                            filteredDisplayAlerts.map(alert => {
+                                // --- NEW: These constants help manage the new UI state ---
+                                const hasAcknowledgement = alert.acknowledged && alert.acknowledgedBy;
+                                const isExpanded = expandedAlertId === alert.id;
+
+                                return (
+                                    // --- MODIFIED: Use React.Fragment to group the row and its details panel ---
+                                    <React.Fragment key={alert.id}>
+                                        <div 
+                                            // --- MODIFIED: Added clickable-row class and onClick handler ---
+                                            className={`${styles['alerts-row']} ${deleteMode === 'select' ? styles['select-delete-grid'] : ''} ${hasAcknowledgement ? styles['clickable-row'] : ''}`}
+                                            onClick={() => handleRowClick(alert.id, hasAcknowledgement)}
+                                        >
+                                            {/* This is all your existing row content, unchanged */}
+                                            <div>{formatDateTime(alert.dateTime)}</div>
+                                            <div>{alert.originator}</div>
+                                            <div>
+                                                {alert.type}
+                                                {alert.note && <div className={styles['alert-note']}>{alert.note}</div>}
+                                            </div>
+                                            <div><span className={`${styles['severity-badge']} ${getSeverityClass(alert.severity)}`}>{alert.severity}</span></div>
+                                            <div><span className={styles['status-acknowledged']}>{alert.status}</span></div>
+                                            <div><span className={alert.acknowledged ? styles['action-acknowledged'] : styles['action-unacknowledged']}>{alert.acknowledged ? 'Acknowledged' : 'Unacknowledged'}</span></div>
+                                            
+                                            {/* Your delete mode checkbox logic, unchanged */}
+                                            {deleteMode === 'select' && (
+                                                <div className={styles['checkbox-cell']}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={selectedToDelete.includes(alert.id)} 
+                                                        // Stop click propagation to prevent row from expanding when checkbox is clicked
+                                                        onClick={(e) => e.stopPropagation()} 
+                                                        onChange={() => handleCheckboxChange(alert.id)} 
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            ))
+
+                                        {/* --- NEW: The slide-out details panel --- */}
+                                        {hasAcknowledgement && (
+                                            <div className={`${styles['details-panel']} ${isExpanded ? styles['expanded'] : ''}`}>
+                                                <div className={styles['details-content']}>
+                                                    <div className={styles['detail-item']}>
+                                                        <User size={16} />
+                                                        <span>Acknowledged by: <strong>{alert.acknowledgedBy.name}</strong></span>
+                                                    </div>
+                                                    <div className={styles['detail-item']}>
+                                                        <Clock size={16} />
+                                                        <span>On: {formatDateTime(alert.acknowledgedBy.timestamp)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })
                         ) : (
                             <div className={styles['no-alerts']} style={{ gridColumn: '1 / -1' }}>
                                 No historical alerts match the current filters.

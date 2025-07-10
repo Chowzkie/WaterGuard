@@ -45,7 +45,7 @@ const Overview = () => {
                 onDeviceFilterChange={handleActiveFilterChange}
                 onAcknowledgeAlert={onAcknowledgeAlert}
                 showFilter={true}
-                newlyAddedId={newlyAddedId} // <-- PASS IT AS A PROP
+                newlyAddedId={newlyAddedId} 
                 onAnimationComplete={onAnimationComplete}
             />
             <PumpingStatus

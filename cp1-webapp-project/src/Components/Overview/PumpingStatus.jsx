@@ -4,7 +4,6 @@ import '../../Styles/PumpingStatus.css';
 
 // --- The component now accepts `stations` and `onSave` as props ---
 const PumpingStatus = ({ stations, onSave }) => {
-    // The internal `stations` state has been REMOVED.
     
     const [isEditing, setIsEditing] = useState(false);
     const [draftStations, setDraftStations] = useState(null);

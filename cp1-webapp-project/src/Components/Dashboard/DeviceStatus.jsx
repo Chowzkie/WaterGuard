@@ -28,10 +28,9 @@ const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) =>
                                 >
                                     <div>{device.id}</div>
                                     <div>{device.location}</div>
-                                    <div>
-                                        <span className={`${styles['status-badge']} ${styles[device.status.toLowerCase()]}`}>
-                                            {device.status}
-                                        </span>
+                                    <div className={`${styles['status-indicator']} ${styles[device.status.toLowerCase()]}`}>
+                                        <div className={styles['status-dot']}></div>
+                                        <span>{device.status}</span>
                                     </div>
                                 </div>
                             ))

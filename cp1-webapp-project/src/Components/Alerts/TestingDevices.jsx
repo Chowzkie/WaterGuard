@@ -31,11 +31,10 @@ const TestingDevices = ({ devices = [], selectedDeviceId, onDeviceSelect }) => {
               >
                 <div>{device.label}</div>
                 <div>{device.location}</div>
-                <div>
-                  <span className={`${styles['status-badge']} ${device.status === 'Online' ? styles['online'] : styles['offline']}`}>
-                    {device.status}
-                  </span>
-                </div>
+                  <div className={`${styles['status-indicator']} ${styles[device.status.toLowerCase()]}`}>
+                      <div className={styles['status-dot']}></div>
+                      <span>{device.status}</span>
+                  </div>
               </div>
             ))
           ) : (

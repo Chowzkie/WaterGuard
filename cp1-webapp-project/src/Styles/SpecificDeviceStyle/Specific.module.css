@@ -5,6 +5,7 @@
   width: 100%;
   gap: 10px; /* Added a gap for spacing between columns */
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .left-column {

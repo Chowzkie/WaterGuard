@@ -9,6 +9,7 @@ import Navigation from './Components/Navigation-Header/Navigation';
 import Overview from "./Components/Overview/Overview";
 import Devices from './Components/Devices/Devices'
 import Alerts from './Components/Alerts/Alerts';
+import Configuration from './Components/Configuration/Configurations'
 import AlertsContext from './utils/AlertsContext';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import { evaluateSensorReading } from './utils/SensorLogic';
@@ -22,12 +23,67 @@ import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 const IS_SIMULATION_MODE = true;
 
 // =================================================================================
+// NEW: SIMULATED CURRENT USER
+// =================================================================================
+const CURRENT_USER = {
+    name: 'John Doe',
+    role: 'System Operator'
+};
+
+// =================================================================================
 // MOCK DATA AND INITIAL STATE
 // =================================================================================
+
+// --- MODIFIED: Added 'configurations' object to each device ---
 const FAKE_API_DATA = [
-    { id: 'ps01-dev', label: 'PS01-DEV', position: [15.6033, 120.6010], location: 'Brgy. Abagon, Gerona, Tarlac', status: 'Online' },
-    { id: 'ps02-dev', label: 'PS02-DEV', position: [15.6115, 120.5935], location: 'Brgy. Apsayan, Gerona, Tarlac', status: 'Online' },
-    { id: 'ps03-dev', label: 'PS03-DEV', position: [15.6250, 120.6050], location: 'Brgy. Buenlag, Gerona, Tarlac', status: 'Offline' }
+    { 
+        id: 'ps01-dev', 
+        label: 'PS01-DEV', 
+        position: [15.6033, 120.6010], 
+        location: 'Brgy. Abagon, Gerona, Tarlac', 
+        status: 'Online',
+        configurations: {
+            ph: { warnLow: 6.4, critLow: 6.0, warnHigh: 8.6, critHigh: 9.0, normalLow: 6.5, normalHigh: 8.5 }, // ADDED normalLow/High
+            turbidity: { warn: 5, crit: 10, normalLow: 0, normalHigh: 5 }, // ADDED normalLow/High
+            tds: { warn: 500, crit: 1000, normalLow: 0, normalHigh: 500 }, // ADDED normalLow/High
+            temp: { warnLow: 5, critLow: 0, warnHigh: 31, critHigh: 35, normalLow: 10, normalHigh: 30 }, // ADDED normalLow/High
+            valveShutOff: { phLow: 5.9, phHigh: 9.1, turbidityCrit: 13, tdsCrit: 1200 },
+            alertLoggingIntervals: { activeToRecent: 30, recentToHistory: 5 },
+            testingIntervals: { drain: 3, delay: 1, fill: 3 }
+        }
+    },
+    { 
+        id: 'ps02-dev', 
+        label: 'PS02-DEV', 
+        position: [15.6115, 120.5935], 
+        location: 'Brgy. Apsayan, Gerona, Tarlac', 
+        status: 'Online',
+        configurations: {
+            ph: { warnLow: 6.5, critLow: 6.1, warnHigh: 8.5, critHigh: 8.9, normalLow: 6.5, normalHigh: 8.5 },
+            turbidity: { warn: 6, crit: 12, normalLow: 0, normalHigh: 5 },
+            tds: { warn: 600, crit: 1100, normalLow: 0, normalHigh: 500 },
+            temp: { warnLow: 6, critLow: 1, warnHigh: 32, critHigh: 36, normalLow: 10, normalHigh: 30 },
+            valveShutOff: { phLow: 6.0, phHigh: 9.0, turbidityCrit: 15, tdsCrit: 1300 },
+            alertLoggingIntervals: { activeToRecent: 40, recentToHistory: 5 }, // NEW
+            testingIntervals: { drain: 4, delay: 2, fill: 4 }
+        }
+    },
+    { 
+        id: 'ps03-dev', 
+        label: 'PS03-DEV', 
+        position: [15.6250, 120.6050], 
+        location: 'Brgy. Buenlag, Gerona, Tarlac', 
+        status: 'Offline',
+        configurations: {
+            ph: { warnLow: 6.3, critLow: 5.9, warnHigh: 8.7, critHigh: 9.1, normalLow: 6.5, normalHigh: 8.5 },
+            turbidity: { warn: 4, crit: 8, normalLow: 0, normalHigh: 5 },
+            tds: { warn: 450, crit: 950, normalLow: 0, normalHigh: 500 },
+            temp: { warnLow: 4, critLow: -1, warnHigh: 30, critHigh: 34, normalLow: 10, normalHigh: 30 },
+            valveShutOff: { phLow: 5.8, phHigh: 9.2, turbidityCrit: 10, tdsCrit: 1150 },
+            alertLoggingIntervals: { activeToRecent: 50, recentToHistory: 5 }, // NEW
+            testingIntervals: { drain: 2, delay: 1, fill: 2 }
+        }
+    },
 ];
 
 const FAKE_STATIONS_DATA = [
@@ -104,43 +160,48 @@ function alertsReducer(state, action) {
         let nextActiveAlerts = [...state.activeAlerts];
         const alertsToArchive = [];
 
+        //Alert depuplication logic
         potentialAlerts.forEach(newAlertData => {
-        const existingAlertIndex = nextActiveAlerts.findIndex(a => a.originator === newAlertData.originator && a.parameter === newAlertData.parameter);
+        const existingAlertIndex = nextActiveAlerts.findIndex(a => 
+            a.originator === newAlertData.originator && 
+            a.parameter === newAlertData.parameter
+        );
         const existingAlert = existingAlertIndex !== -1 ? nextActiveAlerts[existingAlertIndex] : null;
+
         const isNewStatusNormal = newAlertData.severity === 'Normal';
 
         if (existingAlert) {
             // An alert for this device/parameter already exists. Decide what to do.
             if (isNewStatusNormal) {
             // The new status is 'Normal'.
-            if (!existingAlert.isBackToNormal) {
+                if (!existingAlert.isBackToNormal) {
                 // If the existing alert was a real problem (not already a 'Normal' message), resolve it.
-                alertsToArchive.push({ ...existingAlert, status: 'Resolved' });
-                alertIdCounter.current++;
-                const backToNormalAlert = {
-                id: alertIdCounter.current,
-                type: `${newAlertData.parameter} is back to normal`,
-                isBackToNormal: true,
-                dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString(),
-                originator: newAlertData.originator,
-                parameter: newAlertData.parameter,
-                severity: 'Normal',
-                status: 'Active',
-                acknowledged: false
-                };
-                nextActiveAlerts.splice(existingAlertIndex, 1, backToNormalAlert);
-                action.timers.start(backToNormalAlert.id);
-            }
+                    alertsToArchive.push({ ...existingAlert, status: 'Resolved' });
+                    alertIdCounter.current++;
+                    const backToNormalAlert = {
+                        id: alertIdCounter.current,
+                        type: `${newAlertData.parameter} is back to normal`,
+                        isBackToNormal: true,
+                        dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString(),
+                        originator: newAlertData.originator,
+                        parameter: newAlertData.parameter,
+                        severity: 'Normal',
+                        status: 'Active',
+                        acknowledged: false
+                    };
+                    nextActiveAlerts.splice(existingAlertIndex, 1, backToNormalAlert);
+                    action.timers.start(backToNormalAlert.id);
+                }
             } else {
             // The new status is a problem (Warning or Critical).
             if (existingAlert.severity !== newAlertData.severity) {
-                alertsToArchive.push({ ...existingAlert, status: 'Escalated' });
-                alertIdCounter.current++;
-                const newAlert = {
-                ...newAlertData,
-                id: alertIdCounter.current,
-                acknowledged: false,
-                dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
+                    alertsToArchive.push({ ...existingAlert, status: 'Escalated' });
+                    alertIdCounter.current++;
+                    const newAlert = {
+                    ...newAlertData,
+                    id: alertIdCounter.current,
+                    acknowledged: false,
+                    dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
                 };
                 nextActiveAlerts.splice(existingAlertIndex, 1, newAlert);
             }
@@ -149,53 +210,71 @@ function alertsReducer(state, action) {
             // No alert exists, and the new status is a problem. Create a new alert.
             alertIdCounter.current++;
             const newAlert = {
-            ...newAlertData,
-            id: alertIdCounter.current,
-            acknowledged: false,
-            dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
+                ...newAlertData,
+                id: alertIdCounter.current,
+                acknowledged: false,
+                dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
             };
-            nextActiveAlerts.push(newAlert);
+                nextActiveAlerts.push(newAlert);
         }
         });
 
         if (alertsToArchive.length > 0 || nextActiveAlerts.length !== state.activeAlerts.length) {
-        return { ...state, activeAlerts: nextActiveAlerts, recentAlerts: [...alertsToArchive, ...state.recentAlerts] };
+            return { ...state, activeAlerts: nextActiveAlerts, recentAlerts: [...alertsToArchive, ...state.recentAlerts] };
         }
         return state;
     }
 
-    case 'ACKNOWLEDGE_ALERT': {
-        const { alertId } = action.payload;
-        const alertToAck = state.activeAlerts.find(a => a.id === alertId);
-        if (!alertToAck) return state;
+        case 'ACKNOWLEDGE_ALERT': {
+            // --- MODIFIED: This case now handles user accountability ---
+            const { alertId, user, timestamp } = action.payload;
+            const alertToAck = state.activeAlerts.find(a => a.id === alertId);
+            if (!alertToAck) return state;
 
-        if (alertToAck.isBackToNormal) {
-        action.timers.clear(alertId);
-        return {
-            ...state,
-            activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
-            recentAlerts: [{ ...alertToAck, status: 'Cleared', acknowledged: true }, ...state.recentAlerts]
-        };
+            // Create the acknowledgedBy object
+            const acknowledgedByInfo = {
+                name: user.name,
+                timestamp: timestamp
+            };
+
+            // This logic is for "back to normal" alerts
+            if (alertToAck.isBackToNormal) {
+                action.timers.clear(alertId); 
+                return {
+                    ...state,
+                    activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
+                    recentAlerts: [{ 
+                        ...alertToAck, 
+                        status: 'Cleared', 
+                        acknowledged: true,
+                        acknowledgedBy: acknowledgedByInfo // Stamp the user info
+                    }, ...state.recentAlerts]
+                };
+            }
+
+            // For a regular alert, find it, update it, and keep it in the active list
+            const nextActiveAlerts = state.activeAlerts.map(alert =>
+                alert.id === alertId ? { 
+                    ...alert, 
+                    acknowledged: true,
+                    acknowledgedBy: acknowledgedByInfo // Stamp the user info
+                } : alert
+            );
+            return { ...state, activeAlerts: nextActiveAlerts };
         }
-
-        const nextActiveAlerts = state.activeAlerts.map(alert =>
-        alert.id === alertId ? { ...alert, acknowledged: true } : alert
-        );
-        return { ...state, activeAlerts: nextActiveAlerts };
-    }
 
     case 'AUTO_CLEAR_NORMAL_ALERT': {
         const { alertId } = action.payload;
         const alertToClear = state.activeAlerts.find(a => a.id === alertId);
 
         if (!alertToClear || !alertToClear.isBackToNormal) {
-        return state;
+            return state;
         }
 
         return {
-        ...state,
-        activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
-        recentAlerts: [{ ...alertToClear, status: 'Cleared' }, ...state.recentAlerts]
+            ...state,
+            activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
+            recentAlerts: [{ ...alertToClear, status: 'Cleared' }, ...state.recentAlerts]
         };
     }
 
@@ -207,19 +286,19 @@ function alertsReducer(state, action) {
         const alertsToMove = [];
         state.recentAlerts.forEach(alert => {
         const alertTime = new Date(alert.dateTime).getTime();
-        if ((currentTime - alertTime) > archiveInterval) {
-            alertsToMove.push(alert);
+            if ((currentTime - alertTime) > archiveInterval) {
+                alertsToMove.push(alert);
         } else {
-            alertsToKeep.push(alert);
+                alertsToKeep.push(alert);
         }
         });
 
         if (alertsToMove.length === 0) return state;
 
         return {
-        ...state,
-        recentAlerts: alertsToKeep,
-        alertsHistory: [...state.alertsHistory, ...alertsToMove],
+            ...state,
+            recentAlerts: alertsToKeep,
+            alertsHistory: [...state.alertsHistory, ...alertsToMove],
         };
     }
 
@@ -239,9 +318,9 @@ function alertsReducer(state, action) {
         if (deletedAlerts.length === 0) return state;
 
         return {
-        ...state,
-        alertsHistory: remainingAlerts,
-        recentlyDeletedHistory: deletedAlerts,
+            ...state,
+            alertsHistory: remainingAlerts,
+            recentlyDeletedHistory: deletedAlerts,
         };
     }
 
@@ -249,9 +328,9 @@ function alertsReducer(state, action) {
         if (state.recentlyDeletedHistory.length === 0) return state;
 
         return {
-        ...state,
-        alertsHistory: [...state.alertsHistory, ...state.recentlyDeletedHistory],
-        recentlyDeletedHistory: [],
+            ...state,
+            alertsHistory: [...state.alertsHistory, ...state.recentlyDeletedHistory],
+            recentlyDeletedHistory: [],
         };
     }
 
@@ -413,11 +492,16 @@ function App() {
 
     // --- Event Handlers ---
     // These functions are passed down to child components to allow them to trigger state changes.
+
+     // --- MODIFIED: Event handler now passes user and timestamp info ---
     const handleAcknowledgeAlert = (alertId) => {
-        // --- FIX --- Pass the timer functions to the reducer
         dispatch({
             type: 'ACKNOWLEDGE_ALERT',
-            payload: { alertId },
+            payload: { 
+                alertId,
+                user: CURRENT_USER, // Pass the simulated user
+                timestamp: new Date().toISOString() // Pass the current time
+            },
             timers: { clear: clearTimer }
         });
     };
@@ -453,6 +537,29 @@ function App() {
         setPumpingStations(updatedStations);
     };
 
+    // --- NEW: Handler to simulate saving device configurations ---
+    // --- MODIFIED: This function is now async to simulate a backend call ---
+    const handleSaveConfiguration = (deviceId, newConfigs) => {
+        console.log(`Simulating save for ${deviceId}:`, newConfigs);
+    
+        // Return a promise to mimic a real API call
+        return new Promise((resolve) => {
+        // Simulate a network delay of 1 second
+        setTimeout(() => {
+            setDeviceLocations(prevDevices => 
+                prevDevices.map(device => 
+                    device.id === deviceId 
+                        ? { ...device, configurations: newConfigs } 
+                        : device
+                )
+            );
+            // Resolve the promise on success
+            resolve(); 
+        }, 1000);
+        });
+    };
+
+
     // --- Context Value ---
     // This object bundles all the necessary state and functions to be provided to the app.
     const contextValue = {
@@ -476,7 +583,8 @@ function App() {
         selectedMapDeviceId,
         refocusTrigger,
         newlyAddedId,
-        onAnimationComplete: handleAnimationComplete
+        onAnimationComplete: handleAnimationComplete,
+        onSaveConfiguration: handleSaveConfiguration, // NEW
     };
 
   return (
@@ -518,6 +626,20 @@ function App() {
                   <Devices />
                 </ProtectedRoute>
               }
+            />
+             <Route path="/configurations" 
+             element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Configuration />   
+                </ProtectedRoute>
+              } 
+            />
+             <Route path="/configurations" 
+             element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Configuration />   
+                </ProtectedRoute>
+              } 
             />
             <Route
               path="/devices/:deviceId" // Define a route with a parameter for deviceId

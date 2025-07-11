@@ -1,7 +1,14 @@
 import React from 'react';
 import styles from '../../Styles/DeviceStatus.module.css';
+import { useNavigate } from 'react-router-dom';
 
 const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) => {
+    const navigate = useNavigate();
+
+    const handleLogsClick = () => {
+        navigate(`/logs`)
+    }
+
     return (
         // This wrapper holds both the device list and the logs section
         <div className={styles['device-status-wrapper']}>
@@ -42,7 +49,7 @@ const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) =>
             {/* This is the restored "View Sensor Logs" section */}
             <div className={styles["logs-container"]}>
                 <p>View Sensor Logs</p>
-                <button onClick={() => alert('Viewing sensor logs...')}>Click to View</button>
+                <button onClick={() => handleLogsClick()}>Click to View</button>
             </div>
         </div>
     );

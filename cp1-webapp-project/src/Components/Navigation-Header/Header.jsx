@@ -16,7 +16,8 @@ function Header({ onLogout }) { // <-- Accept the onLogout function
     '/dashboard': 'Dashboard',
     '/alerts': 'Alerts',
     '/devices': 'Devices',
-    '/configurations': 'Configuration'
+    '/configurations': 'Configuration',
+    '/logs' : 'Logs'
   };
 
   // Get current sub-title based on pathname

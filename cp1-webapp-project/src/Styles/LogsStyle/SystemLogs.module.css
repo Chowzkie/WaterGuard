@@ -1,0 +1,121 @@
+/* SystemLogs.module.css */
+.container {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: auto; /* Ensures rounded corners apply to content */
+    border: 1px solid #e0e0e0; /* Add a subtle border around the table */
+    height: 100vh;
+}
+
+.tableHeader {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 2.5fr 2fr 1fr; /* Adjust column widths as needed */
+    background-color: #f5f5f5;
+    padding: 12px 20px;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.headerItem {
+    padding: 8px 0;
+    text-align: left;
+}
+
+.tableRow {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 2.5fr 2fr 1fr; /* Must match header columns */
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.tableRow:last-child {
+    border-bottom: none;
+}
+
+.tableRow:hover {
+    background-color: #f9f9f9;
+}
+
+.tableCell {
+    padding: 8px 0;
+    color: #333;
+    font-size: 14px;
+    word-wrap: break-word; /* Allow long words to break */
+    min-width: 0; /* Prevent content from overflowing on small screens */
+}
+
+/* Status colors */
+.warningStatus {
+    color: #ffa500; /* Orange for Warning */
+    font-weight: 600;
+}
+
+.successStatus {
+    color: #28a745; /* Green for Success */
+    font-weight: 600;
+}
+
+.errorStatus {
+    color: #dc3545; /* Red for Error */
+    font-weight: 600;
+}
+
+.infoStatus {
+    color: #17a2b8; /* Cyan/Blue for Info */
+    font-weight: 600;
+}
+
+.noData {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+    font-style: italic;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .tableHeader {
+        display: none; /* Hide table header on small screens */
+    }
+
+    .tableRow {
+        display: block; /* Stack items vertically */
+        padding: 10px 15px;
+        border: 1px solid #eee; /* Give each row a border */
+        margin-bottom: 10px; /* Space between stacked rows */
+        border-radius: 5px;
+    }
+
+    .tableRow > .tableCell {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px dashed #eee; /* Dashed line between fields */
+    }
+
+    .tableRow > .tableCell:last-child {
+        border-bottom: none;
+    }
+
+    .tableCell::before {
+        content: attr(data-label); /* Use data-label for pseudo-elements */
+        font-weight: 600;
+        color: #555;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+}
+
+/* Even smaller screens, adjust padding */
+@media (max-width: 480px) {
+    .tableRow {
+        padding: 8px 12px;
+    }
+}

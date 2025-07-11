@@ -14,6 +14,7 @@ import AlertsContext from './utils/AlertsContext';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import { evaluateSensorReading } from './utils/SensorLogic';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
+import Logs from './Components/WebLogs/Logs';
 
 // =================================================================================
 // CONFIGURATION
@@ -648,6 +649,14 @@ function App() {
                   <SpecificDevice />
                 </ProtectedRoute>
               }
+            />
+            <Route 
+                path="/logs"
+                element = {
+                    <ProtectedRoute isAuthenticated={isAuthenticated}>
+                        <Logs />
+                    </ProtectedRoute>
+                }
             />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>

@@ -1,29 +1,39 @@
-import React, { useEffect, useState } from 'react'; // Import useEffect and useState
-import { useParams, useNavigate } from 'react-router-dom'; // Import useParams and useNavigate for go back
+// Components/Devices/SpecificDevice/SpecificDevice.jsx
+import React, { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import ParamChart from './ParamChart'
 import SpecificReadings from './SpecificReadings'
 import ValveSwitch from './ValveSwitch'
 import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css'
-import { initialDevices } from '../../../utils/DeviceMockUp'; // Import from DeviceMockup.js
+import AlertsContext from '../../../utils/AlertsContext';
 
-
-function SpecificDevice(){
-    const { deviceId } = useParams(); // Get the deviceId from the URL
-    const navigate = useNavigate(); // Initialize useNavigate for going back
-    const [currentDevice, setCurrentDevice] = useState(null); // State to store the specific device data
-
+function SpecificDevice({ onSetHeaderDeviceLabel }) { // Accept onSetHeaderDeviceLabel prop
+    const { deviceId } = useParams();
+    const navigate = useNavigate();
+    const [currentDevice, setCurrentDevice] = useState(null);
+    const { devices } = useContext(AlertsContext);
 
     useEffect(() => {
-        // Find the device based on the deviceId from the URL
-        const foundDevice = initialDevices.find(device => device.id === deviceId);
+        const foundDevice = devices.find(device => device.id === deviceId);
         setCurrentDevice(foundDevice);
+
+        // Update the header label in App.jsx
+        if (onSetHeaderDeviceLabel) {
+            onSetHeaderDeviceLabel(foundDevice ? foundDevice.label : null);
+        }
+
         console.log("Currently viewing device:", deviceId);
-        // In a real application, you would fetch data for this deviceId
-        // Example: fetchData(deviceId).then(data => setDeviceData(data));
-    }, [deviceId]);
+
+        // Cleanup function: Clear the header label when component unmounts or deviceId changes
+        return () => {
+            if (onSetHeaderDeviceLabel) {
+                onSetHeaderDeviceLabel(null);
+            }
+        };
+    }, [deviceId, devices, onSetHeaderDeviceLabel]); // Add onSetHeaderDeviceLabel to dependencies
 
     const handleGoBack = () => {
-        navigate('/devices'); // Navigate back to the devices list
+        navigate('/devices');
     };
 
     if (!currentDevice) {
@@ -33,18 +43,20 @@ function SpecificDevice(){
     return(
         <div className={Style['container']}>
             <div className={Style['left-column']}>
-                <ParamChart 
-                    deviceDetails={currentDevice} 
-                    mockTime={currentDevice.history.time} 
-                    mockReadings={currentDevice.history.readings} 
-                    mockAlerts={currentDevice.alerts} 
-                    onGoBack={handleGoBack}/>
+                <ParamChart
+                    deviceDetails={currentDevice}
+                    mockTime={currentDevice.history?.time}
+                    mockReadings={currentDevice.history?.readings}
+                    mockAlerts={currentDevice.alerts}
+                    onGoBack={handleGoBack}
+                />
             </div>
             <div className={Style['right-column']}>
-                <SpecificReadings 
-                    deviceReadings={currentDevice.readings} 
-                    deviceId={deviceId} 
-                    deviceStatus={currentDevice.status}/>
+                <SpecificReadings
+                    deviceReadings={currentDevice.readings}
+                    deviceId={deviceId}
+                    deviceStatus={currentDevice.status}
+                />
                 <ValveSwitch deviceId={deviceId}/>
             </div>
         </div>

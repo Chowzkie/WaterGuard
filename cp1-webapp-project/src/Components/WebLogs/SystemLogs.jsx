@@ -1,8 +1,20 @@
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css'
+import {Menu, Download} from 'lucide-react'
 function SystemLogs({logs}) {
     
     return(
         <div className={Style['container']}>
+            <div className={Style['tableTitle']}>
+                <p>System Logs</p>
+                <div className={Style['icons']}>
+                    <div className={Style['menu']}>
+                        <Menu />
+                    </div>
+                    <div className={Style['download']}>
+                        <Download />
+                    </div>
+                </div>
+            </div>
             <div className={Style['tableHeader']}>
                 <div className={Style['headerItem']}>Date & Time</div>
                 <div className={Style['headerItem']}>Device ID</div>

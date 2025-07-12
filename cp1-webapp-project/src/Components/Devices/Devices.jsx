@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+// Components/Devices/Devices.jsx
+import React, { useState, useContext } from 'react'; // <--- Import useContext
 import TestingDevice from "./TestingDevice";
-import Style from '../../Styles/Device.module.css'
-import { initialDevices } from '../../utils/DeviceMockUp'
-
+import Style from '../../Styles/Device.module.css';
+import AlertsContext from '../../utils/AlertsContext'; // <--- Import AlertsContext
+// import { initialDevices } from '../../utils/DeviceMockUp'; // <--- REMOVE this line
 
 function Devices(){
-    const [devices, setDevice] = useState(initialDevices);
+    // Use useContext to get devices from the context
+    const { devices } = useContext(AlertsContext); // <--- Get devices from context
 
     return(
         <div className={Style['wrapper']}>
-            <TestingDevice deviceData={devices}/>
+            <TestingDevice deviceData={devices}/> {/* <--- Pass devices from context */}
         </div>
     )
 }

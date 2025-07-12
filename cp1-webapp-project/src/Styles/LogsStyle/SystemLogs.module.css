@@ -9,6 +9,38 @@
     border: 1px solid #e0e0e0; /* Add a subtle border around the table */
     height: 100vh;
 }
+.tableTitle{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f0f2f5;
+}
+.tableTitle p{
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+.icons{
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.menu,
+.download {
+    display: flex; /* Ensure icons are centered within their div */
+    align-items: center;
+    justify-content: center;
+    padding: 8px; /* Padding around the icon */
+    cursor: pointer; /* Indicate interactivity */
+    transition: background-color 0.2s ease, transform 0.2s ease; /* Smooth transitions */
+}
+.menu:hover,
+.download:hover {
+    background-color: #e6e6e6; /* Light gray on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
 
 .tableHeader {
     display: grid;

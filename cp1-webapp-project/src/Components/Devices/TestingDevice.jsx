@@ -62,7 +62,7 @@ function TestingDevice({deviceData}){
                                     className={Style['devices-row']}
                                     onClick={() => handleDeviceRowClick(device.id)}
                                     >{/**in the device-row this is where i want to put the other component it will render this component and move to SpecificDevice.jsx */}
-                                        <div>{device.id}</div>
+                                        <div>{device.label}</div>
                                         <div>{device.location}</div>
                                         <div className={`${Style['status-badge']} ${Style[device.status.toLowerCase()]}`}>{device.status}</div>
                                     </div>

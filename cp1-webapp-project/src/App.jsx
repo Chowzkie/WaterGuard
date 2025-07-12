@@ -1,3 +1,4 @@
+// App.jsx
 import React, { useState, useEffect, useReducer, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
@@ -19,8 +20,6 @@ import Logs from './Components/WebLogs/Logs';
 // =================================================================================
 // CONFIGURATION
 // =================================================================================
-// Set to 'true' to use the current browser time for new alerts (for simulation).
-// Set to 'false' to use the timestamp from the sensor data (for real-world application).
 const IS_SIMULATION_MODE = true;
 
 // =================================================================================
@@ -35,29 +34,48 @@ const CURRENT_USER = {
 // MOCK DATA AND INITIAL STATE
 // =================================================================================
 
-// --- MODIFIED: Added 'configurations' object to each device ---
 const FAKE_API_DATA = [
-    { 
-        id: 'ps01-dev', 
-        label: 'PS01-DEV', 
-        position: [15.6033, 120.6010], 
-        location: 'Brgy. Abagon, Gerona, Tarlac', 
+    {
+        id: 'ps01-dev',
+        label: 'PS01-DEV',
+        position: [15.6033, 120.6010],
+        location: 'Brgy. Abagon, Gerona, Tarlac',
         status: 'Online',
         configurations: {
-            ph: { warnLow: 6.4, critLow: 6.0, warnHigh: 8.6, critHigh: 9.0, normalLow: 6.5, normalHigh: 8.5 }, // ADDED normalLow/High
-            turbidity: { warn: 5, crit: 10, normalLow: 0, normalHigh: 5 }, // ADDED normalLow/High
-            tds: { warn: 500, crit: 1000, normalLow: 0, normalHigh: 500 }, // ADDED normalLow/High
-            temp: { warnLow: 5, critLow: 0, warnHigh: 31, critHigh: 35, normalLow: 10, normalHigh: 30 }, // ADDED normalLow/High
+            ph: { warnLow: 6.4, critLow: 6.0, warnHigh: 8.6, critHigh: 9.0, normalLow: 6.5, normalHigh: 8.5 },
+            turbidity: { warn: 5, crit: 10, normalLow: 0, normalHigh: 5 },
+            tds: { warn: 500, crit: 1000, normalLow: 0, normalHigh: 500 },
+            temp: { warnLow: 5, critLow: 0, warnHigh: 31, critHigh: 35, normalLow: 10, normalHigh: 30 },
             valveShutOff: { phLow: 5.9, phHigh: 9.1, turbidityCrit: 13, tdsCrit: 1200 },
             alertLoggingIntervals: { activeToRecent: 30, recentToHistory: 5 },
             testingIntervals: { drain: 3, delay: 1, fill: 3 }
+        },
+        // ADDED MOCK HISTORY AND READINGS for SpecificDevice
+        history: {
+            time: ["10:00", "10:15", "10:30", "10:45", "11:00"],
+            readings: {
+                pH: [7.5, 7.6, 7.4, 7.7, 7.5],
+                turbidity: [3.0, 3.2, 3.1, 3.0, 3.3],
+                tds: [250, 255, 248, 252, 260],
+                temp: [25.0, 25.1, 24.9, 25.2, 25.0]
+            }
+        },
+        alerts: [
+            { type: "pH Warning", status: "Active", time: "10:40", value: 7},
+            { type: "Temperature High", status: "Critical", time: "10:55", value: 40 }
+        ],
+        readings: { // Current readings for SpecificReadings component
+            ph: 7.5,
+            turbidity: 3.1,
+            tds: 250,
+            temp: 25.0
         }
     },
-    { 
-        id: 'ps02-dev', 
-        label: 'PS02-DEV', 
-        position: [15.6115, 120.5935], 
-        location: 'Brgy. Apsayan, Gerona, Tarlac', 
+    {
+        id: 'ps02-dev',
+        label: 'PS02-DEV',
+        position: [15.6115, 120.5935],
+        location: 'Brgy. Apsayan, Gerona, Tarlac',
         status: 'Online',
         configurations: {
             ph: { warnLow: 6.5, critLow: 6.1, warnHigh: 8.5, critHigh: 8.9, normalLow: 6.5, normalHigh: 8.5 },
@@ -65,15 +83,33 @@ const FAKE_API_DATA = [
             tds: { warn: 600, crit: 1100, normalLow: 0, normalHigh: 500 },
             temp: { warnLow: 6, critLow: 1, warnHigh: 32, critHigh: 36, normalLow: 10, normalHigh: 30 },
             valveShutOff: { phLow: 6.0, phHigh: 9.0, turbidityCrit: 15, tdsCrit: 1300 },
-            alertLoggingIntervals: { activeToRecent: 40, recentToHistory: 5 }, // NEW
+            alertLoggingIntervals: { activeToRecent: 40, recentToHistory: 5 },
             testingIntervals: { drain: 4, delay: 2, fill: 4 }
+        },
+        history: {
+            time: ["10:00", "10:15", "10:30", "10:45", "11:00"],
+            readings: {
+                pH: [7.0, 7.1, 7.2, 7.0, 7.1],
+                turbidity: [4.0, 4.1, 4.0, 4.2, 4.0],
+                tds: [300, 305, 302, 308, 300],
+                temp: [26.0, 26.1, 26.0, 26.2, 26.0]
+            }
+        },
+        alerts: [
+            { type: "TDS Critical", status: "Resolved", time: "10:20" , value: 0}
+        ],
+        readings: {
+            ph: 7.1,
+            turbidity: 4.1,
+            tds: 305,
+            temp: 26.1
         }
     },
-    { 
-        id: 'ps03-dev', 
-        label: 'PS03-DEV', 
-        position: [15.6250, 120.6050], 
-        location: 'Brgy. Buenlag, Gerona, Tarlac', 
+    {
+        id: 'ps03-dev',
+        label: 'PS03-DEV',
+        position: [15.6250, 120.6050],
+        location: 'Brgy. Buenlag, Gerona, Tarlac',
         status: 'Offline',
         configurations: {
             ph: { warnLow: 6.3, critLow: 5.9, warnHigh: 8.7, critHigh: 9.1, normalLow: 6.5, normalHigh: 8.5 },
@@ -81,8 +117,26 @@ const FAKE_API_DATA = [
             tds: { warn: 450, crit: 950, normalLow: 0, normalHigh: 500 },
             temp: { warnLow: 4, critLow: -1, warnHigh: 30, critHigh: 34, normalLow: 10, normalHigh: 30 },
             valveShutOff: { phLow: 5.8, phHigh: 9.2, turbidityCrit: 10, tdsCrit: 1150 },
-            alertLoggingIntervals: { activeToRecent: 50, recentToHistory: 5 }, // NEW
+            alertLoggingIntervals: { activeToRecent: 50, recentToHistory: 5 },
             testingIntervals: { drain: 2, delay: 1, fill: 2 }
+        },
+        history: {
+            time: ["10:00", "10:15", "10:30", "10:45", "11:00"],
+            readings: {
+                pH: [6.8, 6.7, 6.9, 6.8, 6.7],
+                turbidity: [5.0, 5.1, 5.0, 5.2, 5.0],
+                tds: [350, 355, 352, 358, 350],
+                temp: [24.0, 24.1, 24.0, 24.2, 24.0]
+            }
+        },
+        alerts: [
+            { type: "Device Offline", status: "Active", time: "10:00", value: 0 }
+        ],
+        readings: {
+            ph: 6.7,
+            turbidity: 5.1,
+            tds: 355,
+            temp: 24.1
         }
     },
 ];
@@ -92,67 +146,41 @@ const FAKE_STATIONS_DATA = [
 ];
 
 const MOCK_SENSOR_READINGS = [
-  // --- SCENARIO 1: Establish a normal baseline ---
+  // ... (your existing MOCK_SENSOR_READINGS - ensure deviceIds match FAKE_API_DATA)
   { deviceId: "ps01-dev", timestamp: "2025-07-03T10:00:00Z", pH: 7.6, turbidity: 4.1 },
   { deviceId: "ps02-dev", timestamp: "2025-07-03T10:01:00Z", temp: 28.5, tds: 450 },
 
-  // --- SCENARIO 2: Test the full TDS lifecycle ---
-  // A TDS warning is triggered
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:05:00Z", tds: 850 }, // Warning (>500)
-  // TDS escalates to critical
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:06:00Z", tds: 1250 },// Critical (>1000)
-  // TDS returns to normal
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:07:00Z", tds: 480 }, // Normal (<=500)
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:05:00Z", tds: 850 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:06:00Z", tds: 1250 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:07:00Z", tds: 480 },
 
-  // --- SCENARIO 3: Test the High Temperature alerts ---
-  // Temperature enters the high warning range
-  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:10:00Z", temp: 34.5 }, // Warning: High (31-35)
-  // Temperature becomes critical
-  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:11:00Z", temp: 36.2 }, // Critical: High (>35)
-  
-  // --- SCENARIO 4: Test the Low Temperature alerts ---
-  // Temperature enters the low warning range
-  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:15:00Z", temp: 8.5 },  // Warning: Low (5-9)
-  // Temperature becomes critical
-  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:16:00Z", temp: 4.1 },   // Critical: Low (<5)
-  // Temperature returns to normal
-  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:17:00Z", temp: 25.0 }, // Normal (10-30)
+  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:10:00Z", temp: 34.5 },
+  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:11:00Z", temp: 36.2 },
 
-  // --- SCENARIO 5: Test the full pH lifecycle (High and Low) ---
-  //Normal starting point
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:19:00Z", pH: 6.5 },  // Normal (6.5-8.5)
-  // A high pH warning is triggered
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:20:00Z", pH: 8.8 },  // Warning: High (8.6-9.0)
-  // pH escalates to critical high
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:21:00Z", pH: 9.3 },  // Critical: High (>9.0)
-  // pH returns to normal from high
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:22:00Z", pH: 8.1 },  // Normal (6.5-8.5)
-  // A low pH warning is triggered
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:25:00Z", pH: 6.3 },  // Warning: Low (6.0-6.4)
-  // pH escalates to critical low
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:26:00Z", pH: 5.8 },  // Critical: Low (<6.0)
-  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:22:00Z", pH: 6.6 },  // Normal (6.5-8.5)
+  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:15:00Z", temp: 8.5 },
+  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:16:00Z", temp: 4.1 },
+  { deviceId: "ps01-dev", timestamp: "2025-07-03T10:17:00Z", temp: 25.0 },
 
-  // --- SCENARIO 6: Test the full Turbidity lifecycle ---
-  // A device that was offline sends a critical turbidity reading
-  { deviceId: "ps03-dev", timestamp: "2025-07-03T10:30:00Z", turbidity: 15.5 },// Critical (>10)
-  // Turbidity improves but is still at a warning level
-  { deviceId: "ps03-dev", timestamp: "2025-07-03T10:31:00Z", turbidity: 9.8 }, // Warning (>5)
-  // Turbidity finally returns to normal
-  { deviceId: "ps03-dev", timestamp: "2025-07-03T10:32:00Z", turbidity: 4.8 }, // Normal (<=5)
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:19:00Z", pH: 6.5 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:20:00Z", pH: 8.8 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:21:00Z", pH: 9.3 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:22:00Z", pH: 8.1 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:25:00Z", pH: 6.3 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:26:00Z", pH: 5.8 },
+  { deviceId: "ps02-dev", timestamp: "2025-07-03T10:22:00Z", pH: 6.6 },
+
+  { deviceId: "ps03-dev", timestamp: "2025-07-03T10:30:00Z", turbidity: 15.5 },
+  { deviceId: "ps03-dev", timestamp: "2025-07-03T10:31:00Z", turbidity: 9.8 },
+  { deviceId: "ps03-dev", timestamp: "2025-07-03T10:32:00Z", turbidity: 4.8 },
 ];
 
-// --- UPDATED --- Add alertsHistory and recentlyDeletedHistory to our initial state
 const initialState = {
     activeAlerts: [],
     recentAlerts: [],
-    alertsHistory: [], // The permanent storage
-    recentlyDeletedHistory: [], // CHANGE: Added state to hold history alerts for the undo action
+    alertsHistory: [],
+    recentlyDeletedHistory: [],
 };
 
-// =================================================================================
-// ALERTS REDUCER
-// =================================================================================
 function alertsReducer(state, action) {
     switch (action.type) {
     case 'PROCESS_READING': {
@@ -161,63 +189,57 @@ function alertsReducer(state, action) {
         let nextActiveAlerts = [...state.activeAlerts];
         const alertsToArchive = [];
 
-        //Alert depuplication logic
         potentialAlerts.forEach(newAlertData => {
-        const existingAlertIndex = nextActiveAlerts.findIndex(a => 
-            a.originator === newAlertData.originator && 
-            a.parameter === newAlertData.parameter
-        );
-        const existingAlert = existingAlertIndex !== -1 ? nextActiveAlerts[existingAlertIndex] : null;
+            const existingAlertIndex = nextActiveAlerts.findIndex(a =>
+                a.originator === newAlertData.originator &&
+                a.parameter === newAlertData.parameter
+            );
+            const existingAlert = existingAlertIndex !== -1 ? nextActiveAlerts[existingAlertIndex] : null;
 
-        const isNewStatusNormal = newAlertData.severity === 'Normal';
+            const isNewStatusNormal = newAlertData.severity === 'Normal';
 
-        if (existingAlert) {
-            // An alert for this device/parameter already exists. Decide what to do.
-            if (isNewStatusNormal) {
-            // The new status is 'Normal'.
-                if (!existingAlert.isBackToNormal) {
-                // If the existing alert was a real problem (not already a 'Normal' message), resolve it.
-                    alertsToArchive.push({ ...existingAlert, status: 'Resolved' });
-                    alertIdCounter.current++;
-                    const backToNormalAlert = {
-                        id: alertIdCounter.current,
-                        type: `${newAlertData.parameter} is back to normal`,
-                        isBackToNormal: true,
-                        dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString(),
-                        originator: newAlertData.originator,
-                        parameter: newAlertData.parameter,
-                        severity: 'Normal',
-                        status: 'Active',
-                        acknowledged: false
-                    };
-                    nextActiveAlerts.splice(existingAlertIndex, 1, backToNormalAlert);
-                    action.timers.start(backToNormalAlert.id);
+            if (existingAlert) {
+                if (isNewStatusNormal) {
+                    if (!existingAlert.isBackToNormal) {
+                        alertsToArchive.push({ ...existingAlert, status: 'Resolved' });
+                        alertIdCounter.current++;
+                        const backToNormalAlert = {
+                            id: alertIdCounter.current,
+                            type: `${newAlertData.parameter} is back to normal`,
+                            isBackToNormal: true,
+                            dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString(),
+                            originator: newAlertData.originator,
+                            parameter: newAlertData.parameter,
+                            severity: 'Normal',
+                            status: 'Active',
+                            acknowledged: false
+                        };
+                        nextActiveAlerts.splice(existingAlertIndex, 1, backToNormalAlert);
+                        action.timers.start(backToNormalAlert.id);
+                    }
+                } else {
+                    if (existingAlert.severity !== newAlertData.severity) {
+                        alertsToArchive.push({ ...existingAlert, status: 'Escalated' });
+                        alertIdCounter.current++;
+                        const newAlert = {
+                            ...newAlertData,
+                            id: alertIdCounter.current,
+                            acknowledged: false,
+                            dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
+                        };
+                        nextActiveAlerts.splice(existingAlertIndex, 1, newAlert);
+                    }
                 }
-            } else {
-            // The new status is a problem (Warning or Critical).
-            if (existingAlert.severity !== newAlertData.severity) {
-                    alertsToArchive.push({ ...existingAlert, status: 'Escalated' });
-                    alertIdCounter.current++;
-                    const newAlert = {
+            } else if (!isNewStatusNormal) {
+                alertIdCounter.current++;
+                const newAlert = {
                     ...newAlertData,
                     id: alertIdCounter.current,
                     acknowledged: false,
                     dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
                 };
-                nextActiveAlerts.splice(existingAlertIndex, 1, newAlert);
-            }
-            }
-        } else if (!isNewStatusNormal) {
-            // No alert exists, and the new status is a problem. Create a new alert.
-            alertIdCounter.current++;
-            const newAlert = {
-                ...newAlertData,
-                id: alertIdCounter.current,
-                acknowledged: false,
-                dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
-            };
                 nextActiveAlerts.push(newAlert);
-        }
+            }
         });
 
         if (alertsToArchive.length > 0 || nextActiveAlerts.length !== state.activeAlerts.length) {
@@ -226,43 +248,39 @@ function alertsReducer(state, action) {
         return state;
     }
 
-        case 'ACKNOWLEDGE_ALERT': {
-            // --- MODIFIED: This case now handles user accountability ---
-            const { alertId, user, timestamp } = action.payload;
-            const alertToAck = state.activeAlerts.find(a => a.id === alertId);
-            if (!alertToAck) return state;
+    case 'ACKNOWLEDGE_ALERT': {
+        const { alertId, user, timestamp } = action.payload;
+        const alertToAck = state.activeAlerts.find(a => a.id === alertId);
+        if (!alertToAck) return state;
 
-            // Create the acknowledgedBy object
-            const acknowledgedByInfo = {
-                name: user.name,
-                timestamp: timestamp
-            };
+        const acknowledgedByInfo = {
+            name: user.name,
+            timestamp: timestamp
+        };
 
-            // This logic is for "back to normal" alerts
-            if (alertToAck.isBackToNormal) {
-                action.timers.clear(alertId); 
-                return {
-                    ...state,
-                    activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
-                    recentAlerts: [{ 
-                        ...alertToAck, 
-                        status: 'Cleared', 
-                        acknowledged: true,
-                        acknowledgedBy: acknowledgedByInfo // Stamp the user info
-                    }, ...state.recentAlerts]
-                };
-            }
-
-            // For a regular alert, find it, update it, and keep it in the active list
-            const nextActiveAlerts = state.activeAlerts.map(alert =>
-                alert.id === alertId ? { 
-                    ...alert, 
+        if (alertToAck.isBackToNormal) {
+            action.timers.clear(alertId);
+            return {
+                ...state,
+                activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
+                recentAlerts: [{
+                    ...alertToAck,
+                    status: 'Cleared',
                     acknowledged: true,
-                    acknowledgedBy: acknowledgedByInfo // Stamp the user info
-                } : alert
-            );
-            return { ...state, activeAlerts: nextActiveAlerts };
+                    acknowledgedBy: acknowledgedByInfo
+                }, ...state.recentAlerts]
+            };
         }
+
+        const nextActiveAlerts = state.activeAlerts.map(alert =>
+            alert.id === alertId ? {
+                ...alert,
+                acknowledged: true,
+                acknowledgedBy: acknowledgedByInfo
+            } : alert
+        );
+        return { ...state, activeAlerts: nextActiveAlerts };
+    }
 
     case 'AUTO_CLEAR_NORMAL_ALERT': {
         const { alertId } = action.payload;
@@ -286,12 +304,12 @@ function alertsReducer(state, action) {
         const alertsToKeep = [];
         const alertsToMove = [];
         state.recentAlerts.forEach(alert => {
-        const alertTime = new Date(alert.dateTime).getTime();
+            const alertTime = new Date(alert.dateTime).getTime();
             if ((currentTime - alertTime) > archiveInterval) {
                 alertsToMove.push(alert);
-        } else {
+            } else {
                 alertsToKeep.push(alert);
-        }
+            }
         });
 
         if (alertsToMove.length === 0) return state;
@@ -309,11 +327,11 @@ function alertsReducer(state, action) {
         const deletedAlerts = [];
 
         state.alertsHistory.forEach(alert => {
-        if (idsToDelete.has(alert.id)) {
-            deletedAlerts.push(alert);
-        } else {
-            remainingAlerts.push(alert);
-        }
+            if (idsToDelete.has(alert.id)) {
+                deletedAlerts.push(alert);
+            } else {
+                remainingAlerts.push(alert);
+            }
         });
 
         if (deletedAlerts.length === 0) return state;
@@ -338,99 +356,76 @@ function alertsReducer(state, action) {
     default:
         return state;
     }
-    }
+}
 
-    //Notification sound function
-    function playNotificationSound() {
-    const audio = new Audio('/Notification.mp3'); 
-    
-    // The play() method returns a promise. We need to handle potential errors.
+function playNotificationSound() {
+    const audio = new Audio('/Notification.mp3');
     const playPromise = audio.play();
 
     if (playPromise !== undefined) {
         playPromise.catch(error => {
-            // This error often happens if the user hasn't interacted with the page yet.
             console.warn("Could not play notification sound automatically. User interaction may be required.", error);
         });
     }
 }
 
 function App() {
-  // Use to Authenticate the user when logging in
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    // NEW STATE: To hold the device label for the header
+    const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
+    const handleLogin = () => {
+        setIsAuthenticated(true);
+    };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
+    const handleLogout = () => {
+        setIsAuthenticated(false);
+    };
 
-  // --- State Management ---
-    // Holds all alert data and the function to change it.
     const [alertsState, dispatch] = useReducer(alertsReducer, initialState);
     const { activeAlerts, recentAlerts, alertsHistory } = alertsState;
 
-    // --- NEW --- State for the configurable archive interval.
-    // Default is 24 hours in milliseconds. Change this for testing!
-    // For example, set to 60000 (1 minute) to see alerts move quickly.
-    const [archiveInterval, setArchiveInterval] = useState(60000); // Set to 60 seconds for testing
-
-    // State for non-alert components like the map and pumping stations.
-    const [deviceLocations, setDeviceLocations] = useState([]);
-    const [pumpingStations, setPumpingStations] = useState([]);
+    const [archiveInterval, setArchiveInterval] = useState(60000);
+    const [deviceLocations, setDeviceLocations] = useState(FAKE_API_DATA);
+    const [pumpingStations, setPumpingStations] = useState(FAKE_STATIONS_DATA);
     const [selectedMapDeviceId, setSelectedMapDeviceId] = useState(null);
     const [refocusTrigger, setRefocusTrigger] = useState(0);
 
-    // State for the device filters in Active and Recent alerts.
     const [activeFilterDevice, setActiveFilterDevice] = useState('All Devices');
     const [recentFilterDevice, setRecentFilterDevice] = useState('All Devices');
 
-    // Refs to hold values that don't need to trigger re-renders.
     const alertIdCounter = useRef(0);
     const [latestReading, setLatestReading] = useState(null);
 
-    // --- FIX --- Re-introducing the timer management
     const backToNormalTimers = useRef(new Map());
 
-    // --- MODIFIED: Animation state management is updated for stability ---
     const [newlyAddedId, setNewlyAddedId] = useState(null);
-    const maxSeenId = useRef(0); // Use a ref to prevent re-render cycles
+    const maxSeenId = useRef(0);
 
-
-     // --- This useEffect now calls the new sound function ---
     useEffect(() => {
         if (!activeAlerts || activeAlerts.length === 0) return;
         const currentMaxId = Math.max(0, ...activeAlerts.map(a => a.id));
 
         if (currentMaxId > maxSeenId.current) {
             const newAlert = activeAlerts.find(a => a.id === currentMaxId);
-            
-            // Only play the sound for "real" alerts, not for "back to normal" messages
+
             if (newAlert && !newAlert.isBackToNormal) {
                 playNotificationSound();
             }
-            
+
             setNewlyAddedId(currentMaxId);
             maxSeenId.current = currentMaxId;
         }
     }, [activeAlerts]);
 
-    // --- ADDED --- A handler to allow child components to signal animation completion
     const handleAnimationComplete = () => {
         setNewlyAddedId(null);
     };
 
-
-    // --- Timer Management ---
-    // These functions start and stop the 10-second timer for "Back to Normal" alerts.
-
     const startTimer = (alertId) => {
         const timerId = setTimeout(() => {
-            // --- FIX --- The timer now dispatches the new, non-acknowledging action
             dispatch({ type: 'AUTO_CLEAR_NORMAL_ALERT', payload: { alertId } });
-        }, 10000); // 10-second timer for "back to normal" alerts
+        }, 10000);
         backToNormalTimers.current.set(alertId, timerId);
     };
 
@@ -441,11 +436,7 @@ function App() {
         }
     };
 
-    // --- useEffect Hooks for Simulation and Timers ---
-
-    // This hook runs ONCE to initialize the app and start the main simulation timer.
     useEffect(() => {
-        setDeviceLocations(FAKE_API_DATA);
         setPumpingStations(FAKE_STATIONS_DATA);
         let readingIndex = 0;
         const intervalId = setInterval(() => {
@@ -454,19 +445,24 @@ function App() {
             } else {
                 clearInterval(intervalId);
             }
-        }, 10000); // New sensor reading every 5 seconds
+        }, 10000);
 
         return () => {
             clearInterval(intervalId);
-            // --- FIX --- Ensure all timers are cleared on unmount
             backToNormalTimers.current.forEach(timerId => clearTimeout(timerId));
         };
     }, []);
 
-    // This hook runs whenever a new sensor reading is available, dispatching it to the reducer.
     useEffect(() => {
         if (latestReading) {
-            // --- FIX --- Pass the timer functions to the reducer
+            setDeviceLocations(prevDevices =>
+                prevDevices.map(device =>
+                    device.id === latestReading.deviceId
+                        ? { ...device, readings: { ...device.readings, ...latestReading } }
+                        : device
+                )
+            );
+
             dispatch({
                 type: 'PROCESS_READING',
                 payload: { reading: latestReading, alertIdCounter },
@@ -475,9 +471,7 @@ function App() {
         }
     }, [latestReading]);
 
-    // --- NEW --- Timer to periodically check and archive old alerts
     useEffect(() => {
-        // Run this check every minute
         const archiveTimer = setInterval(() => {
             dispatch({
                 type: 'ARCHIVE_RECENT_ALERTS',
@@ -486,28 +480,23 @@ function App() {
                     archiveInterval: archiveInterval,
                 }
             });
-        }, 60000); // 60,000 milliseconds = 1 minute
+        }, 60000);
 
-        return () => clearInterval(archiveTimer); // Cleanup on component unmount
-    }, [archiveInterval]); // Rerun if the interval setting changes
+        return () => clearInterval(archiveTimer);
+    }, [archiveInterval]);
 
-    // --- Event Handlers ---
-    // These functions are passed down to child components to allow them to trigger state changes.
-
-     // --- MODIFIED: Event handler now passes user and timestamp info ---
     const handleAcknowledgeAlert = (alertId) => {
         dispatch({
             type: 'ACKNOWLEDGE_ALERT',
-            payload: { 
+            payload: {
                 alertId,
-                user: CURRENT_USER, // Pass the simulated user
-                timestamp: new Date().toISOString() // Pass the current time
+                user: CURRENT_USER,
+                timestamp: new Date().toISOString()
             },
             timers: { clear: clearTimer }
         });
     };
 
-    // CHANGE: Added handler to delete history alerts
     const handleDeleteHistoryAlerts = (idsToDelete) => {
         dispatch({
             type: 'DELETE_HISTORY_ALERTS',
@@ -515,7 +504,6 @@ function App() {
         });
     };
 
-    // CHANGE: Added handler to restore history alerts
     const handleRestoreHistoryAlerts = () => {
         dispatch({ type: 'RESTORE_HISTORY_ALERTS' });
     };
@@ -538,31 +526,23 @@ function App() {
         setPumpingStations(updatedStations);
     };
 
-    // --- NEW: Handler to simulate saving device configurations ---
-    // --- MODIFIED: This function is now async to simulate a backend call ---
     const handleSaveConfiguration = (deviceId, newConfigs) => {
         console.log(`Simulating save for ${deviceId}:`, newConfigs);
-    
-        // Return a promise to mimic a real API call
         return new Promise((resolve) => {
-        // Simulate a network delay of 1 second
-        setTimeout(() => {
-            setDeviceLocations(prevDevices => 
-                prevDevices.map(device => 
-                    device.id === deviceId 
-                        ? { ...device, configurations: newConfigs } 
-                        : device
-                )
-            );
-            // Resolve the promise on success
-            resolve(); 
-        }, 1000);
+            setTimeout(() => {
+                setDeviceLocations(prevDevices =>
+                    prevDevices.map(device =>
+                        device.id === deviceId
+                            ? { ...device, configurations: newConfigs }
+                            : device
+                    )
+                );
+                resolve();
+            }, 1000);
         });
     };
 
-
     // --- Context Value ---
-    // This object bundles all the necessary state and functions to be provided to the app.
     const contextValue = {
         activeAlerts,
         recentAlerts,
@@ -574,7 +554,6 @@ function App() {
         recentFilterDevice,
         handleRecentFilterChange,
         onAcknowledgeAlert: handleAcknowledgeAlert,
-        // CHANGE: Added delete and restore functions to context
         onDeleteHistoryAlerts: handleDeleteHistoryAlerts,
         onRestoreHistoryAlerts: handleRestoreHistoryAlerts,
         onSelectMapDevice: handleSelectDevice,
@@ -585,84 +564,79 @@ function App() {
         refocusTrigger,
         newlyAddedId,
         onAnimationComplete: handleAnimationComplete,
-        onSaveConfiguration: handleSaveConfiguration, // NEW
+        onSaveConfiguration: handleSaveConfiguration,
     };
 
-  return (
-    <AlertsContext.Provider value={contextValue}>
-      {isAuthenticated && <Header onLogout={handleLogout} />}
-      {isAuthenticated && <Navigation />}
-        <main>
-          <Routes>
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            
-            <Route
-              path="/overview"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Overview />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-              <Route
-              path="/alerts"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Alerts />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/devices"
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Devices />
-                </ProtectedRoute>
-              }
-            />
-             <Route path="/configurations" 
-             element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Configuration />   
-                </ProtectedRoute>
-              } 
-            />
-             <Route path="/configurations" 
-             element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Configuration />   
-                </ProtectedRoute>
-              } 
-            />
-            <Route
-              path="/devices/:deviceId" // Define a route with a parameter for deviceId
-              element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <SpecificDevice />
-                </ProtectedRoute>
-              }
-            />
-            <Route 
-                path="/logs"
-                element = {
-                    <ProtectedRoute isAuthenticated={isAuthenticated}>
-                        <Logs />
-                    </ProtectedRoute>
-                }
-            />
-            <Route path="/" element={<Navigate to="/login" />} />
-          </Routes>
-        </main>
-    </AlertsContext.Provider>
-  );
+    return (
+        <AlertsContext.Provider value={contextValue}>
+            {/* Pass the headerDeviceLabel prop to Header */}
+            {isAuthenticated && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} />}
+            {isAuthenticated && <Navigation />}
+            <main>
+                <Routes>
+                    <Route path="/login" element={<Login onLogin={handleLogin} />} />
+
+                    <Route
+                        path="/overview"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <Overview />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/alerts"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <Alerts />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/devices"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <Devices />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route path="/configurations"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <Configuration />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/devices/:deviceId"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                {/* Pass the setHeaderDeviceLabel function to SpecificDevice */}
+                                <SpecificDevice onSetHeaderDeviceLabel={setHeaderDeviceLabel} />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/logs"
+                        element = {
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <Logs />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route path="/" element={<Navigate to="/login" />} />
+                </Routes>
+            </main>
+        </AlertsContext.Provider>
+    );
 }
 
 export default App;

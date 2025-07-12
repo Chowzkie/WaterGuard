@@ -1,32 +1,43 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+// Components/Navigation-Header/Header.jsx
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom'; // Removed useParams
 import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight } from 'lucide-react';
 import styles from '../../Styles/Header.module.css';
 import ProfilePic from '../../assets/ProfilePic.png';
 import Logo from '../../assets/Logo.png';
 
-function Header({ onLogout }) { // <-- Accept the onLogout function
+// No need to import AlertsContext here anymore as deviceLabelForHeader is passed directly
 
-  const navigate = useNavigate(); // <-- Add navigation for logout
+function Header({ onLogout, deviceLabelForHeader }) { // Accept deviceLabelForHeader prop
+  const navigate = useNavigate();
   const location = useLocation();
 
-  // Route-to-title mapping
+  const [subTitle, setSubTitle] = useState('WaterGuard'); // State for dynamic subtitle
+
+  // Route-to-title mapping for static pages
   const routeTitleMap = {
     '/overview': 'Overview',
     '/dashboard': 'Dashboard',
     '/alerts': 'Alerts',
     '/devices': 'Devices',
     '/configurations': 'Configuration',
-    '/logs' : 'Logs'
+    '/logs': 'Logs'
   };
 
-  // Get current sub-title based on pathname
-  const subTitle = routeTitleMap[location.pathname] || 'WaterGuard';
+  useEffect(() => {
+    let currentSubTitle;
 
-  // Dynamically change the browser tab title
-  React.useEffect(() => {
-    document.title = `WaterGuard | ${subTitle}`;
-  }, [subTitle]);
+    // Prioritize deviceLabelForHeader if it's provided (meaning we are on a specific device page)
+    if (deviceLabelForHeader) {
+      currentSubTitle = `Devices > ${deviceLabelForHeader}`;
+    } else {
+      // Fallback to route-based title for other pages
+      currentSubTitle = routeTitleMap[location.pathname] || 'WaterGuard';
+    }
+
+    setSubTitle(currentSubTitle); // Update the state
+    document.title = `WaterGuard | ${currentSubTitle}`; // Update browser tab title
+  }, [location.pathname, deviceLabelForHeader, routeTitleMap]); // Re-run when path or deviceLabelForHeader changes
 
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -71,8 +82,8 @@ function Header({ onLogout }) { // <-- Accept the onLogout function
   };
 
   const handleLogout = () => {
-    onLogout();           // Clear the auth state in App.jsx
-    navigate('/login');   // Redirect to login
+    onLogout();
+    navigate('/login');
   };
 
   return (

@@ -1,15 +1,3 @@
-/*Para mahati yung paglalagyan nung testing device at yung view*/
-.device-status-wrapper{
-    display: grid;
-    grid-template-rows: 3fr 1fr;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 .devices-section {
     background: white;
     border-radius: 5px;
@@ -18,8 +6,14 @@
     font-family: 'Poppins', sans-serif;
     display: flex;
     flex-direction: column;
+    animation: fadeIn 0.5s ease-in-out;
 
     height: 100% /*Eto naman para kunin lahat ni Testing device yung size na 3fr na nabigay sakanya*/
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .section-header h3 {
@@ -150,6 +144,7 @@
 .status-indicator.maintenance {
     background-color: #fff3cd;
     color: #856404;
+    width: 120px;
 }
 
 .status-indicator.maintenance .status-dot {
@@ -163,37 +158,8 @@
     text-align: center;
 }
 
-
-.logs-container{
-    background-color: #ffffff;
-    border-radius: 7px;
-    text-align: center;
-    margin-top: 20px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-.logs-container button{
-    border-radius: 20px;
-    border: none;
-    background-color: #50AE5B;
-    color: #FFFFFF;
-    width: 30%;
-    height: 40px;
-    transition: 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-}
-.logs-container button:hover{
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
 @media (max-width: 1399px) {
     .device-status-wrapper{
-        height: 0;
-    }
-
-    .logs-container{
-        margin-top: 15px;
+        height: 100%;
     }
 }

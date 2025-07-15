@@ -20,7 +20,7 @@ function Navigation() {
                     `${styles['nav-link']} ${isActive ? styles.active : ''}`
                 }
             >
-                <div className={styles.navigation}>Dashboard</div>
+                <div className={styles.navigation}>Readings</div>
             </NavLink>
 
             <NavLink 

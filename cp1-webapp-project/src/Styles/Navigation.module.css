@@ -41,3 +41,31 @@
     background-color: #0097E6;
     font-weight: 600;
 }
+
+@media (min-width: 1440px) {
+    .navigation{
+        width: 240px;
+    }
+  
+}
+
+@media (min-width: 1600px) {
+    .navigation{
+        width: 275px;
+    }
+  
+}
+
+@media (min-width: 1800px) {
+    .navigation{
+        width: 300px;
+    }
+  
+}
+
+@media (min-width: 1900px) {
+    .navigation{
+        width: 330px;
+    }
+  
+}

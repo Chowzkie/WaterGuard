@@ -1,5 +1,5 @@
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css'
-import {Menu, Download} from 'lucide-react'
+import {ListFilter, Download} from 'lucide-react'
 function SystemLogs({logs}) {
     
     return(
@@ -8,7 +8,7 @@ function SystemLogs({logs}) {
                 <p>System Logs</p>
                 <div className={Style['icons']}>
                     <div className={Style['menu']}>
-                        <Menu />
+                        <ListFilter />
                     </div>
                     <div className={Style['download']}>
                         <Download />
@@ -30,7 +30,9 @@ function SystemLogs({logs}) {
                     <div className={Style['tableCell']}>{log.location}</div>
                     <div className={`${Style['tableCell']} ${
                         log.status === 'Warning' ? Style['warningStatus'] :
-                        log.status === 'Success' ? Style['successStatus'] : ''
+                        log.status === 'Success' ? Style['successStatus'] :
+                        log.status === 'Error' ? Style['errorStatus'] :
+                        log.status === 'Info' ? Style['infoStatus'] : ''
                     }`}>
                         {log.status}
                     </div>

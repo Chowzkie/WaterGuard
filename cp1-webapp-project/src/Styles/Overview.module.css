@@ -3,10 +3,10 @@
   width: 100%;
   background-color: #f0f2f5;
   box-sizing: border-box; 
-  padding: 5px 24px;
+  padding: 5px 24px 24px 24px;
   margin-top: 15px;
   gap: 15px; /* The space between your components */
-  overflow-y: auto;
+  overflow-y: scroll;
 
   display: grid;
   /* --- KEY CHANGE HERE --- */
@@ -43,7 +43,7 @@
   }
 }
 
-@media (max-width: 1399px) {
+@media (max-width: 1400px) {
   .component-wrapper-overview{
     grid-template-rows: 310px 1fr;
   }

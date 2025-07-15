@@ -9,7 +9,7 @@
   background-color: #f0f2f5;
   font-family: 'Poppins', sans-serif;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
 /* Responsive layout for smaller screens */

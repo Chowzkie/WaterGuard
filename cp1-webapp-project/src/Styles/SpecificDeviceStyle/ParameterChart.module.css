@@ -1,217 +1,86 @@
-/* paramChart.css */
-.container {
-  padding: 20px;
+/* Styles/SpecificDeviceStyle/ParameterChart.module.css */
+
+.panel-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 100%; /* Makes it fill the .left-column */
-  width: 100%;
-  box-sizing: border-box; /* IMPORTANT: Includes padding in the total height/width */
-}
-
-.chart-container {
+  gap: 1rem;
   background: #fff;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  width: 100%;
-  flex-grow: 1; /* Allows this element to expand and fill available space */
-  display: flex;
-  flex-direction: column;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  height: 100%;
+  box-sizing: border-box;
 }
 
-.blockHeader {
+.panel-header {
   display: flex;
-  gap: 15px;
-  margin-bottom: 10px;
   align-items: center;
+  gap: 1rem;
+}
+
+.panel-title {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin: 0;
 }
 
 .back-button {
-  background-color: #838c94;
-  color: #FFFFFF;
-  border-radius: 5px;
-  border: 1px solid #767676;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  padding: 10px 20px;
+  background-color: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s;
 }
 
 .back-button:hover {
-  background-color: #6c757d;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background-color: #5a6268;
 }
 
-.back-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(130, 138, 145, 0.4);
-}
-
-.blockTitle {
-  font-weight: bold;
-  font-size: 1.8rem;
-  margin: 0;
-  color: #1f2937;
-}
-
-.buttons {
+.param-tabs {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1rem; /* Add some space */
 }
 
-.buttonNav {
-  color: #4b5563;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  background: none;
+.tab {
+  padding: 8px 12px;
   border: none;
-}
-
-.buttonNav:hover {
-  color: #1d4ed8;
-}
-
-.active {
-  color: #1d4ed8;
-  border-bottom: 2px solid #1d4ed8;
-}
-
-.inactive {
-  color: #4b5563;
-}
-
-.chart {
-  max-width: 100%;
-  height: 100%; /* Allows the chart to fill the .chart-container */
-  border: 1px solid #adadad;
-  border-radius: 8px; /* Rounded corners for the chart area */
-}
-
-.details-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  height: auto;
-}
-
-.recent-alerts,
-.details {
-  background-color: #FFFFFF;
-  border: 1px solid #e0e0e0; /* Softer border color */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px; /* Consistent border-radius */
-  overflow-y: auto;
-  max-height: 180px; /* Keep max-height for alert list */
-  display: flex; /* Make it a flex container to push title to top */
-  flex-direction: column;
-}
-
-.title {
+  background: none;
+  cursor: pointer;
+  color: #6b7280;
   font-weight: 600;
-  font-size: 1.2rem; /* Adjusted title size for internal sections */
-  padding: 10px 15px; /* Adjust padding */
-  border-bottom: 1px solid #e0e0e0; /* Softer border */
-  position: sticky;
-  top: 0;
-  background-color: #FFFFFF;
-  z-index: 1;
-  color: #374151; /* Darker text for titles */
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
 }
 
-.title p {
-  margin: 0;
+.tab:hover {
+  color: #374151;
 }
 
-.alertList {
-  list-style: none;
-  padding: 10px 15px; /* Adjust padding */
-  margin: 0;
-  flex-grow: 1; /* Allow alert list to grow and use remaining space */
+.tab.active {
+  color: #2563eb;
+  border-color: #2563eb;
 }
 
-.alert {
-  display: flex;
-  align-items: flex-start; /* Align items to the start for multi-line messages */
-  gap: 8px; /* Slightly reduced gap for alert items */
-  padding: 8px 0; /* Increased vertical padding for clarity */
-  margin-bottom: 5px; /* Reduce margin-bottom if padding is increased */
-  border-bottom: 1px dashed #e5e7eb; /* Subtle separator between alerts */
-}
-
-.alert:last-child {
-  border-bottom: none; /* No border for the last alert */
-}
-
-.alert span {
-  font-size: 0.85rem; /* Slightly smaller font for alerts */
-}
-
-.high {
-  border-left: 4px solid #ef4444; /* More vibrant red */
-  padding-left: 8px;
-  background-color: #fef2f2; /* Light red background */
-  border-radius: 4px;
-}
-
-.medium {
-  border-left: 4px solid #f97316; /* More vibrant orange */
-  padding-left: 8px;
-  background-color: #fff7ed; /* Light orange background */
-  border-radius: 4px;
-}
-
-.safe {
-  border-left: 4px solid #22c55e; /* More vibrant green */
-  padding-left: 8px;
-  background-color: #f0fdf4; /* Light green background */
-  border-radius: 4px;
-}
-
-.time {
-  width: 65px; /* Slightly adjusted width */
-  color: #6b7280; /* Softer time color */
-  flex-shrink: 0; /* Prevent shrinking */
-}
-
-.message {
+.chart-wrapper {
   flex: 1;
-  color: #374151; /* Darker message text */
+  min-height: 0;
+  position: relative;
 }
 
-.value {
-  color: #4b5563; /* Darker value text */
-  font-weight: 500;
-  flex-shrink: 0; /* Prevent shrinking */
-}
-
-.details-wrapper {
-  padding: 10px 15px; /* Adjusted padding */
-  flex-grow: 1; /* Allows content to grow */
+.no-data-message {
   display: flex;
-  flex-direction: column;
-  justify-content: space-around; /* Distribute space evenly */
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 1.1rem;
 }
 
-.wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center; /* Align items vertically */
-  padding: 5px 0; /* Add vertical padding */
-  border-bottom: 1px dashed #e5e7eb; /* Subtle separator */
-}
-
-.wrapper:last-child {
-  border-bottom: none;
-}
-
-.wrapper p {
-  margin: 0;
-  font-size: 1rem; /* Reduced from 24px for better readability */
-  color: #4b5563; /* Softer text color */
-  font-weight: 500; /* Medium font weight */
-}
+/* All CSS for .details-grid, .details-card, etc., has been removed. */

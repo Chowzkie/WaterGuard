@@ -82,7 +82,7 @@ function SpecificReadings({ deviceReadings, deviceId, deviceStatus }){
     return(
         <div className={Style['container']}>
             <div className={Style['blockContainer']}>
-                <div className={Style['blockTitle']}>Real-time Monitoring for {deviceId}</div>
+                <div className={Style['blockTitle']}>Real-time Monitoring {">"} {deviceId.toUpperCase()}</div>
                 <div className={Style['cardGrid']}>
                     {readingsToDisplay.map((reading) => (
                         <div

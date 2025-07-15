@@ -1,65 +1,91 @@
-// Components/Devices/SpecificDevice/SpecificDevice.jsx
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ParamChart from './ParamChart'
-import SpecificReadings from './SpecificReadings'
-import ValveSwitch from './ValveSwitch'
-import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css'
+import ParamChart from './ParamChart';
+import SpecificReadings from './SpecificReadings';
+import ValveSwitch from './ValveSwitch';
+import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css';
 import AlertsContext from '../../../utils/AlertsContext';
 
-function SpecificDevice({ onSetHeaderDeviceLabel }) { // Accept onSetHeaderDeviceLabel prop
+// Helper components remain the same
+function AlertsPanel({ alerts }) {
+    return (
+        <div className={Style['details-card']}>
+            <h3 className={Style['card-title']}>Recent Alerts</h3>
+            <ul className={Style['alert-list']}>
+                {alerts && alerts.length > 0 ? (
+                    alerts.slice(0, 3).map((alert, index) => (
+                        <li key={index} className={Style.alert}>
+                            <span>{alert.time}</span>
+                            <span>{alert.type}</span>
+                            <span>({alert.value})</span>
+                        </li>
+                    ))
+                ) : (
+                    <li className={Style['no-alerts']}>No recent alerts.</li>
+                )}
+            </ul>
+        </div>
+    );
+}
+function DetailsPanel({ device }) {
+    return (
+        <div className={Style['details-card']}>
+            <h3 className={Style['card-title']}>Device Details</h3>
+            <div className={Style['device-info']}>
+                <p><strong>Label:</strong> {device.label}</p>
+                <p><strong>Status:</strong> {device.status}</p>
+                <p><strong>Location:</strong> {device.location}</p>
+            </div>
+        </div>
+    );
+}
+
+function SpecificDevice({ onSetHeaderDeviceLabel }) {
     const { deviceId } = useParams();
     const navigate = useNavigate();
     const [currentDevice, setCurrentDevice] = useState(null);
     const { devices } = useContext(AlertsContext);
 
+    // useEffect and other logic remains unchanged
     useEffect(() => {
         const foundDevice = devices.find(device => device.id === deviceId);
         setCurrentDevice(foundDevice);
-
-        // Update the header label in App.jsx
         if (onSetHeaderDeviceLabel) {
             onSetHeaderDeviceLabel(foundDevice ? foundDevice.label : null);
         }
-
-        console.log("Currently viewing device:", deviceId);
-
-        // Cleanup function: Clear the header label when component unmounts or deviceId changes
         return () => {
-            if (onSetHeaderDeviceLabel) {
-                onSetHeaderDeviceLabel(null);
-            }
+            if (onSetHeaderDeviceLabel) onSetHeaderDeviceLabel(null);
         };
-    }, [deviceId, devices, onSetHeaderDeviceLabel]); // Add onSetHeaderDeviceLabel to dependencies
+    }, [deviceId, devices, onSetHeaderDeviceLabel]);
 
-    const handleGoBack = () => {
-        navigate('/devices');
-    };
+    const handleGoBack = () => navigate('/devices');
 
     if (!currentDevice) {
-        return <div className={Style['container']}>Loading device data or Device not found...</div>;
+        return <div className={Style['loading-container']}>Loading device data or Device not found...</div>;
     }
 
-    return(
-        <div className={Style['container']}>
-            <div className={Style['left-column']}>
-                <ParamChart
-                    deviceDetails={currentDevice}
-                    mockTime={currentDevice.history?.time}
-                    mockReadings={currentDevice.history?.readings}
-                    mockAlerts={currentDevice.alerts}
-                    onGoBack={handleGoBack}
-                />
+    return (
+        <div className={Style['page-container']}>
+            <ParamChart
+                mockTime={currentDevice.history?.time}
+                mockReadings={currentDevice.history?.readings}
+                onGoBack={handleGoBack}
+            />
+            <SpecificReadings
+                deviceReadings={currentDevice.readings}
+                deviceId={deviceId}
+                deviceStatus={currentDevice.status}
+            />
+
+            {/* Key Change: A new wrapper div for the bottom-left panels */}
+            <div className={Style['bottom-left-wrapper']}>
+                <AlertsPanel alerts={currentDevice.alerts} />
+                <DetailsPanel device={currentDevice} />
             </div>
-            <div className={Style['right-column']}>
-                <SpecificReadings
-                    deviceReadings={currentDevice.readings}
-                    deviceId={deviceId}
-                    deviceStatus={currentDevice.status}
-                />
-                <ValveSwitch deviceId={deviceId}/>
-            </div>
+            
+            <ValveSwitch deviceId={deviceId} />
         </div>
-    )
+    );
 }
+
 export default SpecificDevice;

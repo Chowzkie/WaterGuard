@@ -1,34 +1,93 @@
-.container {
+/* Styles/SpecificDeviceStyle/Specific.module.css */
+
+.page-container {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  height: calc(100vh - 100px); /* Adjust 100px to match your header/nav height */
+  /* Key Change: A simpler 2x2 grid layout */
+  grid-template-areas:
+    "chart       readings"
+    "bottom-left valve";
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-rows: 1fr auto; /* Top row grows, bottom row fits content */
+  gap: 15px;
+  padding: 5px 24px 40px 24px;
+  margin-top: 15px;
+  height: calc(100vh - 80px);
   width: 100%;
-  gap: 10px; /* Added a gap for spacing between columns */
   box-sizing: border-box;
-  overflow-y: auto;
+  background-color: #f0f2f5;
+  overflow-y: scroll;
+
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-.left-column {
-  display: flex;
-  flex-direction: column;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* Added a gap for spacing between the two right components */
+/* Key Change: Assigning 4 children to the new grid areas */
+.page-container > :nth-child(1) { grid-area: chart; }
+.page-container > :nth-child(2) { grid-area: readings; }
+.page-container > :nth-child(3) { grid-area: bottom-left; }
+.page-container > :nth-child(4) { grid-area: valve; }
+
+/* Key Change: This new style arranges the alerts and details panels side-by-side */
+.bottom-left-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 1.25rem; /* Space between the two panels */
 }
+
+/* Styles for the cards inside the wrapper (no changes needed here) */
+.details-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Other existing styles for alerts, details, etc. are unchanged */
+.alert-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; }
+.alert { display: flex; justify-content: space-between; padding: 4px 0; }
+.no-alerts { color: #9ca3af; }
+.device-info p { margin: 4px 0; font-size: 0.9rem; }
+.device-info strong { color: #374151; }
+.loading-container { padding: 2rem; font-size: 1.2rem; color: #555; }
 
 @media (max-width: 1024px) {
-  .container {
+  .page-container {
+    grid-template-areas:
+      "chart"
+      "readings"
+      "bottom-left"
+      "valve";
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    height: auto; /* Allow height to adjust based on content on smaller screens */
+    grid-template-rows: auto;
+    height: auto;
+    overflow-y: auto;
   }
+  
+  /* On smaller screens, stack the alerts and details again */
+  .bottom-left-wrapper {
+      grid-template-columns: 1fr;
+  }
+}
 
-  .left-column,
-  .right-column {
-    width: 100%;
-    gap: 5px;
-  }
+/* Exact scrollbar styling */
+.page-container::-webkit-scrollbar {
+  width: 6px;
+}
+.page-container::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.page-container::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
 }

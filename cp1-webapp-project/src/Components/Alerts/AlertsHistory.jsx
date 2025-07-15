@@ -3,7 +3,7 @@ import { Trash2, Download, ListFilter, X, Check, User, ChevronDown, Undo, Clock 
 import styles from '../../Styles/AlertsHistory.module.css';
 
 // The component now accepts onDeleteHistoryAlerts and onRestoreHistoryAlerts
-const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHistoryAlerts }) => {
+const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHistoryAlerts, assigneeList = [] }) => {
     // --- All existing filter state is unchanged ---
     const [filters, setFilters] = useState({
         status: [],
@@ -39,7 +39,9 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         return Array.from(types);
     }, [historyAlerts]);
 
-    const assignees = ['All', 'John Doe', 'Jane Smith', 'System Admin'];
+    // ADDED: Create the assignees list for the dropdown, ensuring 'All' is always first.
+    const assignees = useMemo(() => ['All', ...assigneeList], [assigneeList]);
+
 
     //Filter logics
     const filteredDisplayAlerts = useMemo(() => {
@@ -48,7 +50,8 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             const statusMatch = filters.status.length === 0 || filters.status.includes(alert.status);
             const severityMatch = filters.severity.length === 0 || filters.severity.includes(alert.severity);
             const typeMatch = filters.type.length === 0 || filters.type.some(t => baseType.toLowerCase().includes(t.toLowerCase()));
-            const assigneeMatch = filters.assignee === 'All' || alert.assignee === filters.assignee;
+            // MODIFIED: This logic now correctly checks the nested 'acknowledgedBy.name' property.
+            const assigneeMatch = filters.assignee === 'All' || (alert.acknowledgedBy && alert.acknowledgedBy.name === filters.assignee);
             const actionMatch = filters.action.length === 0 ||
                 (filters.action.includes('Acknowledged') && alert.acknowledged === true) ||
                 (filters.action.includes('Unacknowledged') && (alert.acknowledged === false || alert.acknowledged === undefined));

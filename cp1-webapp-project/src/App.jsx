@@ -1,6 +1,7 @@
 // App.jsx
 import React, { useState, useEffect, useReducer, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// UPDATED: Import useLocation. The Router component is expected to be in a higher-level file like main.jsx or index.js
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 import Login from './Components/Login';
@@ -16,6 +17,8 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import { evaluateSensorReading } from './utils/SensorLogic';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
+// NEW: Import the AccountSettings component
+import AccountSettings from './Components/AccountSettings/AccountSettings';
 
 // =================================================================================
 // CONFIGURATION
@@ -369,7 +372,22 @@ function playNotificationSound() {
     }
 }
 
+// UPDATED: The App component now uses the useLocation hook to conditionally render navigation.
+// It is no longer split into App and AppLayout.
 function App() {
+    // NEW: useLocation hook to get the current URL path.
+    const location = useLocation();
+    
+    // NEW: An array of paths where the Header and Navigation should NOT be displayed.
+    const noNavPaths = ['/login', '/account-settings'];
+    
+    // UPDATED: We now have two separate checks for the header and the sidebar navigation.
+    const noHeaderPaths = ['/login']; // Only hide header on the login page.
+    const noSidebarPaths = ['/login', '/account-settings']; // Hide sidebar on login AND account settings.
+
+    const showHeader = !noHeaderPaths.includes(location.pathname);
+    const showSidebar = !noSidebarPaths.includes(location.pathname);
+
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     // NEW STATE: To hold the device label for the header
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
@@ -569,12 +587,22 @@ function App() {
 
     return (
         <AlertsContext.Provider value={contextValue}>
-            {/* Pass the headerDeviceLabel prop to Header */}
-            {isAuthenticated && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} />}
-            {isAuthenticated && <Navigation />}
+            {/* UPDATED: Conditionally render Header and Navigation based on the new booleans */}
+            {isAuthenticated && showHeader && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} />}
+            {isAuthenticated && showSidebar && <Navigation />}
             <main>
                 <Routes>
                     <Route path="/login" element={<Login onLogin={handleLogin} />} />
+
+                    {/* NEW: Add the route for the AccountSettings page */}
+                    <Route
+                        path="/account-settings"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <AccountSettings />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     <Route
                         path="/overview"

@@ -8,16 +8,29 @@ import AlertsContext from '../../../utils/AlertsContext';
 
 // Helper components remain the same
 function AlertsPanel({ alerts }) {
+    //Use to change the alert color dynnamically
+    const getAlertStatusClass = (status) => {
+        switch(status) {
+            case 'Active':
+                return Style['alertActive'];
+            case 'Critical':
+                return Style['alertCritical'];
+            case 'Resolved':
+                return Style['alertResolved']
+            default:
+                return ''
+        }
+    }
     return (
         <div className={Style['details-card']}>
             <h3 className={Style['card-title']}>Recent Alerts</h3>
             <ul className={Style['alert-list']}>
                 {alerts && alerts.length > 0 ? (
                     alerts.slice(0, 3).map((alert, index) => (
-                        <li key={index} className={Style.alert}>
+                        <li key={index} className={`${Style.alert} ${getAlertStatusClass(alert.status)}`}>
                             <span>{alert.time}</span>
                             <span>{alert.type}</span>
-                            <span>({alert.value})</span>
+                            <span>{alert.value} {alert.unit}</span>
                         </li>
                     ))
                 ) : (

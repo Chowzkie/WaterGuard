@@ -64,8 +64,9 @@ const FAKE_API_DATA = [
             }
         },
         alerts: [
-            { type: "pH Warning", status: "Active", time: "10:40", value: 7},
-            { type: "Temperature High", status: "Critical", time: "10:55", value: 40 }
+            { type: "pH Warning", status: "Active", time: "10:40", value: 8, unit: 'pH'},
+            { type: "Temperature High", status: "Critical", time: "10:55", value: 40, unit: '°C'},
+            { type: "TDS Critical", status: "Critical", time: "11:05", value: 750, unit: 'ppm'},
         ],
         readings: { // Current readings for SpecificReadings component
             ph: 7.5,
@@ -99,7 +100,7 @@ const FAKE_API_DATA = [
             }
         },
         alerts: [
-            { type: "TDS Critical", status: "Resolved", time: "10:20" , value: 0}
+            { type: "TDS Critical", status: "Resolved", time: "10:20" , value: 900, unit: 'ppm'}
         ],
         readings: {
             ph: 7.1,
@@ -133,7 +134,7 @@ const FAKE_API_DATA = [
             }
         },
         alerts: [
-            { type: "Device Offline", status: "Active", time: "10:00", value: 0 }
+            { type: "Device Offline", status: "Active", time: "10:00", value: 0, unit:'' }
         ],
         readings: {
             ph: 6.7,

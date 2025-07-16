@@ -54,12 +54,71 @@
 }
 
 /* Other existing styles for alerts, details, etc. are unchanged */
-.alert-list { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; }
-.alert { display: flex; justify-content: space-between; padding: 4px 0; }
-.no-alerts { color: #9ca3af; }
-.device-info p { margin: 4px 0; font-size: 0.9rem; }
-.device-info strong { color: #374151; }
-.loading-container { padding: 2rem; font-size: 1.2rem; color: #555; }
+.alert-list { 
+  list-style: none; 
+  padding: 0; 
+  margin: 0; 
+  font-size: 0.9rem; 
+}
+.alert { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease-in-out;
+  padding: 4px; 
+  margin: 4px;
+}
+.alert span:first-child {
+  font-weight: 600; /* Make time stand out a bit */
+  min-width: 80px; /* Ensure time has enough space */
+}
+
+.alert span:nth-child(2) {
+  flex-grow: 1; /* Allow type to take up available space */
+  margin: 0 10px; /* Space between time, type, and value */
+}
+
+.alert span:last-child {
+  font-weight: 500; /* Make value slightly bold */
+  text-align: right;
+  min-width: 60px; /* Ensure value has enough space */
+}
+.alertActive {
+  background-color: #e3f2fd; /* Light blue */
+  color: #1a237e; /* Darker blue text */
+  border-left: 3px solid #90caf9; /* Complementary blue border */
+}
+.alertCritical {
+  background-color: #ffebee; /* Softer red */
+  color: #b71c1c; /* Deeper red text */
+  border-left: 3px solid #ef9a9a; /* Complementary border */
+}
+.alertResolved {
+  background-color: #e8f5e9; /* Softer green */
+  color: #2e7d32; /* Deeper green text */
+  border-left: 3px solid #a5d6a7; /* Complementary border */
+}
+
+.alertActive:hover, .alertCritical:hover, .alertResolved:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px); /* Subtle lift */
+}
+.no-alerts { 
+  color: #9ca3af; 
+}
+.device-info p { 
+  margin: 4px 0; 
+  font-size: 0.9rem; 
+}
+.device-info strong { 
+  color: #374151; 
+}
+.loading-container { 
+  padding: 2rem; 
+  font-size: 1.2rem; 
+  color: #555; 
+}
 
 @media (max-width: 1024px) {
   .page-container {

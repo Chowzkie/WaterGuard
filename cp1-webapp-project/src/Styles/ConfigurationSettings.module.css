@@ -378,3 +378,9 @@
     font-size: 14px;
     font-weight: lighter;
  }
+
+ @media (min-width: 1900px) {
+  .offline-card{
+    margin-top: 100px;
+  }
+}

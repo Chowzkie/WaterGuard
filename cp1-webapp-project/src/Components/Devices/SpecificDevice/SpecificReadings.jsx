@@ -1,5 +1,3 @@
-// Components/Devices/SpecificDevice/SpecificReadings.jsx
-import React, { useState } from "react";
 import Style from '../../../Styles/SpecificDeviceStyle/SpecificReadings.module.css';
 
 // Define the exact order and configuration for the 4 parameters you want to display
@@ -19,7 +17,6 @@ const PARAMETER_CONFIG = {
 };
 
 // Define the thresholds directly or reference deviceDetails.configurations
-// For simplicity, using hardcoded values based on your FAKE_API_DATA defaults for ps01-dev
 const getStatusClass = (paramTitle, value) => {
     switch (paramTitle) {
         case 'Current pH':

@@ -340,6 +340,7 @@
   cursor: pointer;
   border-bottom: 1px solid #f0f0f0;
   transition: background-color 0.2s ease, font-weight 0.2s ease;
+  text-decoration: none;
 }
 
 .dropdownItemU:last-child {
@@ -361,12 +362,15 @@
 /* Hover effects */
 .dropdownItemU.manageProfile:hover {
   background-color: #e0f7fa;
-  color: #00796b;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .dropdownItemU.logout:hover {
   background-color: #ffebee;
-  color: #c62828;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+.dropdownItemU.logs:hover{
+  background-color: #ebffee;
+  font-weight: 500;
 }

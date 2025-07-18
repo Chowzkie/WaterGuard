@@ -1,7 +1,7 @@
 // Components/Navigation-Header/Header.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight, Logs  } from 'lucide-react';
 import styles from '../../Styles/Header.module.css';
 import ProfilePic from '../../assets/ProfilePic.png';
 import Logo from '../../assets/Logo.png';
@@ -124,10 +124,13 @@ function Header({ onLogout, deviceLabelForHeader }) {
                     </button>
                     <div className={`${styles.dropdownMenu} ${open ? styles.show : ''}`}>
                         <div className={`${styles.dropdownItemU} ${styles.manageProfile}`} onClick={handleAccountSettings}>
-                            <Settings size={18} /> <p>Account</p> <ChevronRight size={15} />
+                            <Settings size={18} color='#0fd1eb' /> <p>Account</p> <ChevronRight size={15} />
                         </div>
+                        <Link to="/logs" className={`${styles.dropdownItemU} ${styles.logs}`} >
+                            <Logs size={17} color='#307e3c' /> <p>View Logs</p> <ChevronRight size={15} />
+                        </Link>
                         <div className={`${styles.dropdownItemU} ${styles.logout}`} onClick={handleLogout}>
-                            <LogOut size={16} /> <p>Log Out</p> <ChevronRight size={15} />
+                            <LogOut size={16} color='#ec515e'/> <p>Log Out</p> <ChevronRight size={15} />
                         </div>
                     </div>
                 </div>

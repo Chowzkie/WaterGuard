@@ -1,6 +1,24 @@
 /* =================================================
-   Styles/ConfigurationSettings.module.css (Final)
+    Styles/ConfigurationSettings.module.css (Final)
    ================================================= */
+
+/* --- NEW: Color Palette for Collapsibles --- */
+:root {
+    --bg-surface: #ffffff;      /* Panel background */
+    --bg-hover: #f1f5f9;        /* Hover state background */
+    --border-color: #e2e8f0;    /* Softer borders */
+    
+    --text-header: #1e293b;     /* Darker text for headers */
+    --text-body: #475569;       /* Softer text for body/labels */
+    --text-light: #64748b;      /* Muted text for icons, etc. */
+
+    /* Icon-specific colors */
+    --icon-alerts: #f59e0b;      /* Amber */
+    --icon-logging: #6366f1;     /* Indigo */
+    --icon-testing: #10b981;     /* Teal */
+    --icon-shutoff: #ef4444;     /* Red */
+}
+
 .settings-wrapper {
     animation: fadeIn 0.5s ease-in-out;
 }
@@ -14,9 +32,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
+/* --- BUTTON STYLES (Reverted to Original) --- */
 .back-button, .save-button {
     display: inline-flex;
     align-items: center;
@@ -49,48 +68,31 @@
     background-color: #1d4ed8;
 }
 
-.settings-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* Default to one column */
-    gap: 20px;
+.save-button:disabled {
+    cursor: not-allowed;
+    background-color: #d1d5db;
+    border-color: #9ca3af;
+    color: #4b5563;
 }
 
-.left-column, .right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.save-button.save-success {
+    background-color: #22c55e;
+    border-color: #9ca3af;
+    color: white;
 }
 
-@media (min-width: 1100px) {
-    .settings-grid {
-        grid-template-columns: 2fr 1fr;
-    }
+.spinner {
+    animation: spin 1s linear infinite;
 }
 
-.settings-panel {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid #e5e7eb;
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-.settings-panel h4 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 10px;
-}
-
+/* --- FORM & INPUT STYLES (Original) --- */
 .threshold-group {
-    margin-bottom: 20px;
-}
-
-.threshold-group:last-child {
-    margin-bottom: 0;
+    margin-bottom: 0; /* Let the new .content-inner 'gap' property handle spacing */
 }
 
 .threshold-group > label {
@@ -101,37 +103,19 @@
     margin-bottom: 10px;
 }
 
-/* --- NEW: A container for multiple rows of inputs --- */
 .input-rows-container {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* This creates space between the rows of inputs */
-}
-
-/* --- REMOVED: The generic .input-row is replaced by specific ones below --- */
-
-/* --- NEW: Specific grid layouts for input rows --- */
-.input-row-4-col {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
 }
 
-.input-row-2-col {
+.input-row-1-col, .input-row-2-col, .input-row-4-col {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
-
-/* --- This handles the single-column layout for select fields gracefully --- */
-.threshold-group .select-field {
-    max-width: 250px; /* Prevents select from becoming too wide */
-}
-
-.input-field {
-    display: flex;
-    flex-direction: column;
-}
+.input-row-1-col { grid-template-columns: 1fr; }
+.input-row-2-col { grid-template-columns: repeat(2, 1fr); }
+.input-row-4-col { grid-template-columns: repeat(4, 1fr); }
 
 .input-field label {
     font-size: 12px;
@@ -139,248 +123,230 @@
     margin-bottom: 4px;
 }
 
-.input-field input {
+.input-field input, .select-field {
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
     padding: 8px 10px;
     border: 1px solid #d1d5db;
     border-radius: 5px;
-    transition: border-color 0.2s;
     background-color: #f9fafb;
+    width: 100%;
 }
 
-.input-field input:focus {
+.input-field input:focus, .select-field:focus {
     outline: none;
     border-color: #3b82f6;
     background-color: #fff;
 }
 
-.select-field {
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
-    background-color: #f9fafb;
-    width: 100%;
+/* ============================================= */
+/* == NEW ACCORDION LAYOUT STYLES             == */
+/* ============================================= */
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between collapsible panels */
 }
 
-.view-logs-button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    border-radius: 6px;
-    background-color: #28a745;
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none;
+.collapsible-panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
     cursor: pointer;
+    user-select: none;
     transition: background-color 0.2s ease;
 }
 
-.view-logs-button:hover {
-    background-color: #218838;
+.collapsible-header:hover {
+    background-color: var(--bg-hover);
 }
 
-/* Add these styles to your existing ConfigurationSettings.module.css file */
+.collapsible-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-header);
+}
 
-/* ============================================= */
-/* == CONFIRMATION MODAL (for Unsaved Changes) == */
-/* ============================================= */
+.header-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon {
+    color: var(--text-light);
+}
+
+.icon-alerts { color: var(--icon-alerts); }
+.icon-logging { color: var(--icon-logging); }
+.icon-testing { color: var(--icon-testing); }
+.icon-shutoff { color: var(--icon-shutoff); }
+
+
+.chevron-icon {
+    color: var(--text-light);
+    transition: transform 0.3s ease;
+}
+
+.chevron-icon.open {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+.collapsible-content.open {
+    max-height: 1500px;
+}
+
+.content-inner {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* --- OTHER STYLES (Unchanged logic) --- */
+.not-configured-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-top: 5px;
+    color: #6c757d;
+}
+.not-configured-message p { margin: 0; font-size: 0.9rem; }
 
 .modalBackdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.confirmationModalBackdrop {
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 1001;
-}
-
-.modalContent {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  width: 100%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  animation: zoomIn 0.2s ease-out;
-}
-
-@keyframes zoomIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
 }
 
 .confirmationModalContent {
-  max-width: 420px;
-  text-align: center;
-  padding: 2rem 1.5rem 1.5rem 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    animation: zoomIn 0.2s ease-out;
 }
 
-.icon {
-  margin: 0 auto 1rem auto;
-  color: #f59e0b; /* A yellow-orange warning color */
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.confirmationModalContent .icon {
+    margin: 0 auto 1rem auto;
+    color: #f59e0b;
 }
 
 .confirmationModalContent h4 {
-  font-size: 1.25rem;
-  margin: 0 0 0.5rem 0;
-  font-weight: 600;
-  color: #1f2937;
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+    color: #1f2937;
 }
 
 .confirmationModalContent p {
-  font-size: 1rem;
-  margin: 0 0 1.5rem 0;
-  color: #4b5563;
-  line-height: 1.5;
+    font-size: 1rem;
+    margin: 0 0 1.5rem 0;
+    color: #4b5563;
+    line-height: 1.5;
 }
 
 .modalFooter {
-  display: flex;
-  justify-content: center; /* Center buttons in confirmation modal */
-  padding-top: 1rem; /* Add padding to the top */
-  border-top: 1px solid #e5e7eb;
-  gap: 0.75rem;
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    gap: 0.75rem;
 }
 
-/* Button styles, now part of the module */
 .buttonPrimary, .buttonSecondary, .buttonTertiary {
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.buttonPrimary {
-  background-color: #3b82f6; /* Blue */
-  color: white;
-}
-.buttonPrimary:hover {
-  background-color: #2563eb;
-}
+.buttonPrimary { background-color: #3b82f6; color: white; }
+.buttonPrimary:hover { background-color: #2563eb; }
+.buttonSecondary { background-color: #f3f4f6; color: #1f2937; border: 1px solid #d1d5db; }
+.buttonSecondary:hover { background-color: #e5e7eb; }
+.buttonTertiary { background-color: transparent; color: #4b5563; }
+.buttonTertiary:hover { background-color: #f3f4f6; }
 
-.buttonSecondary {
-  background-color: #f3f4f6; /* Light Gray */
-  color: #1f2937;
-  border: 1px solid #d1d5db;
-}
-.buttonSecondary:hover {
-  background-color: #e5e7eb;
-}
-
-.buttonTertiary {
-    background-color: transparent;
-    color: #4b5563;
-    box-shadow: none;
-}
-.buttonTertiary:hover {
-    background-color: #f3f4f6;
-}
-
-/*NEW----*/
-
-/* Add this to ConfigurationSettings.module.css */
-
-.save-button.save-success {
-  background-color: #22c55e; /* A success green color */
-  border-color: #16a34a;
-  color: white;
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.save-button:disabled {
-    cursor: not-allowed;
-    background-color: #d1d5db; /* A light gray for disabled */
-    border-color: #9ca3af;
-    color: #4b5563;
-}
-
- /* Offline device styles */
-
- .offline-device {
+.offline-device {
     display: flex;
     align-items: center;
     justify-content: center;
-  
- }
+}
 
- .offline-card{
+.offline-card {
     background-color: #f0f2f5;
     width: 400px;
     height: 300px;
     border-radius: 15px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
- }
- 
- .icon-wrapper{
+    margin-top: 50px;
+}
+
+.offline-card .icon-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ff4d4d;
     background-color: rgb(255, 218, 218);
-
     height: 100px;
     width: 100px;
     border-radius: 20px;
-    padding: 10px;
- }
+}
 
- .offline-card h4{
+.offline-card h4 {
     color: #444444;
     margin: 15px 0 5px 0;
     font-size: 16px;
     font-weight: 700;
- }
+}
 
- .offline-card p {
+.offline-card p {
     margin: 0;
     text-align: center;
     font-size: 14px;
     font-weight: lighter;
- }
-
- @media (min-width: 1900px) {
-  .offline-card{
-    margin-top: 100px;
-  }
 }

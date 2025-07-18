@@ -26,6 +26,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
+    position: relative; /* Crucial for positioning the filter panel */
 }
 .menu,
 .download {
@@ -42,6 +43,341 @@
     transform: translateY(-2px); /* Slight lift effect */
 }
 
+/* --- Filter Panel Styles --- */
+.filter-panel {
+    position: absolute;
+    top: 50px; /* Adjust based on your header height */
+    right: 0;
+    width: 400px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* For rounded corners */
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    background-color: #f9f9f9;
+}
+
+.filter-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.close-filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #777;
+    transition: color 0.2s ease;
+}
+
+.close-filter-btn:hover {
+    color: #333;
+}
+
+.filter-body {
+    padding: 20px;
+    flex-grow: 1;
+    overflow-y: auto; /* Allows scrolling if many filters */
+}
+
+.filter-row {
+    margin-bottom: 20px;
+}
+
+.filter-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.filter-control {
+    position: relative; /* For dropdown positioning */
+}
+
+/* Date Range Inputs */
+.date-range-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    color: #333;
+    -webkit-appearance: none; /* Remove default date picker icon */
+    appearance: none;
+    background-color: #fff;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+/* --- REFINED STYLES FOR DROPDOWN MULTI-SELECT (Device ID) --- */
+
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-dropdown:hover {
+    border-color: #bbb;
+}
+
+.custom-dropdown.open {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    /* Align to flex-start for wrapping pills, otherwise center */
+    align-items: flex-start;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: #333;
+    min-height: 40px; /* Ensure consistent height */
+}
+
+.selected-pills-summary {
+    display: flex;
+    flex-wrap: wrap; /* Allow pills to wrap to the next line */
+    gap: 5px; /* Spacing between pills */
+    flex-grow: 1; /* Allow it to take up available space */
+    margin-right: 10px; /* Space before the chevron */
+}
+
+.summary-pill {
+    background-color: #e2f0ff; /* Light blue */
+    border: 1px solid #a8d7ff;
+    border-radius: 12px; /* Slightly more rounded */
+    padding: 2px 8px; /* Adjusted padding */
+    font-size: 0.8em;
+    color: #0056b3;
+    white-space: nowrap;
+    line-height: 1.2; /* Ensure text sits nicely */
+}
+
+.dropdown-header span { /* For "Any Device ID" placeholder */
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-top: 2px; /* Align with summary-pill padding */
+    padding-bottom: 2px;
+}
+
+.dropdown-chevron {
+    transition: transform 0.2s ease;
+    flex-shrink: 0; /* Prevent chevron from shrinking */
+    margin-top: 5px; /* Adjust vertical position to align with pills if they wrap */
+}
+
+.custom-dropdown.open .dropdown-chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown List Content (when open) */
+.type-dropdown-list {
+    position: absolute;
+    top: calc(100% + 5px); /* Position slightly below the header, adjusted for spacing */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #007bff; /* Border color matches focus */
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+    max-height: 250px; /* Max height for the entire dropdown content */
+    overflow: hidden; /* Contains internal scrolling */
+    z-index: 1001;
+    padding: 0;
+    display: flex; /* Use flexbox for internal layout */
+    flex-direction: column;
+}
+
+.search-input-wrapper {
+    padding: 10px 15px; /* Padding all around */
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0; /* Don't shrink when content scrolls */
+}
+
+.dropdown-search-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc; /* Lighter border for search input */
+    border-radius: 4px;
+    font-size: 0.9rem;
+    outline: none;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+.dropdown-search-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.selected-pills-display {
+    padding: 10px 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid #eee; /* Only apply border if there are selected items */
+    flex-shrink: 0; /* Don't shrink */
+}
+
+.selected-pills-display:empty {
+    padding: 0;
+    border-bottom: none;
+    min-height: 0; /* Ensure it collapses fully if empty */
+}
+
+.selected-header {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+    margin-right: 5px;
+    flex-basis: 100%; /* Make header take full width */
+    margin-bottom: 5px;
+    line-height: 1; /* Tighter line height for the header */
+}
+
+.type-pill-dropdown { /* Style for pills *inside* the dropdown */
+    display: inline-flex;
+    align-items: center;
+    background-color: #e9f5ff; /* Slightly lighter blue for distinction */
+    border: 1px solid #cceeff;
+    border-radius: 15px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    color: #0056b3;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.type-pill-dropdown button {
+    background: none;
+    border: none;
+    color: #0056b3;
+    margin-left: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.type-pill-dropdown button:hover {
+    color: #003e80;
+}
+
+.dropdown-separator {
+    width: calc(100% - 30px); /* Adjust width to account for padding */
+    margin: 10px 15px; /* Center it with padding */
+    border: 0;
+    border-top: 1px dashed #eee;
+    flex-shrink: 0; /* Don't shrink */
+}
+
+.selected-pills-display:empty + .dropdown-separator {
+    display: none; /* Hide separator if no pills are displayed */
+}
+
+.available-items-scroll {
+    flex-grow: 1; /* Allow this section to take remaining space and scroll */
+    overflow-y: auto;
+    padding-bottom: 5px;
+    min-height: 0; /* Important for flex-grow with overflow */
+}
+
+.type-dropdown-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #333;
+    transition: background-color 0.2s ease;
+    display: flex; /* Ensure full clickable area */
+    align-items: center;
+}
+
+.type-dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+.no-results {
+    padding: 10px 15px;
+    color: #777;
+    font-style: italic;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.filter-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    background-color: #f9f9f9;
+    flex-shrink: 0; /* Prevent shrinking if filter body scrolls */
+}
+
+.clear-btn,
+.apply-btn {
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.clear-btn {
+    background-color: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.clear-btn:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.apply-btn {
+    background-color: #007bff;
+    color: #fff;
+    border: 1px solid #007bff;
+}
+
+.apply-btn:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
 .tableHeader {
     display: grid;
     grid-template-columns: 1.5fr 1fr 2.5fr 2fr 1fr; /* Adjust column widths as needed */
@@ -110,7 +446,7 @@
     font-style: italic;
 }
 
-/* Responsive adjustments for smaller screens */
+/* --- Responsive adjustments for smaller screens --- */
 @media (max-width: 768px) {
     .tableHeader {
         display: none; /* Hide table header on small screens */
@@ -142,6 +478,17 @@
         color: #555;
         margin-right: 10px;
         flex-shrink: 0;
+    }
+    .filter-panel {
+        width: 90%; /* Make it wider on smaller screens */
+        left: 5%;
+        right: 5%;
+        top: 60px; /* Adjust top position */
+        max-height: 80vh; /* Add a max-height for very small screens */
+    }
+    .available-items-scroll,
+    .type-dropdown-list {
+        max-height: unset; /* Let content dictate height in mobile, or set a new max-height */
     }
 }
 

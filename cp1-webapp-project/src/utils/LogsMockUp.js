@@ -20,7 +20,7 @@ export const systemLogsData = [
     {
         id: 3,
         dateTime: '2025-07-11 10:47:15',
-        deviceId: 'TEMP-SENSOR-01',
+        deviceId: 'PS01-DEV',
         event: 'Temperature sensor offline',
         location: 'Reservoir A',
         status: 'Error',
@@ -36,7 +36,7 @@ export const systemLogsData = [
     {
         id: 5,
         dateTime: '2025-07-11 10:49:22',
-        deviceId: 'FLOW-MTR-03',
+        deviceId: 'PS02-DEV',
         event: 'Abnormal flow rate detected',
         location: 'Sector 3 Pipeline',
         status: 'Warning',
@@ -44,7 +44,7 @@ export const systemLogsData = [
     {
         id: 6,
         dateTime: '2025-07-11 10:50:05',
-        deviceId: 'FILTER-01',
+        deviceId: 'PS04-DEV',
         event: 'Filter cleaned successfully',
         location: 'Filtration Plant',
         status: 'Success',
@@ -52,7 +52,7 @@ export const systemLogsData = [
     {
         id: 7,
         dateTime: '2025-07-11 10:51:10',
-        deviceId: 'PH-SENSOR-02',
+        deviceId: 'PS02-DEV',
         event: 'pH sensor calibration required',
         location: 'Treatment Tank 2',
         status: 'Info', // This status is still relevant for System Logs if you want to keep it
@@ -60,7 +60,7 @@ export const systemLogsData = [
     {
         id: 8,
         dateTime: '2025-07-11 10:52:00',
-        deviceId: 'CHEM-INJ-UNIT',
+        deviceId: 'PS03-DEV',
         event: 'Chemical injection rate adjusted',
         location: 'Chemical Dosing Unit',
         status: 'Success',

@@ -1,11 +1,12 @@
-/* SystemLogs.module.css */
+/* UserLogs.module.css */
+
 .container {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     background-color: #fff;
     border-radius: 8px;
-    overflow: auto; /* Ensures rounded corners apply to content */
+    overflow: hidden; /* Ensures rounded corners apply to content */
     border: 1px solid #e0e0e0; /* Add a subtle border around the table */
     height: auto;
 }
@@ -66,6 +67,7 @@
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
     background-color: #f9f9f9;
+    flex-shrink: 0;
 }
 
 .filter-header h4 {
@@ -133,7 +135,7 @@
     cursor: pointer;
 }
 
-/* --- REFINED STYLES FOR DROPDOWN MULTI-SELECT (Device ID) --- */
+/* --- REFINED STYLES FOR DROPDOWN MULTI-SELECT (Username) --- */
 
 .custom-dropdown {
     position: relative;
@@ -157,8 +159,7 @@
 .dropdown-header {
     display: flex;
     justify-content: space-between;
-    /* Align to flex-start for wrapping pills, otherwise center */
-    align-items: flex-start;
+    align-items: flex-start; /* Align to flex-start for wrapping pills */
     padding: 8px 12px;
     font-size: 0.9rem;
     color: #333;
@@ -184,12 +185,12 @@
     line-height: 1.2; /* Ensure text sits nicely */
 }
 
-.dropdown-header span { /* For "Any Device ID" placeholder */
+.dropdown-header span { /* For "Any Username" placeholder */
     flex-grow: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-top: 2px; /* Align with summary-pill padding */
+    padding-top: 2px;
     padding-bottom: 2px;
 }
 
@@ -255,7 +256,7 @@
 .selected-pills-display:empty {
     padding: 0;
     border-bottom: none;
-    min-height: 0; /* Ensure it collapses fully if empty */
+    min-height: 0;
 }
 
 .selected-header {
@@ -263,15 +264,15 @@
     color: #666;
     font-weight: 500;
     margin-right: 5px;
-    flex-basis: 100%; /* Make header take full width */
+    flex-basis: 100%;
     margin-bottom: 5px;
-    line-height: 1; /* Tighter line height for the header */
+    line-height: 1;
 }
 
-.type-pill-dropdown { /* Style for pills *inside* the dropdown */
+.type-pill-dropdown {
     display: inline-flex;
     align-items: center;
-    background-color: #e9f5ff; /* Slightly lighter blue for distinction */
+    background-color: #e9f5ff;
     border: 1px solid #cceeff;
     border-radius: 15px;
     padding: 4px 8px;
@@ -297,44 +298,22 @@
 }
 
 .dropdown-separator {
-    width: calc(100% - 30px); /* Adjust width to account for padding */
-    margin: 10px 15px; /* Center it with padding */
+    width: calc(100% - 30px);
+    margin: 10px 15px;
     border: 0;
     border-top: 1px dashed #eee;
-    flex-shrink: 0; /* Don't shrink */
+    flex-shrink: 0;
 }
 
 .selected-pills-display:empty + .dropdown-separator {
-    display: none; /* Hide separator if no pills are displayed */
+    display: none;
 }
 
 .available-items-scroll {
-    flex-grow: 1; /* Allow this section to take remaining space and scroll */
+    flex-grow: 1;
     overflow-y: auto;
     padding-bottom: 5px;
-    min-height: 0; /* Important for flex-grow with overflow */
-}
-
-.type-dropdown-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: #333;
-    transition: background-color 0.2s ease;
-    display: flex; /* Ensure full clickable area */
-    align-items: center;
-}
-
-.type-dropdown-item:hover {
-    background-color: #f0f0f0;
-}
-
-.no-results {
-    padding: 10px 15px;
-    color: #777;
-    font-style: italic;
-    font-size: 0.9rem;
-    text-align: center;
+    min-height: 0;
 }
 
 .filter-footer {
@@ -344,7 +323,7 @@
     padding: 15px 20px;
     border-top: 1px solid #eee;
     background-color: #f9f9f9;
-    flex-shrink: 0; /* Prevent shrinking if filter body scrolls */
+    flex-shrink: 0;
 }
 
 .clear-btn,
@@ -380,7 +359,8 @@
 }
 .tableHeader {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 2.5fr 2fr 1fr; /* Adjust column widths as needed */
+    /* Adjusted grid-template-columns for Date & Time, Username, Fullname, Action */
+    grid-template-columns: 1.5fr 1.2fr 1.8fr 2.5fr;
     background-color: #f5f5f5;
     padding: 12px 20px;
     font-weight: 600;
@@ -395,7 +375,7 @@
 
 .tableRow {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 2.5fr 2fr 1fr; /* Must match header columns */
+    grid-template-columns: 1.5fr 1.2fr 1.8fr 2.5fr;
     padding: 12px 20px;
     border-bottom: 1px solid #eee;
     align-items: center;
@@ -414,29 +394,8 @@
     padding: 8px 0;
     color: #333;
     font-size: 14px;
-    word-wrap: break-word; /* Allow long words to break */
-    min-width: 0; /* Prevent content from overflowing on small screens */
-}
-
-/* Status colors */
-.warningStatus {
-    color: #ffa500; /* Orange for Warning */
-    font-weight: 600;
-}
-
-.successStatus {
-    color: #28a745; /* Green for Success */
-    font-weight: 600;
-}
-
-.errorStatus {
-    color: #dc3545; /* Red for Error */
-    font-weight: 600;
-}
-
-.infoStatus {
-    color: #17a2b8; /* Cyan/Blue for Info */
-    font-weight: 600;
+    word-wrap: break-word;
+    min-width: 0;
 }
 
 .noData {
@@ -449,14 +408,14 @@
 /* --- Responsive adjustments for smaller screens --- */
 @media (max-width: 768px) {
     .tableHeader {
-        display: none; /* Hide table header on small screens */
+        display: none;
     }
 
     .tableRow {
-        display: block; /* Stack items vertically */
+        display: block;
         padding: 10px 15px;
-        border: 1px solid #eee; /* Give each row a border */
-        margin-bottom: 10px; /* Space between stacked rows */
+        border: 1px solid #eee;
+        margin-bottom: 10px;
         border-radius: 5px;
     }
 
@@ -465,7 +424,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 5px 0;
-        border-bottom: 1px dashed #eee; /* Dashed line between fields */
+        border-bottom: 1px dashed #eee;
     }
 
     .tableRow > .tableCell:last-child {
@@ -473,22 +432,35 @@
     }
 
     .tableCell::before {
-        content: attr(data-label); /* Use data-label for pseudo-elements */
+        content: attr(data-label);
         font-weight: 600;
         color: #555;
         margin-right: 10px;
         flex-shrink: 0;
     }
     .filter-panel {
-        width: 90%; /* Make it wider on smaller screens */
+        width: 90%;
         left: 5%;
         right: 5%;
-        top: 60px; /* Adjust top position */
-        max-height: 80vh; /* Add a max-height for very small screens */
+        top: 60px;
+        max-height: 80vh;
     }
     .available-items-scroll,
     .type-dropdown-list {
-        max-height: unset; /* Let content dictate height in mobile, or set a new max-height */
+        max-height: unset;
+    }
+
+    .container {
+        height: auto; /* Allow height to adjust on smaller screens for overall page scrolling */
+        max-height: 95vh; /* Or set a specific max-height if you want a fixed-height component on mobile */
+    }
+
+    /* For mobile, ensure the tableBodyScroll takes appropriate height if the container has a fixed height */
+    .tableBodyScroll {
+        overflow-y: auto;
+        height: auto; /* Reset to auto for stacked layout on mobile */
+        max-height: calc(100% - (var(--table-title-height) + var(--table-header-height))); /* This would require CSS variables or explicit values */
+        /* A simpler approach is to ensure the parent has a fixed height and flex-grow works */
     }
 }
 

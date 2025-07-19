@@ -2,15 +2,13 @@
     height: calc(100vh - 100px);
     width: 100%;
     padding: 20px;
+    overflow-y: auto;
 }
 .tabs {
     display: flex;
     border-bottom: 1px solid #e0e0e0;
     margin-bottom: 20px;
     overflow-x: auto; /* Enable horizontal scrolling for tabs on small screens */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
-    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
 }
 
 .tabs::-webkit-scrollbar { /* Hide scrollbar for Chrome/Safari */

@@ -66,3 +66,90 @@ export const systemLogsData = [
         status: 'Success',
     },
 ];
+
+export const userLogs = [
+  {
+    dateTime: "2025-07-20T09:00:00Z",
+    username: "john.doe",
+    fullname: "John Doe",
+    action: "Logged in successfully",
+  },
+  {
+    dateTime: "2025-07-20T09:05:15Z",
+    username: "jane.smith",
+    fullname: "Jane Smith",
+    action: "Shut off water valve: 'Main Inlet Valve'",
+  },
+  {
+    dateTime: "2025-07-20T09:10:30Z",
+    username: "alice.wonder",
+    fullname: "Alice Wonderland",
+    action: "Changed hardware device parameter: 'pH sensor' to 7.2 (from 6.8)",
+  },
+  {
+    dateTime: "2025-07-20T09:15:45Z",
+    username: "john.doe",
+    fullname: "John Doe",
+    action: "Updated water change interval: 'Tank 1' to 24 hours (from 48 hours)",
+  },
+  {
+    dateTime: "2025-07-20T09:20:00Z",
+    username: "bob.builder",
+    fullname: "Bob Builder",
+    action: "Changed hardware device parameter: 'Turbidity sensor' to 5 NTU (from 8 NTU)",
+  },
+  {
+    dateTime: "2025-07-20T09:25:20Z",
+    username: "jane.smith",
+    fullname: "Jane Smith",
+    action: "Updated account details for 'john.doe': changed password",
+  },
+  {
+    dateTime: "2025-07-20T09:30:40Z",
+    username: "alice.wonder",
+    fullname: "Alice Wonderland",
+    action: "Changed hardware device parameter: 'TDS sensor' to 150 ppm (from 180 ppm)",
+  },
+  {
+    dateTime: "2025-07-20T09:35:05Z",
+    username: "john.doe",
+    fullname: "John Doe",
+    action: "Opened water valve: 'Discharge Valve Unit B'",
+  },
+  {
+    dateTime: "2025-07-20T09:40:10Z",
+    username: "bob.builder",
+    fullname: "Bob Builder",
+    action: "Changed hardware device parameter: 'Temperature sensor' to 25.0 °C (from 26.5 °C)",
+  },
+  {
+    dateTime: "2025-07-20T09:45:30Z",
+    username: "jane.smith",
+    fullname: "Jane Smith",
+    action: "Logged out",
+  },
+  {
+    dateTime: "2025-07-20T10:00:10Z",
+    username: "john.doe",
+    fullname: "John Doe",
+    action: "Created new user account: 'new.engineer'",
+  },
+  {
+    dateTime: "2025-07-20T10:05:00Z",
+    username: "alice.wonder",
+    fullname: "Alice Wonderland",
+    action: "Performed system diagnostic on 'Sensor Hub 3'",
+  },
+  {
+    dateTime: "2025-07-20T10:10:20Z",
+    username: "bob.builder",
+    fullname: "Bob Builder",
+    action: "Acknowledged low pressure alarm: 'Pump Station 1'",
+  },
+  {
+    dateTime: "2025-07-14T09:24:3Z",
+    username: "dora.explo",
+    fullname: "Dora The Explorer",
+    action: "fucked up the system",
+  },
+];

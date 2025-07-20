@@ -214,34 +214,46 @@ const initialState = {
 // =================================================================================
 function alertsReducer(state, action) {
     switch (action.type) {
+        // This case is the core of the alert generation logic. It processes each new sensor
+        // reading and decides whether to create, update, or resolve an alert.
         case 'PROCESS_READING': {
             const { reading, alertIdCounter } = action.payload;
+            // The evaluateSensorReading function returns potential alerts based on the reading.
             const potentialAlerts = evaluateSensorReading(reading);
+            // Create a mutable copy of the current active alerts to work with.
             let nextActiveAlerts = [...state.activeAlerts];
+            // An array to hold any alerts that need to be moved out of the active list.
             const alertsToArchive = [];
 
-            //Alert depuplication logic
+            // Iterate over each potential alert generated from the sensor reading.
             potentialAlerts.forEach(newAlertData => {
+                // Check if an alert for the same device and parameter already exists.
+                // This is crucial for preventing duplicate alerts.
                 const existingAlertIndex = nextActiveAlerts.findIndex(a =>
                     a.originator === newAlertData.originator &&
                     a.parameter === newAlertData.parameter
                 );
                 const existingAlert = existingAlertIndex !== -1 ? nextActiveAlerts[existingAlertIndex] : null;
 
+                // Determine if the new sensor reading indicates a 'Normal' state.
                 const isNewStatusNormal = newAlertData.severity === 'Normal';
 
                 if (existingAlert) {
-                    // An alert for this device/parameter already exists. Decide what to do.
+                    // --- An alert for this parameter already exists. ---
+
                     if (isNewStatusNormal) {
-                        // The new status is 'Normal'.
+                        // The parameter has returned to a normal state.
+                        // We only act if the existing alert was a real problem, not already a "back to normal" message.
                         if (!existingAlert.isBackToNormal) {
-                            // If the existing alert was a real problem (not already a 'Normal' message), resolve it.
+                            // 1. Archive the original problem alert with a 'Resolved' status.
                             alertsToArchive.push({ ...existingAlert, status: 'Resolved' });
+
+                            // 2. Create a new "back to normal" notification to inform the user.
                             alertIdCounter.current++;
                             const backToNormalAlert = {
                                 id: alertIdCounter.current,
                                 type: `${newAlertData.parameter} is back to normal`,
-                                isBackToNormal: true,
+                                isBackToNormal: true, // Special flag for this type of notification.
                                 dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString(),
                                 originator: newAlertData.originator,
                                 parameter: newAlertData.parameter,
@@ -249,14 +261,22 @@ function alertsReducer(state, action) {
                                 status: 'Active',
                                 acknowledged: false
                             };
+
+                            // 3. Replace the old problem alert with the new "back to normal" notification in the active list.
                             nextActiveAlerts.splice(existingAlertIndex, 1, backToNormalAlert);
-                            // We start the timer here
+                            
+                            // 4. Start the auto-clear timer for this notification.
                             action.timers.start(backToNormalAlert.id);
                         }
                     } else {
-                        // The new status is a problem (Warning or Critical).
+                        // The new reading indicates a continued or new problem (Warning or Critical).
+                        // We only update if the severity level has changed (e.g., from Warning to Critical).
                         if (existingAlert.severity !== newAlertData.severity) {
+                            // 1. Archive the previous alert with an 'Escalated' status.
+                            // This applies even if the previous alert was a "back to normal" message.
                             alertsToArchive.push({ ...existingAlert, status: 'Escalated' });
+                            
+                            // 2. Create the new, more severe alert.
                             alertIdCounter.current++;
                             const newAlert = {
                                 ...newAlertData,
@@ -264,11 +284,14 @@ function alertsReducer(state, action) {
                                 acknowledged: false,
                                 dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(reading.timestamp).toISOString()
                             };
+
+                            // 3. Replace the old alert with the new one in the active list.
                             nextActiveAlerts.splice(existingAlertIndex, 1, newAlert);
                         }
                     }
                 } else if (!isNewStatusNormal) {
-                    // No alert exists, and the new status is a problem. Create a new alert.
+                    // --- No alert exists for this parameter, and the new reading is a problem. ---
+                    // This is the simplest case: create a brand new alert.
                     alertIdCounter.current++;
                     const newAlert = {
                         ...newAlertData,
@@ -280,104 +303,104 @@ function alertsReducer(state, action) {
                 }
             });
 
+            // If any changes were made, update the state.
             if (alertsToArchive.length > 0 || nextActiveAlerts.length !== state.activeAlerts.length) {
                 return { ...state, activeAlerts: nextActiveAlerts, recentAlerts: [...alertsToArchive, ...state.recentAlerts] };
             }
+            // If no changes occurred, return the original state to avoid unnecessary re-renders.
             return state;
         }
 
+        // This case handles a user manually acknowledging any active alert.
         case 'ACKNOWLEDGE_ALERT': {
-            // --- MODIFIED: This case now handles user accountability ---
-            // This is the only place the 'acknowledged' flag should be set.
             const { alertId, user, timestamp } = action.payload;
             const alertToAck = state.activeAlerts.find(a => a.id === alertId);
+
+            // If the alert doesn't exist (e.g., was cleared by the system first), do nothing.
             if (!alertToAck) return state;
 
-            // Create the acknowledgedBy object
+            // Prepare the acknowledgment information object.
             const acknowledgedByInfo = {
                 name: user.name,
                 timestamp: timestamp
             };
 
-            // This logic is for "back to normal" alerts
-            if (alertToAck.isBackToNormal) {
-                // --- FIX --- This is for when a user MANUALLY acknowledges a "back to normal" alert.
-                action.timers.clear(alertId); // Stop the auto-clear timer
-                return {
-                    ...state,
-                    activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
-                    // Move to recent, set status to Cleared, and set acknowledged to TRUE
-                    recentAlerts: [{
-                        ...alertToAck,
-                        status: 'Cleared',
-                        acknowledged: true,
-                        acknowledgedBy: acknowledgedByInfo // Stamp the user info
-                    }, ...state.recentAlerts]
-                };
-            }
-
-            // For a regular alert, find it, update it, and keep it in the active list
+            // This logic now applies to ALL active alerts, including "back to normal" messages.
+            // It maps over the active alerts, finds the one with the matching ID, and updates it.
             const nextActiveAlerts = state.activeAlerts.map(alert =>
                 alert.id === alertId ? {
                     ...alert,
-                    acknowledged: true,
-                    acknowledgedBy: acknowledgedByInfo // Stamp the user info
+                    acknowledged: true,          // Set the acknowledged flag to true.
+                    acknowledgedBy: acknowledgedByInfo // Stamp the user and time information.
                 } : alert
             );
+
+            // Return the new state with the updated active alerts list. The alert remains
+            // in the active list until it is resolved or cleared by another action.
             return { ...state, activeAlerts: nextActiveAlerts };
         }
 
-        // --- FIX --- A new action specifically for the timer
+        // This case is triggered ONLY by the timer set for "back to normal" alerts.
+        // It automatically moves the notification from the active list to the recent list.
         case 'AUTO_CLEAR_NORMAL_ALERT': {
             const { alertId } = action.payload;
             const alertToClear = state.activeAlerts.find(a => a.id === alertId);
 
-            // If alert is not found or is not a "back to normal" alert, do nothing
+            // If the alert is not found or is not a "back to normal" alert, do nothing.
+            // This is a safeguard against race conditions.
             if (!alertToClear || !alertToClear.isBackToNormal) {
                 return state;
             }
 
-            // Move the alert from active to recent
+            // Move the alert from the active list to the recent list.
             return {
                 ...state,
+                // Filter the alert out of the active list.
                 activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
-                // Set status to "Cleared" but DO NOT touch the 'acknowledged' property.
-                // It will remain false as it was created.
+                // Add the alert to the beginning of the recent list with a final 'Cleared' status.
+                // Its acknowledged status (true or false) is preserved from its time in the active list.
                 recentAlerts: [{ ...alertToClear, status: 'Cleared' }, ...state.recentAlerts]
             };
         }
 
-        // --- NEW --- Add a new case to handle archiving old alerts
+        // This case handles the periodic archiving of old alerts. It runs on a timer (e.g., every minute).
         case 'ARCHIVE_RECENT_ALERTS': {
             const { currentTime, archiveInterval } = action.payload;
+            // If there are no recent alerts to check, do nothing.
             if (!state.recentAlerts || state.recentAlerts.length === 0) return state;
 
-            const alertsToKeep = [];
-            const alertsToMove = [];
+            const alertsToKeep = [];    // To hold alerts that are not old enough to be archived.
+            const alertsToMove = [];    // To hold alerts that are old and ready for permanent history.
+
+            // Sort through the recent alerts based on their timestamp.
             state.recentAlerts.forEach(alert => {
                 const alertTime = new Date(alert.dateTime).getTime();
+                // If the time elapsed since the alert was created is greater than the interval, move it.
                 if ((currentTime - alertTime) > archiveInterval) {
-                    alertsToMove.push(alert); // This alert is old, move it
+                    alertsToMove.push(alert);
                 } else {
-                    alertsToKeep.push(alert); // This alert is still recent
+                    alertsToKeep.push(alert);
                 }
             });
 
-            if (alertsToMove.length === 0) return state; // No changes needed
+            // If no alerts were old enough to be moved, return the original state.
+            if (alertsToMove.length === 0) return state;
 
-            // Return the new state with alerts moved
+            // Return the new state with the updated lists.
             return {
                 ...state,
-                recentAlerts: alertsToKeep,
-                alertsHistory: [...state.alertsHistory, ...alertsToMove],
+                recentAlerts: alertsToKeep, // The new, shorter list of recent alerts.
+                alertsHistory: [...state.alertsHistory, ...alertsToMove], // Add the moved alerts to the permanent history.
             };
         }
 
+        // This case handles the permanent deletion of alerts from the history log.
         case 'DELETE_HISTORY_ALERTS': {
-            const { idsToDelete } = action.payload;
-            const remainingAlerts = [];
-            const deletedAlerts = [];
+            const { idsToDelete } = action.payload; // A Set of alert IDs to be deleted.
+            const remainingAlerts = []; // Alerts that will remain in history.
+            const deletedAlerts = [];   // A temporary copy of the alerts being deleted for the undo feature.
 
+            // Partition the history alerts into two groups: remaining and deleted.
             state.alertsHistory.forEach(alert => {
                 if (idsToDelete.has(alert.id)) {
                     deletedAlerts.push(alert);
@@ -386,25 +409,31 @@ function alertsReducer(state, action) {
                 }
             });
 
+            // If for some reason no alerts matched the IDs, do nothing.
             if (deletedAlerts.length === 0) return state;
 
+            // Update the state with the new history and store the deleted items.
             return {
                 ...state,
                 alertsHistory: remainingAlerts,
-                recentlyDeletedHistory: deletedAlerts,
+                recentlyDeletedHistory: deletedAlerts, // This enables the "undo" functionality.
             };
         }
 
+        // This case handles the "undo" action after a deletion.
         case 'RESTORE_HISTORY_ALERTS': {
+            // If there's nothing in the temporary undo buffer, do nothing.
             if (state.recentlyDeletedHistory.length === 0) return state;
 
+            // Return the state with the recently deleted alerts merged back into the main history.
             return {
                 ...state,
                 alertsHistory: [...state.alertsHistory, ...state.recentlyDeletedHistory],
-                recentlyDeletedHistory: [],
+                recentlyDeletedHistory: [], // Clear the undo buffer.
             };
         }
 
+        // The default case for any unhandled actions. It returns the current state unchanged.
         default:
             return state;
     }
@@ -432,15 +461,12 @@ function App() {
     // NEW: useLocation hook to get the current URL path.
     const location = useLocation();
 
-    // NEW: An array of paths where the Header and Navigation should NOT be displayed.
-    const noNavPaths = ['/login', '/account-settings'];
-
     // UPDATED: We now have two separate checks for the header and the sidebar navigation.
     const noHeaderPaths = ['/login']; // Only hide header on the login page.
-    const noSidebarPaths = ['/login', '/account-settings']; // Hide sidebar on login AND account settings.
+    const noNavPaths = ['/login', '/account-settings', '/logs']; // Hide sidebar on login AND account settings.
 
     const showHeader = !noHeaderPaths.includes(location.pathname);
-    const showSidebar = !noSidebarPaths.includes(location.pathname);
+    const showSidebar = !noNavPaths.includes(location.pathname);
 
     // Use to Authenticate the user when logging in
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -518,7 +544,7 @@ function App() {
         const timerId = setTimeout(() => {
             // --- FIX --- The timer now dispatches the new, non-acknowledging action
             dispatch({ type: 'AUTO_CLEAR_NORMAL_ALERT', payload: { alertId } });
-        }, 10000); // 10-second timer for "back to normal" alerts
+        }, 30000); // 30-second timer for "back to normal" alerts
         backToNormalTimers.current.set(alertId, timerId);
     };
 

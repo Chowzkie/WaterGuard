@@ -76,9 +76,9 @@
 }
 
 .save-button.save-success {
-    background-color: #22c55e;
+    background-color: #d1d5db;
     border-color: #9ca3af;
-    color: white;
+    color: 4b5563;
 }
 
 .spinner {
@@ -323,7 +323,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-top: 50px;
+    margin-top: 20px;
 }
 
 .offline-card .icon-wrapper {

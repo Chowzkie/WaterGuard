@@ -1,24 +1,44 @@
-/* SystemLogs.module.css */
+/*
+  SystemLogs.module.css
+*/
+
 .container {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
     background-color: #fff;
     border-radius: 8px;
-    overflow: auto; /* Ensures rounded corners apply to content */
-    border: 1px solid #e0e0e0; /* Add a subtle border around the table */
-    height: auto;
+    border: 1px solid #e0e0e0;
+    
+    /* Changed to a flex column layout */
+    display: flex;
+    flex-direction: column;
+
+    /* Constrain the height of the component to enable internal scrolling. */
+    max-height: 80vh; 
+    
+    /* Hide overflow from the container itself, as scrolling is now handled by the body */
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-in-out;
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .tableTitle{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    /* NEW: Reduced vertical padding for a thinner title bar */
+    padding: 10px 20px;
     background-color: #f0f2f5;
+    /* Prevent this element from shrinking in the flex layout */
+    flex-shrink: 0;
 }
 .tableTitle p{
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    /* NEW: Reduced font weight for a lighter look */
+    font-weight: 600;
     color: #333;
     margin: 0;
 }
@@ -35,12 +55,13 @@
     justify-content: center;
     padding: 8px; /* Padding around the icon */
     cursor: pointer; /* Indicate interactivity */
+    border-radius: 50%; /* Make the hover effect circular */
     transition: background-color 0.2s ease, transform 0.2s ease; /* Smooth transitions */
 }
 .menu:hover,
 .download:hover {
     background-color: #e6e6e6; /* Light gray on hover */
-    transform: translateY(-2px); /* Slight lift effect */
+    transform: scale(1.1); /* Slight zoom effect */
 }
 
 /* --- Filter Panel Styles --- */
@@ -58,7 +79,6 @@
     flex-direction: column;
     overflow: hidden; /* For rounded corners */
 }
-
 .filter-header {
     display: flex;
     justify-content: space-between;
@@ -67,13 +87,11 @@
     border-bottom: 1px solid #eee;
     background-color: #f9f9f9;
 }
-
 .filter-header h4 {
     margin: 0;
     font-size: 1.1rem;
     color: #333;
 }
-
 .close-filter-btn {
     background: none;
     border: none;
@@ -82,21 +100,17 @@
     color: #777;
     transition: color 0.2s ease;
 }
-
 .close-filter-btn:hover {
     color: #333;
 }
-
 .filter-body {
     padding: 20px;
     flex-grow: 1;
     overflow-y: auto; /* Allows scrolling if many filters */
 }
-
 .filter-row {
     margin-bottom: 20px;
 }
-
 .filter-label {
     display: block;
     font-size: 0.9rem;
@@ -104,37 +118,27 @@
     color: #555;
     margin-bottom: 8px;
 }
-
 .filter-control {
     position: relative; /* For dropdown positioning */
 }
-
-/* Date Range Inputs */
 .date-range-group {
     display: flex;
     align-items: center;
     gap: 10px;
 }
-
 .date-input {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 0.9rem;
-    color: #333;
-    -webkit-appearance: none; /* Remove default date picker icon */
-    appearance: none;
-    background-color: #fff;
 }
-
 .date-input::-webkit-calendar-picker-indicator {
     opacity: 0.7;
     cursor: pointer;
 }
 
 /* --- REFINED STYLES FOR DROPDOWN MULTI-SELECT (Device ID) --- */
-
 .custom-dropdown {
     position: relative;
     width: 100%;
@@ -144,143 +148,111 @@
     border-radius: 5px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 .custom-dropdown:hover {
     border-color: #bbb;
 }
-
 .custom-dropdown.open {
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
-
 .dropdown-header {
     display: flex;
     justify-content: space-between;
-    /* Align to flex-start for wrapping pills, otherwise center */
     align-items: flex-start;
     padding: 8px 12px;
     font-size: 0.9rem;
     color: #333;
     min-height: 40px; /* Ensure consistent height */
 }
-
 .selected-pills-summary {
     display: flex;
-    flex-wrap: wrap; /* Allow pills to wrap to the next line */
-    gap: 5px; /* Spacing between pills */
-    flex-grow: 1; /* Allow it to take up available space */
-    margin-right: 10px; /* Space before the chevron */
+    flex-wrap: wrap; 
+    gap: 5px; 
+    flex-grow: 1;
+    margin-right: 10px;
 }
-
 .summary-pill {
-    background-color: #e2f0ff; /* Light blue */
+    background-color: #e2f0ff;
     border: 1px solid #a8d7ff;
-    border-radius: 12px; /* Slightly more rounded */
-    padding: 2px 8px; /* Adjusted padding */
+    border-radius: 12px;
+    padding: 2px 8px;
     font-size: 0.8em;
     color: #0056b3;
-    white-space: nowrap;
-    line-height: 1.2; /* Ensure text sits nicely */
 }
-
-.dropdown-header span { /* For "Any Device ID" placeholder */
+.dropdown-header > span { /* For "Any Device ID" placeholder */
     flex-grow: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-top: 2px; /* Align with summary-pill padding */
-    padding-bottom: 2px;
+    padding-top: 3px; /* Align vertically with pills */
 }
-
 .dropdown-chevron {
     transition: transform 0.2s ease;
-    flex-shrink: 0; /* Prevent chevron from shrinking */
-    margin-top: 5px; /* Adjust vertical position to align with pills if they wrap */
+    flex-shrink: 0; 
+    margin-top: 5px; 
 }
-
 .custom-dropdown.open .dropdown-chevron {
     transform: rotate(180deg);
 }
-
-/* Dropdown List Content (when open) */
 .type-dropdown-list {
     position: absolute;
-    top: calc(100% + 5px); /* Position slightly below the header, adjusted for spacing */
+    top: calc(100% + 5px);
     left: 0;
     right: 0;
     background-color: #fff;
-    border: 1px solid #007bff; /* Border color matches focus */
+    border: 1px solid #007bff;
     border-radius: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
-    max-height: 250px; /* Max height for the entire dropdown content */
-    overflow: hidden; /* Contains internal scrolling */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+    overflow: hidden;
     z-index: 1001;
     padding: 0;
-    display: flex; /* Use flexbox for internal layout */
+    display: flex;
     flex-direction: column;
 }
-
 .search-input-wrapper {
-    padding: 10px 15px; /* Padding all around */
+    padding: 10px 15px;
     border-bottom: 1px solid #eee;
-    flex-shrink: 0; /* Don't shrink when content scrolls */
+    flex-shrink: 0;
 }
-
 .dropdown-search-input {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #ccc; /* Lighter border for search input */
+    border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 0.9rem;
     outline: none;
-    box-sizing: border-box; /* Include padding in width */
+    box-sizing: border-box;
 }
-
 .dropdown-search-input:focus {
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
-
 .selected-pills-display {
     padding: 10px 15px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
-    border-bottom: 1px solid #eee; /* Only apply border if there are selected items */
-    flex-shrink: 0; /* Don't shrink */
+    flex-shrink: 0;
 }
-
-.selected-pills-display:empty {
-    padding: 0;
-    border-bottom: none;
-    min-height: 0; /* Ensure it collapses fully if empty */
-}
-
 .selected-header {
     font-size: 0.85rem;
     color: #666;
     font-weight: 500;
-    margin-right: 5px;
-    flex-basis: 100%; /* Make header take full width */
+    flex-basis: 100%;
     margin-bottom: 5px;
-    line-height: 1; /* Tighter line height for the header */
 }
-
-.type-pill-dropdown { /* Style for pills *inside* the dropdown */
+.type-pill-dropdown {
     display: inline-flex;
     align-items: center;
-    background-color: #e9f5ff; /* Slightly lighter blue for distinction */
+    background-color: #e9f5ff;
     border: 1px solid #cceeff;
     border-radius: 15px;
     padding: 4px 8px;
     font-size: 0.85rem;
     color: #0056b3;
-    white-space: nowrap;
-    line-height: 1.2;
 }
-
 .type-pill-dropdown button {
     background: none;
     border: none;
@@ -291,44 +263,28 @@
     align-items: center;
     padding: 0;
 }
-
-.type-pill-dropdown button:hover {
-    color: #003e80;
-}
-
 .dropdown-separator {
-    width: calc(100% - 30px); /* Adjust width to account for padding */
-    margin: 10px 15px; /* Center it with padding */
+    width: calc(100% - 30px);
+    margin: 10px 15px 0 15px; /* Added 0 top margin */
     border: 0;
-    border-top: 1px dashed #eee;
-    flex-shrink: 0; /* Don't shrink */
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
 }
-
-.selected-pills-display:empty + .dropdown-separator {
-    display: none; /* Hide separator if no pills are displayed */
-}
-
 .available-items-scroll {
-    flex-grow: 1; /* Allow this section to take remaining space and scroll */
+    flex-grow: 1; 
     overflow-y: auto;
-    padding-bottom: 5px;
-    min-height: 0; /* Important for flex-grow with overflow */
+    padding: 5px 0;
+    min-height: 0;
 }
-
 .type-dropdown-item {
     padding: 10px 15px;
     cursor: pointer;
     font-size: 0.9rem;
-    color: #333;
     transition: background-color 0.2s ease;
-    display: flex; /* Ensure full clickable area */
-    align-items: center;
 }
-
 .type-dropdown-item:hover {
     background-color: #f0f0f0;
 }
-
 .no-results {
     padding: 10px 15px;
     color: #777;
@@ -336,7 +292,6 @@
     font-size: 0.9rem;
     text-align: center;
 }
-
 .filter-footer {
     display: flex;
     justify-content: flex-end;
@@ -344,11 +299,9 @@
     padding: 15px 20px;
     border-top: 1px solid #eee;
     background-color: #f9f9f9;
-    flex-shrink: 0; /* Prevent shrinking if filter body scrolls */
+    flex-shrink: 0;
 }
-
-.clear-btn,
-.apply-btn {
+.clear-btn, .apply-btn {
     padding: 8px 15px;
     border-radius: 5px;
     cursor: pointer;
@@ -356,41 +309,49 @@
     font-weight: 600;
     transition: all 0.2s ease;
 }
-
 .clear-btn {
     background-color: #f0f0f0;
     color: #555;
     border: 1px solid #ddd;
 }
-
 .clear-btn:hover {
     background-color: #e0e0e0;
-    color: #333;
 }
-
 .apply-btn {
     background-color: #007bff;
     color: #fff;
     border: 1px solid #007bff;
 }
-
 .apply-btn:hover {
     background-color: #0056b3;
-    border-color: #0056b3;
 }
+
+/* --- Table Structure --- */
 .tableHeader {
     display: grid;
     grid-template-columns: 1.5fr 1fr 2.5fr 2fr 1fr; /* Adjust column widths as needed */
-    background-color: #f5f5f5;
-    padding: 12px 20px;
+    background-color: #f8f9fa; 
+    /* NEW: Reduced padding for a more compressed header */
+    padding: 10px 20px;
     font-weight: 600;
     color: #555;
-    border-bottom: 1px solid #e0e0e0;
+    /* NEW: Thinner border for a lighter look */
+    border-bottom: 1px solid #e0e0e0; 
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+.headerItem {
+    /* NEW: Reduced padding for tighter vertical spacing */
+    padding: 4px 0;
+    text-align: left;
+    display: flex;
+    align-items: center;
 }
 
-.headerItem {
-    padding: 8px 0;
-    text-align: left;
+/* The body container for scrollable rows */
+.tableBody {
+    flex-grow: 1; /* Take up all available vertical space */
+    overflow-y: auto; /* Enable vertical scrollbar when needed */
+    min-height: 0; /* Crucial for flexbox scrolling behavior */
 }
 
 .tableRow {
@@ -401,100 +362,90 @@
     align-items: center;
     transition: background-color 0.2s ease;
 }
-
 .tableRow:last-child {
     border-bottom: none;
 }
-
 .tableRow:hover {
     background-color: #f9f9f9;
 }
-
 .tableCell {
     padding: 8px 0;
     color: #333;
     font-size: 14px;
-    word-wrap: break-word; /* Allow long words to break */
-    min-width: 0; /* Prevent content from overflowing on small screens */
+    word-wrap: break-word; 
+    min-width: 0;
 }
 
 /* Status colors */
-.warningStatus {
-    color: #ffa500; /* Orange for Warning */
-    font-weight: 600;
-}
-
-.successStatus {
-    color: #28a745; /* Green for Success */
-    font-weight: 600;
-}
-
-.errorStatus {
-    color: #dc3545; /* Red for Error */
-    font-weight: 600;
-}
-
-.infoStatus {
-    color: #17a2b8; /* Cyan/Blue for Info */
-    font-weight: 600;
-}
+.warningStatus { color: #ffa500; font-weight: 600; }
+.successStatus { color: #28a745; font-weight: 600; }
+.errorStatus { color: #dc3545; font-weight: 600; }
+.infoStatus { color: #17a2b8; font-weight: 600; }
 
 .noData {
-    padding: 20px;
+    padding: 40px 20px; /* More padding to center it in the scrollable area */
     text-align: center;
     color: #777;
     font-style: italic;
+    font-size: 1rem;
 }
 
-/* --- Responsive adjustments for smaller screens --- */
+/* --- Responsive adjustments --- */
 @media (max-width: 768px) {
+    /* The scrollable structure still works on mobile, we just change the row layout */
     .tableHeader {
-        display: none; /* Hide table header on small screens */
+        display: none; 
     }
-
     .tableRow {
-        display: block; /* Stack items vertically */
+        display: block; 
         padding: 10px 15px;
-        border: 1px solid #eee; /* Give each row a border */
-        margin-bottom: 10px; /* Space between stacked rows */
+        border: 1px solid #eee;
+        margin: 0 10px 10px 10px; /* Add margin for card-like appearance */
         border-radius: 5px;
     }
-
+    .tableRow:first-child {
+        margin-top: 10px;
+    }
     .tableRow > .tableCell {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 5px 0;
-        border-bottom: 1px dashed #eee; /* Dashed line between fields */
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
     }
-
     .tableRow > .tableCell:last-child {
         border-bottom: none;
     }
-
     .tableCell::before {
-        content: attr(data-label); /* Use data-label for pseudo-elements */
+        content: attr(data-label);
         font-weight: 600;
         color: #555;
         margin-right: 10px;
-        flex-shrink: 0;
     }
     .filter-panel {
-        width: 90%; /* Make it wider on smaller screens */
+        width: 90%;
         left: 5%;
         right: 5%;
-        top: 60px; /* Adjust top position */
-        max-height: 80vh; /* Add a max-height for very small screens */
-    }
-    .available-items-scroll,
-    .type-dropdown-list {
-        max-height: unset; /* Let content dictate height in mobile, or set a new max-height */
+        top: 60px;
+        max-height: 80vh;
     }
 }
 
-/* Even smaller screens, adjust padding */
 @media (max-width: 480px) {
     .tableRow {
         padding: 8px 12px;
+        margin: 0 5px 10px 5px;
     }
+}
+
+/* Exact scrollbar styling */
+.tableBody::-webkit-scrollbar {
+  width: 6px;
+}
+.tableBody::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.tableBody::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
 }

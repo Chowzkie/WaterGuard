@@ -2,52 +2,73 @@
 
 .container {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
     background-color: #fff;
     border-radius: 8px;
-    overflow: hidden; /* Ensures rounded corners apply to content */
-    border: 1px solid #e0e0e0; /* Add a subtle border around the table */
-    height: auto;
+    border: 1px solid #e0e0e0;
+    
+    /* NEW: Changed to a flex column layout */
+    display: flex;
+    flex-direction: column;
+
+    /* NEW: Constrain the height of the component to enable internal scrolling */
+    max-height: 80vh; 
+    
+    /* NEW: Hide overflow from the container, as scrolling is handled by the body */
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-in-out;
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .tableTitle{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    /* NEW: Reduced vertical padding for a thinner title bar */
+    padding: 10px 20px;
     background-color: #f0f2f5;
+    flex-shrink: 0;
 }
+
 .tableTitle p{
-    font-size: 1.5rem;
-    font-weight: 700;
+    /* NEW: Font size and weight reduced for a more compact header */
+    font-size: 1.2rem;
+    font-weight: 600;
     color: #333;
     margin: 0;
 }
+
 .icons{
     display: flex;
     align-items: center;
     gap: 15px;
-    position: relative; /* Crucial for positioning the filter panel */
+    position: relative; 
 }
+
 .menu,
 .download {
-    display: flex; /* Ensure icons are centered within their div */
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px; /* Padding around the icon */
-    cursor: pointer; /* Indicate interactivity */
-    transition: background-color 0.2s ease, transform 0.2s ease; /* Smooth transitions */
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
+
 .menu:hover,
 .download:hover {
-    background-color: #e6e6e6; /* Light gray on hover */
-    transform: translateY(-2px); /* Slight lift effect */
+    background-color: #e6e6e6;
+    transform: scale(1.1);
 }
 
 /* --- Filter Panel Styles --- */
 .filter-panel {
     position: absolute;
-    top: 50px; /* Adjust based on your header height */
+    top: 50px;
     right: 0;
     width: 400px;
     background-color: #fff;
@@ -57,9 +78,8 @@
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* For rounded corners */
+    overflow: hidden;
 }
-
 .filter-header {
     display: flex;
     justify-content: space-between;
@@ -67,15 +87,12 @@
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
     background-color: #f9f9f9;
-    flex-shrink: 0;
 }
-
 .filter-header h4 {
     margin: 0;
     font-size: 1.1rem;
     color: #333;
 }
-
 .close-filter-btn {
     background: none;
     border: none;
@@ -84,21 +101,17 @@
     color: #777;
     transition: color 0.2s ease;
 }
-
 .close-filter-btn:hover {
     color: #333;
 }
-
 .filter-body {
     padding: 20px;
     flex-grow: 1;
-    overflow-y: auto; /* Allows scrolling if many filters */
+    overflow-y: auto;
 }
-
 .filter-row {
     margin-bottom: 20px;
 }
-
 .filter-label {
     display: block;
     font-size: 0.9rem;
@@ -106,37 +119,27 @@
     color: #555;
     margin-bottom: 8px;
 }
-
 .filter-control {
-    position: relative; /* For dropdown positioning */
+    position: relative;
 }
-
-/* Date Range Inputs */
 .date-range-group {
     display: flex;
     align-items: center;
     gap: 10px;
 }
-
 .date-input {
     flex: 1;
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 0.9rem;
-    color: #333;
-    -webkit-appearance: none; /* Remove default date picker icon */
-    appearance: none;
-    background-color: #fff;
 }
-
 .date-input::-webkit-calendar-picker-indicator {
     opacity: 0.7;
     cursor: pointer;
 }
 
-/* --- REFINED STYLES FOR DROPDOWN MULTI-SELECT (Username) --- */
-
+/* --- DROPDOWN MULTI-SELECT --- */
 .custom-dropdown {
     position: relative;
     width: 100%;
@@ -146,129 +149,97 @@
     border-radius: 5px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 .custom-dropdown:hover {
     border-color: #bbb;
 }
-
 .custom-dropdown.open {
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
-
 .dropdown-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* Align to flex-start for wrapping pills */
+    align-items: flex-start;
     padding: 8px 12px;
     font-size: 0.9rem;
     color: #333;
-    min-height: 40px; /* Ensure consistent height */
+    min-height: 40px;
 }
-
 .selected-pills-summary {
     display: flex;
-    flex-wrap: wrap; /* Allow pills to wrap to the next line */
-    gap: 5px; /* Spacing between pills */
-    flex-grow: 1; /* Allow it to take up available space */
-    margin-right: 10px; /* Space before the chevron */
+    flex-wrap: wrap; 
+    gap: 5px; 
+    flex-grow: 1;
+    margin-right: 10px;
 }
-
 .summary-pill {
-    background-color: #e2f0ff; /* Light blue */
+    background-color: #e2f0ff;
     border: 1px solid #a8d7ff;
-    border-radius: 12px; /* Slightly more rounded */
-    padding: 2px 8px; /* Adjusted padding */
+    border-radius: 12px;
+    padding: 2px 8px;
     font-size: 0.8em;
     color: #0056b3;
-    white-space: nowrap;
-    line-height: 1.2; /* Ensure text sits nicely */
 }
-
-.dropdown-header span { /* For "Any Username" placeholder */
+.dropdown-header > span {
     flex-grow: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding-top: 3px;
 }
-
 .dropdown-chevron {
     transition: transform 0.2s ease;
-    flex-shrink: 0; /* Prevent chevron from shrinking */
-    margin-top: 5px; /* Adjust vertical position to align with pills if they wrap */
+    flex-shrink: 0; 
+    margin-top: 5px; 
 }
-
 .custom-dropdown.open .dropdown-chevron {
     transform: rotate(180deg);
 }
-
-/* Dropdown List Content (when open) */
 .type-dropdown-list {
     position: absolute;
-    top: calc(100% + 5px); /* Position slightly below the header, adjusted for spacing */
+    top: calc(100% + 5px);
     left: 0;
     right: 0;
     background-color: #fff;
-    border: 1px solid #007bff; /* Border color matches focus */
+    border: 1px solid #007bff;
     border-radius: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
-    max-height: 250px; /* Max height for the entire dropdown content */
-    overflow: hidden; /* Contains internal scrolling */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+    overflow: hidden;
     z-index: 1001;
     padding: 0;
-    display: flex; /* Use flexbox for internal layout */
+    display: flex;
     flex-direction: column;
 }
-
 .search-input-wrapper {
-    padding: 10px 15px; /* Padding all around */
+    padding: 10px 15px;
     border-bottom: 1px solid #eee;
-    flex-shrink: 0; /* Don't shrink when content scrolls */
+    flex-shrink: 0;
 }
-
 .dropdown-search-input {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #ccc; /* Lighter border for search input */
+    border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 0.9rem;
     outline: none;
-    box-sizing: border-box; /* Include padding in width */
+    box-sizing: border-box;
 }
-
-.dropdown-search-input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-}
-
 .selected-pills-display {
     padding: 10px 15px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
-    border-bottom: 1px solid #eee; /* Only apply border if there are selected items */
-    flex-shrink: 0; /* Don't shrink */
+    flex-shrink: 0;
 }
-
-.selected-pills-display:empty {
-    padding: 0;
-    border-bottom: none;
-    min-height: 0;
-}
-
 .selected-header {
     font-size: 0.85rem;
     color: #666;
     font-weight: 500;
-    margin-right: 5px;
     flex-basis: 100%;
     margin-bottom: 5px;
-    line-height: 1;
 }
-
 .type-pill-dropdown {
     display: inline-flex;
     align-items: center;
@@ -278,10 +249,7 @@
     padding: 4px 8px;
     font-size: 0.85rem;
     color: #0056b3;
-    white-space: nowrap;
-    line-height: 1.2;
 }
-
 .type-pill-dropdown button {
     background: none;
     border: none;
@@ -292,30 +260,19 @@
     align-items: center;
     padding: 0;
 }
-
-.type-pill-dropdown button:hover {
-    color: #003e80;
-}
-
 .dropdown-separator {
     width: calc(100% - 30px);
-    margin: 10px 15px;
+    margin: 10px 15px 0 15px;
     border: 0;
-    border-top: 1px dashed #eee;
+    border-top: 1px solid #eee;
     flex-shrink: 0;
 }
-
-.selected-pills-display:empty + .dropdown-separator {
-    display: none;
-}
-
 .available-items-scroll {
-    flex-grow: 1;
+    flex-grow: 1; 
     overflow-y: auto;
-    padding-bottom: 5px;
+    padding: 5px 0;
     min-height: 0;
 }
-
 .filter-footer {
     display: flex;
     justify-content: flex-end;
@@ -323,73 +280,62 @@
     padding: 15px 20px;
     border-top: 1px solid #eee;
     background-color: #f9f9f9;
-    flex-shrink: 0;
 }
-
-.clear-btn,
-.apply-btn {
+.clear-btn, .apply-btn {
     padding: 8px 15px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: all 0.2s ease;
 }
+.clear-btn { background-color: #f0f0f0; color: #555; border: 1px solid #ddd; }
+.clear-btn:hover { background-color: #e0e0e0; }
+.apply-btn { background-color: #007bff; color: #fff; border: 1px solid #007bff; }
+.apply-btn:hover { background-color: #0056b3; }
 
-.clear-btn {
-    background-color: #f0f0f0;
-    color: #555;
-    border: 1px solid #ddd;
-}
-
-.clear-btn:hover {
-    background-color: #e0e0e0;
-    color: #333;
-}
-
-.apply-btn {
-    background-color: #007bff;
-    color: #fff;
-    border: 1px solid #007bff;
-}
-
-.apply-btn:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
+/* --- Table Structure --- */
 .tableHeader {
     display: grid;
-    /* Adjusted grid-template-columns for Date & Time, Username, Fullname, Action */
     grid-template-columns: 1.5fr 1.2fr 1.8fr 2.5fr;
-    background-color: #f5f5f5;
-    padding: 12px 20px;
+    background-color: #f8f9fa;
+    /* NEW: Reduced padding for a more compressed header */
+    padding: 10px 20px;
     font-weight: 600;
     color: #555;
-    border-bottom: 1px solid #e0e0e0;
+    /* NEW: Thinner border for a lighter look */
+    border-bottom: 1px solid #e0e0e0; 
+    flex-shrink: 0;
 }
 
 .headerItem {
-    padding: 8px 0;
+    /* NEW: Reduced padding for tighter vertical spacing */
+    padding: 4px 0;
     text-align: left;
+    display: flex;
+    align-items: center;
+}
+
+/* NEW: The body container for scrollable rows */
+.tableBody {
+    flex-grow: 1; 
+    overflow-y: auto; 
+    min-height: 0; 
 }
 
 .tableRow {
     display: grid;
-    grid-template-columns: 1.5fr 1.2fr 1.8fr 2.5fr;
+    grid-template-columns: 1.5fr 1.2fr 1.8fr 2.5fr; /* Must match header columns */
     padding: 12px 20px;
     border-bottom: 1px solid #eee;
     align-items: center;
     transition: background-color 0.2s ease;
 }
-
 .tableRow:last-child {
     border-bottom: none;
 }
-
 .tableRow:hover {
     background-color: #f9f9f9;
 }
-
 .tableCell {
     padding: 8px 0;
     color: #333;
@@ -397,46 +343,44 @@
     word-wrap: break-word;
     min-width: 0;
 }
-
 .noData {
-    padding: 20px;
+    padding: 40px 20px;
     text-align: center;
     color: #777;
     font-style: italic;
+    font-size: 1rem;
 }
 
-/* --- Responsive adjustments for smaller screens --- */
+/* --- Responsive adjustments --- */
 @media (max-width: 768px) {
     .tableHeader {
-        display: none;
+        display: none; 
     }
-
     .tableRow {
-        display: block;
+        display: block; 
         padding: 10px 15px;
         border: 1px solid #eee;
-        margin-bottom: 10px;
+        margin: 0 10px 10px 10px;
         border-radius: 5px;
     }
-
+    .tableRow:first-child {
+        margin-top: 10px;
+    }
     .tableRow > .tableCell {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 5px 0;
+        padding: 8px 0;
         border-bottom: 1px dashed #eee;
     }
-
     .tableRow > .tableCell:last-child {
         border-bottom: none;
     }
-
     .tableCell::before {
         content: attr(data-label);
         font-weight: 600;
         color: #555;
         margin-right: 10px;
-        flex-shrink: 0;
     }
     .filter-panel {
         width: 90%;
@@ -445,28 +389,22 @@
         top: 60px;
         max-height: 80vh;
     }
-    .available-items-scroll,
-    .type-dropdown-list {
-        max-height: unset;
-    }
-
-    .container {
-        height: auto; /* Allow height to adjust on smaller screens for overall page scrolling */
-        max-height: 95vh; /* Or set a specific max-height if you want a fixed-height component on mobile */
-    }
-
-    /* For mobile, ensure the tableBodyScroll takes appropriate height if the container has a fixed height */
-    .tableBodyScroll {
-        overflow-y: auto;
-        height: auto; /* Reset to auto for stacked layout on mobile */
-        max-height: calc(100% - (var(--table-title-height) + var(--table-header-height))); /* This would require CSS variables or explicit values */
-        /* A simpler approach is to ensure the parent has a fixed height and flex-grow works */
-    }
 }
-
-/* Even smaller screens, adjust padding */
 @media (max-width: 480px) {
     .tableRow {
         padding: 8px 12px;
+        margin: 0 5px 10px 5px;
     }
+}
+
+/* Exact scrollbar styling */
+.tableBody::-webkit-scrollbar {
+  width: 6px;
+}
+.tableBody::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.tableBody::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
 }

@@ -83,9 +83,7 @@ function UserLogs({ logs }) {
             return { ...prev, username: Array.from(currentUsers) };
         });
         setUsernameSearchTerm(''); // Clear search term after selection
-        // No need to close dropdown immediately after selection for multi-select
     };
-
 
     // Apply and Clear filters
     const applyFilters = () => {
@@ -132,32 +130,19 @@ function UserLogs({ logs }) {
                                     <label className={Style['filter-label']}>Date Range</label>
                                     <div className={Style['filter-control']}>
                                         <div className={Style['date-range-group']}>
-                                            <input
-                                                type="date"
-                                                name="startDate"
-                                                value={draftFilters.startDate}
-                                                onChange={handleDateChange}
-                                                className={Style['date-input']}
-                                            />
+                                            <input type="date" name="startDate" value={draftFilters.startDate} onChange={handleDateChange} className={Style['date-input']} />
                                             <span>to</span>
-                                            <input
-                                                type="date"
-                                                name="endDate"
-                                                value={draftFilters.endDate}
-                                                onChange={handleDateChange}
-                                                className={Style['date-input']}
-                                            />
+                                            <input type="date" name="endDate" value={draftFilters.endDate} onChange={handleDateChange} className={Style['date-input']} />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Username Filter - Modified for dropdown behavior */}
+                                {/* Username Filter */}
                                 <div className={Style['filter-row']} ref={usernameDropdownRef}>
                                     <label className={Style['filter-label']}>Username</label>
                                     <div className={Style['filter-control']}>
-                                        <div className={Style['custom-dropdown']} onClick={() => setIsUsernameDropdownOpen(o => !o)}>
+                                        <div className={`${Style['custom-dropdown']} ${isUsernameDropdownOpen ? Style['open'] : ''}`} onClick={() => setIsUsernameDropdownOpen(o => !o)}>
                                             <div className={Style['dropdown-header']}>
-                                                {/* Display selected usernames or placeholder */}
                                                 {draftFilters.username.length > 0 ? (
                                                     <div className={Style['selected-pills-summary']}>
                                                         {draftFilters.username.map(username => (
@@ -171,46 +156,35 @@ function UserLogs({ logs }) {
                                             </div>
                                             {isUsernameDropdownOpen && (
                                                 <div className={Style['type-dropdown-list']}>
-                                                    {/* Search Input within the dropdown */}
                                                     <div className={Style['search-input-wrapper']}>
                                                         <input
                                                             type="text"
                                                             placeholder="Search Usernames..."
                                                             className={Style['dropdown-search-input']}
                                                             value={usernameSearchTerm}
-                                                            onChange={(e) => setUsernameSearchTerm(e.target.value)}
-                                                            onFocus={(e) => e.target.select()}
+                                                            onChange={(e) => { e.stopPropagation(); setUsernameSearchTerm(e.target.value); }}
+                                                            onClick={(e) => e.stopPropagation()}
                                                             autoFocus
                                                         />
                                                     </div>
                                                     <div className={Style['selected-pills-display']}>
-                                                        {/* Display selected pills at the top of the dropdown */}
-                                                        {draftFilters.username.length > 0 && (
-                                                            <div className={Style['selected-header']}>Selected:</div>
-                                                        )}
+                                                        {draftFilters.username.length > 0 && <div className={Style['selected-header']}>Selected:</div>}
                                                         {draftFilters.username.map(username => (
                                                             <div key={`selected-${username}`} className={Style['type-pill-dropdown']}>
                                                                 <span>{username}</span>
                                                                 <button onClick={(e) => { e.stopPropagation(); handleUsernameSelect(username); }}><X size={12}/></button>
                                                             </div>
                                                         ))}
-                                                        {draftFilters.username.length > 0 && <hr className={Style['dropdown-separator']} />}
                                                     </div>
-
-
-                                                    {/* Available Usernames for selection */}
+                                                    {draftFilters.username.length > 0 && <hr className={Style['dropdown-separator']} />}
                                                     <div className={Style['available-items-scroll']}>
                                                         {uniqueUsernames
                                                             .filter(username =>
                                                                 username.toLowerCase().includes(usernameSearchTerm.toLowerCase()) &&
-                                                                !draftFilters.username.includes(username) // Don't show already selected in the main list
+                                                                !draftFilters.username.includes(username)
                                                             )
                                                             .map(username => (
-                                                                <div
-                                                                    key={username}
-                                                                    className={Style['type-dropdown-item']}
-                                                                    onClick={() => handleUsernameSelect(username)}
-                                                                >
+                                                                <div key={username} className={Style['type-dropdown-item']} onClick={(e) => { e.stopPropagation(); handleUsernameSelect(username); }}>
                                                                     {username}
                                                                 </div>
                                                             ))}
@@ -232,30 +206,36 @@ function UserLogs({ logs }) {
                     )}
                 </div>
             </div>
+
+            {/* Table Header: Remains fixed at the top */}
             <div className={Style['tableHeader']}>
                 <div className={Style['headerItem']}>Date & Time</div>
                 <div className={Style['headerItem']}>Username</div>
                 <div className={Style['headerItem']}>Fullname</div>
                 <div className={Style['headerItem']}>Action</div>
             </div>
-            {filteredDisplayLogs.length > 0 ? (
-                filteredDisplayLogs.map((log) => (
-                    <div className={Style['tableRow']} key={log.id}>
-                        <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                        <div className={Style['tableCell']} data-label="Username">{log.username}</div>
-                        <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
-                        <div className={Style['tableCell']} data-label="Action">{log.action}</div>
-                    </div>
-                ))
+
+            {/* NEW: A dedicated 'tableBody' container for scrollable rows */}
+            <div className={Style['tableBody']}>
+                {filteredDisplayLogs.length > 0 ? (
+                    filteredDisplayLogs.map((log) => (
+                        <div className={Style['tableRow']} key={log.id}>
+                            <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                            <div className={Style['tableCell']} data-label="Username">{log.username}</div>
+                            <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
+                            <div className={Style['tableCell']} data-label="Action">{log.action}</div>
+                        </div>
+                    ))
                 ) : (
+                    // ENHANCEMENT: Combined the two "no data" messages into a single logic block
                     <div className={Style['noData']}>
-                        No user logs match the current filters.
+                        {logs.length === 0
+                            ? "No user logs available."
+                            : "No user logs match the current filters."
+                        }
                     </div>
                 )}
-            {/* Show "No user logs available" only if the initial userLogs array is empty */}
-            {logs.length === 0 && filteredDisplayLogs.length === 0 && ( // Added condition for filteredDisplayLogs
-                <div className={Style['noData']}>No user logs available.</div>
-            )}
+            </div>
         </div>
     );
 }

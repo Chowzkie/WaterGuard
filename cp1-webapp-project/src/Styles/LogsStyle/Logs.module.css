@@ -1,13 +1,28 @@
 .container{
-    height: calc(100vh - 100px);
+    background-color: #f4f5f7;
+    min-height: 100vh;
     width: 100%;
-    padding: 20px;
-    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 0 10px 10px 10px;
+    animation: fadeIn 0.5s ease-in-out;
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* NEW: Header container to hold the back button and tabs. */
+/* It now correctly handles the top padding for the entire section. */
+.header {
+    padding-top: 60px; /* This pushes the content down, likely to avoid a fixed navbar */
+}
+
+/* MODIFIED: Removed the incorrect padding-top from here. */
 .tabs {
     display: flex;
     border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     overflow-x: auto; /* Enable horizontal scrolling for tabs on small screens */
 }
 
@@ -49,27 +64,36 @@
     background-color: #1a73e8; /* Blue underline for active tab */
 }
 
+.backButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    background-color: #fff;
+    border-color: #d1d5db;
+    color: #374151;
+
+}
+.backButton:hover {
+   background-color: #f9fafb;
+}
+
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
-    .logsContainer {
-        margin: 20px; /* Smaller margin on smaller screens */
-        padding: 15px;
-    }
-
-    .title {
-        font-size: 20px;
+    .header {
+        padding-top: 20px; /* Reduce top padding on smaller screens */
     }
 
     .tabButton {
         font-size: 14px;
         padding: 8px 15px;
-    }
-}
-
-@media (max-width: 480px) {
-    .logsContainer {
-        margin: 10px;
-        padding: 10px;
     }
 }

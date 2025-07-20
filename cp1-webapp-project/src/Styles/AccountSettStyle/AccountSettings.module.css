@@ -5,7 +5,6 @@
     min-height: 100vh;
     width: 100%;
     box-sizing: border-box;
-
     animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -16,19 +15,17 @@
 
 .layoutGrid {
     display: grid;
-    grid-template-columns: 1fr; /* Mobile-first: single column layout */
+    grid-template-columns: 1fr;
     gap: 24px;
-    max-width: 1200px; /* Increased max-width for larger screens */
-    margin: 0 auto; /* Center the layout grid */
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 24px;
-    padding-top: 80px; /* Space for a potential fixed header */
+    padding-top: 80px;
 }
 
-/* --- RESPONSIVE BREAKPOINT --- */
-/* On tablets and larger screens, switch to a two-column layout */
 @media (min-width: 1024px) {
     .layoutGrid {
-        grid-template-columns: 280px 1fr; /* Fixed sidebar, flexible content */
+        grid-template-columns: 280px 1fr;
     }
 }
 
@@ -41,14 +38,12 @@
     align-self: flex-start;
 }
 
-/* On larger screens, make the sidebar sticky */
 @media (min-width: 1024px) {
     .sidebar {
         position: sticky;
-        top: 80px; /* Stick below the header */
+        top: 80px;
     }
 }
-
 
 .backButton {
     display: inline-flex;
@@ -77,12 +72,38 @@
     margin-bottom: 20px;
 }
 
+/* NEW: Styles for the interactive avatar */
+.profileAvatarWrapper {
+    position: relative;
+    cursor: pointer;
+    border-radius: 9999px;
+    overflow: hidden; /* Ensures the overlay is clipped */
+}
+
 .profileAvatar {
     width: 80px;
     height: 80px;
     border-radius: 9999px;
     object-fit: cover;
+    display: block; /* Removes any extra space below the image */
 }
+
+.avatarOverlay {
+    position: absolute;
+    inset: 0; /* Covers the parent div completely */
+    background-color: rgba(17, 24, 39, 0.5); /* semi-transparent dark background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.profileAvatarWrapper:hover .avatarOverlay {
+    opacity: 1;
+}
+
 
 .profileName {
     font-size: 18px;
@@ -101,6 +122,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    margin-bottom: 65px;
 }
 
 .navLink {
@@ -135,15 +157,15 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    min-width: 0; /* Prevents content from overflowing its container */
+    min-width: 0;
 }
 
 .contentHeader {
     display: flex;
-    flex-wrap: wrap; /* Allow items to wrap on small screens */
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 16px; /* Add gap for wrapped items */
+    gap: 16px;
     padding-bottom: 16px;
     border-bottom: 1px solid #e5e7eb;
 }
@@ -164,7 +186,7 @@
     background-color: #ffffff;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
-    overflow: hidden; /* Ensures padding and borders are contained */
+    overflow: hidden;
 }
 
 .cardBody {
@@ -173,9 +195,8 @@
 
 .cardRow {
     display: grid;
-    /* MOBILE-FIRST: Default to a single column to stack elements */
     grid-template-columns: 1fr;
-    gap: 8px; /* Vertical gap for mobile */
+    gap: 8px;
     padding-bottom: 24px;
     margin-bottom: 24px;
     border-bottom: 1px solid #f3f4f6;
@@ -186,22 +207,19 @@
     padding-bottom: 0;
 }
 
-/* RESPONSIVE: On larger screens, switch to multi-column layout */
 @media (min-width: 768px) {
     .cardRow {
-        /* 200px label, flexible content, auto-sized button */
         grid-template-columns: 200px 1fr auto;
-        align-items: center; /* Vertically align items in the center */
-        gap: 24px; /* Horizontal gap for desktop */
+        align-items: center;
+        gap: 24px;
     }
 }
 
 .rowDetails {
-    /* This container helps group related info */
     display: flex;
     flex-direction: column;
     gap: 4px;
-    min-width: 0; /* Prevents overflow inside grid */
+    min-width: 0;
 }
 
 .rowDetails p {
@@ -212,7 +230,7 @@
     font-weight: 500;
     color: #111827;
     font-size: 14px;
-    line-height: 1.5; /* Improves readability */
+    line-height: 1.5;
 }
 
 .rowValue {
@@ -227,12 +245,12 @@
     cursor: pointer;
     color: #9ca3af;
     border-radius: 9999px;
-    justify-self: end; /* Aligns button to the right on mobile */
+    justify-self: end;
 }
 
 @media (min-width: 768px) {
     .editButton {
-        justify-self: auto; /* Reset alignment for desktop grid */
+        justify-self: auto;
     }
 }
 
@@ -244,7 +262,7 @@
 .input {
     display: block;
     width: 100%;
-    max-width: 380px; /* Allow input to be slightly wider */
+    max-width: 380px;
     box-sizing: border-box;
     border-radius: 6px;
     border: 1px solid #d1d5db;
@@ -284,7 +302,7 @@
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
-    white-space: nowrap; /* Prevent buttons from breaking into two lines */
+    white-space: nowrap;
 }
 
 .buttonPrimary {
@@ -324,7 +342,6 @@
 /* --- Alert Message Styles --- */
 .alert {
     position: fixed;
-    /* On mobile, the alert remains a banner at the top */
     top: 80px;
     left: 16px;
     right: 16px;
@@ -338,7 +355,6 @@
     animation: slideIn 0.5s ease-out forwards, slideOut 0.5s ease-in 3.5s forwards;
 }
 
-/* On desktop, anchor the alert to the top-right corner */
 @media (min-width: 768px) {
     .alert {
         left: auto;
@@ -359,50 +375,23 @@
     border: 1px solid #fca5a5;
 }
 
-/* Keyframes for mobile slide-down animation */
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
 }
 
-/* Keyframes for desktop slide-right animation */
 @media (min-width: 768px) {
     @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
     }
-
     @keyframes slideOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(100%);
-        }
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100%); }
     }
 }

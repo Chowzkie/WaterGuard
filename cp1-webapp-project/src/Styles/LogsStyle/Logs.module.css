@@ -1,4 +1,4 @@
-.container{
+.container {
     background-color: #f4f5f7;
     min-height: 100vh;
     width: 100%;
@@ -8,17 +8,21 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* NEW: Header container to hold the back button and tabs. */
-/* It now correctly handles the top padding for the entire section. */
 .header {
-    padding-top: 60px; /* This pushes the content down, likely to avoid a fixed navbar */
+    /* This padding pushes the content down to avoid a fixed navbar. */
+    padding-top: 60px;
 }
 
-/* MODIFIED: Removed the incorrect padding-top from here. */
 .tabs {
     display: flex;
     border-bottom: 1px solid #e0e0e0;
@@ -26,12 +30,14 @@
     overflow-x: auto; /* Enable horizontal scrolling for tabs on small screens */
 }
 
-.tabs::-webkit-scrollbar { /* Hide scrollbar for Chrome/Safari */
+.tabs::-webkit-scrollbar {
+    /* Hide scrollbar for Chrome/Safari */
     display: none;
 }
 
 .tabButton {
-    flex-shrink: 0; /* Prevent buttons from shrinking */
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking */
     background: none;
     border: none;
     padding: 10px 20px;
@@ -41,7 +47,8 @@
     position: relative;
     outline: none;
     transition: color 0.3s ease;
-    white-space: nowrap; /* Keep tab text on one line */
+    white-space: nowrap;
+    /* Keep tab text on one line */
     font-weight: 600;
 }
 
@@ -50,7 +57,8 @@
 }
 
 .activeTab {
-    color: #1a73e8; /* Blue color for active tab */
+    color: #1a73e8;
+    /* Blue color for active tab */
     font-weight: 600;
 }
 
@@ -61,7 +69,8 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: #1a73e8; /* Blue underline for active tab */
+    background-color: #1a73e8;
+    /* Blue underline for active tab */
 }
 
 .backButton {
@@ -75,23 +84,21 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-
     background-color: #fff;
     border-color: #d1d5db;
     color: #374151;
-
+    /* NEW: Added margin for spacing between the button and the tabs below it. */
+    margin-bottom: 20px;
 }
+
 .backButton:hover {
-   background-color: #f9fafb;
+    background-color: #f9fafb;
 }
 
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
-    .header {
-        padding-top: 20px; /* Reduce top padding on smaller screens */
-    }
-
+    
     .tabButton {
         font-size: 14px;
         padding: 8px 15px;

@@ -48,7 +48,11 @@ function Dashboard() {
 
     return (
         <div className='component-wrapper-dashboard'>
-            <Readings selectedDevice={selectedDevice} />
+            <Readings 
+                selectedDevice={selectedDevice} 
+                device={devices}
+
+            />
             <DeviceStatus
                 devicesData={devices}
                 selectedDeviceId={selectedDeviceId}

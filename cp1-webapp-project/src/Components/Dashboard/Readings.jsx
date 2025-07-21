@@ -2,10 +2,11 @@ import React from 'react';
 import ReadingsStyle from '../../Styles/Readings.module.css';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import NoDevicesFound from '../NoDevFound/noDevicesFound';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice}) => {
+const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice }) => {
   const normalizedValue = (value - min) / (max - min);
   const percentage = normalizedValue * 100;
 
@@ -55,9 +56,11 @@ const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice}) => 
   );
 };
 
-const Readings = ({ selectedDevice }) => {
-  if (!selectedDevice) {
-    return <div>Please select a device to view readings.</div>;
+const Readings = ({ selectedDevice, device}) => {
+  if (device.length === 0) {
+    return <div className={ReadingsStyle["no-device"]}>
+      <NoDevicesFound/>
+    </div>;
   }
 
   return (

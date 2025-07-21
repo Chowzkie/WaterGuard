@@ -2,11 +2,27 @@ import React from 'react';
 import ReadingsStyle from '../../Styles/Readings.module.css';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import {WifiOff} from 'lucide-react'
 import NoDevicesFound from '../NoDevFound/noDevicesFound';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice }) => {
+const ReadingCard = ({ title, value, min, max, unit, color, status ,selectedDevice }) => {
+    {/**Render this pag offline yung device */}
+    if (status === 'Offline') {
+    return (
+      <div className={ReadingsStyle['offline-readings']}> {/* Keep the main readings container style */}
+        <div className={ReadingsStyle['offline-card']}>
+          <div className={ReadingsStyle['icon-wrapper']}>
+            <WifiOff size={50} />
+          </div>
+          <h4>{selectedDevice} is offline</h4>
+          <p>No avalable readings for {title} <br />at this moment</p>
+        </div>
+      </div>
+    );
+  }
+
   const normalizedValue = (value - min) / (max - min);
   const percentage = normalizedValue * 100;
 
@@ -56,7 +72,7 @@ const ReadingCard = ({ title, value, min, max, unit, color, selectedDevice }) =>
   );
 };
 
-const Readings = ({ selectedDevice, device}) => {
+const Readings = ({ selectedDevice, device, deviceStatus}) => {
   if (device.length === 0) {
     return <div className={ReadingsStyle["no-device"]}>
       <NoDevicesFound/>
@@ -74,6 +90,7 @@ const Readings = ({ selectedDevice, device}) => {
           max={reading.max}
           unit={reading.unit}
           color={reading.color}
+          status={deviceStatus}
           selectedDevice={selectedDevice.id}
         />
       ))}

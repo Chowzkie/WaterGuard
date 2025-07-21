@@ -51,7 +51,7 @@ function Dashboard() {
             <Readings 
                 selectedDevice={selectedDevice} 
                 device={devices}
-
+                deviceStatus={selectedDevice ? selectedDevice.status : null}
             />
             <DeviceStatus
                 devicesData={devices}

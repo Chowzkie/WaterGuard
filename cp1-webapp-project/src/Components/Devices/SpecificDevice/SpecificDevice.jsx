@@ -96,7 +96,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
                 <DetailsPanel device={currentDevice} />
             </div>
             
-            <ValveSwitch deviceId={deviceId} />
+            <ValveSwitch deviceId={deviceId} deviceStatus={currentDevice.status} />
         </div>
     );
 }

@@ -114,6 +114,49 @@
     color: #888;
 }
 
+.offline-readings{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+}
+.offline-card {
+    width: 400px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.offline-card .icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff4d4d;
+    background-color: rgb(255, 218, 218);
+    height: 100px;
+    width: 100px;
+    border-radius: 20px;
+}
+
+.offline-card h4 {
+    color: #444444;
+    margin: 15px 0 5px 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.offline-card p {
+    margin: 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: lighter;
+}
 @media (max-width: 1399px) {
   .readings-container{
     height: 0;

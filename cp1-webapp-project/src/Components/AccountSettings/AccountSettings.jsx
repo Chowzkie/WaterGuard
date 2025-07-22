@@ -100,7 +100,7 @@ const AccountSettings = () => {
     /**
      * Navigates the user to the previous page in their browser history.
      */
-    const handleBack = () => navigate(-1);
+    const handleBack = () => navigate('/overview');
 
     /**
      * Handles the file selection for the profile picture.

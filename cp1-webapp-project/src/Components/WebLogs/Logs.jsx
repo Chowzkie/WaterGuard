@@ -15,15 +15,16 @@ function Logs(){
     };
 
     //Handle go back function
-    const handleBack = () => navigate(-1);
+    const handleBack = () => navigate('/overview');
 
     return(
         <div className={Style['container']}>
             {/* NEW: A dedicated header container to group the back button and tabs */}
-            <div className={Style['header']}>
-                <button onClick={handleBack} className={Style['backButton']}>
-                    <ArrowLeft size={16} /> Back
-                </button>
+                <div className={Style['header']}>
+                    <button onClick={handleBack} className={Style['backButton']}>
+                        <ArrowLeft size={16} /> Back
+                    </button>
+                </div>
                 <div className={Style['tabs']}>
                     <button
                         className={`${Style['tabButton']} ${activeTab === 'system' ? Style['activeTab'] : ''}`}
@@ -38,7 +39,6 @@ function Logs(){
                         User Logs
                     </button>
                 </div>
-            </div>
 
             <div className={Style['logContent']}>
                 {activeTab === 'system' && <SystemLogs logs={systemLogsData} />}

@@ -118,10 +118,10 @@ function SystemLogs({ logs }) {
                 <p>System Logs</p>
                 <div className={Style['icons']}>
                     <div className={Style['menu']} onClick={() => setIsFilterOpen(o => !o)}>
-                        <ListFilter />
+                        <ListFilter size={16}/>
                     </div>
                     <div className={Style['download']}>
-                        <Download />
+                        <Download size={16}/>
                     </div>
 
                     {isFilterOpen && (

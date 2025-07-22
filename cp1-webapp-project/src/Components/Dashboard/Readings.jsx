@@ -14,7 +14,7 @@ const ReadingCard = ({ title, value, min, max, unit, color, status ,selectedDevi
       <div className={ReadingsStyle['offline-readings']}> {/* Keep the main readings container style */}
         <div className={ReadingsStyle['offline-card']}>
           <div className={ReadingsStyle['icon-wrapper']}>
-            <WifiOff size={50} />
+            <WifiOff size={40} />
           </div>
           <h4>{selectedDevice} is offline</h4>
           <p>No avalable readings for {title} <br />at this moment</p>

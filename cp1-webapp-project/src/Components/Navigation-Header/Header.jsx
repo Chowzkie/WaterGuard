@@ -1,7 +1,7 @@
 // Components/Navigation-Header/Header.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight, Logs  } from 'lucide-react';
+import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight, Logs, ShieldUser  } from 'lucide-react';
 import styles from '../../Styles/Header.module.css';
 import ProfilePic from '../../assets/ProfilePic.png';
 import Logo from '../../assets/Logo.png';
@@ -11,7 +11,6 @@ function Header({ onLogout, deviceLabelForHeader }) {
     const location = useLocation();
     const [subTitle, setSubTitle] = useState('WaterGuard');
 
-    // UPDATED: Added a title for the account settings page
     const routeTitleMap = {
         '/overview': 'Overview',
         '/dashboard': 'Readings',
@@ -19,10 +18,10 @@ function Header({ onLogout, deviceLabelForHeader }) {
         '/devices': 'Devices',
         '/configurations': 'Configuration',
         '/logs': 'Logs',
-        '/account-settings': 'Account Settings' // NEW
+        '/account-settings': 'Account Settings',
+        '/admin-panel': 'Admin Panel'
     };
 
-    // ... (The rest of your Header.jsx file remains unchanged)
     useEffect(() => {
         let currentSubTitle;
         if (deviceLabelForHeader) {
@@ -73,6 +72,14 @@ function Header({ onLogout, deviceLabelForHeader }) {
         navigate('/account-settings');
         setOpen(false);
     };
+    const handleAdminPanel = () => {
+        navigate('/admin-panel');
+        setOpen(false);
+    }
+    const handleLogs = () => {
+        navigate('/logs');
+        setOpen(false);
+    }
 
     return (
         <header className={styles.appHeader}>
@@ -126,9 +133,12 @@ function Header({ onLogout, deviceLabelForHeader }) {
                         <div className={`${styles.dropdownItemU} ${styles.manageProfile}`} onClick={handleAccountSettings}>
                             <Settings size={18} color='#0fd1eb' /> <p>Account</p> <ChevronRight size={15} />
                         </div>
-                        <Link to="/logs" className={`${styles.dropdownItemU} ${styles.logs}`} >
+                        <div className={`${styles.dropdownItemU} ${styles.admin}`} onClick={handleAdminPanel} >
+                            <ShieldUser  size={18} color='#6d6d6dff' /> <p>Admin</p> <ChevronRight size={15} />
+                        </div>
+                        <div className={`${styles.dropdownItemU} ${styles.logs}`} onClick={handleLogs} >
                             <Logs size={17} color='#307e3c' /> <p>View Logs</p> <ChevronRight size={15} />
-                        </Link>
+                        </div>
                         <div className={`${styles.dropdownItemU} ${styles.logout}`} onClick={handleLogout}>
                             <LogOut size={16} color='#ec515e'/> <p>Log Out</p> <ChevronRight size={15} />
                         </div>

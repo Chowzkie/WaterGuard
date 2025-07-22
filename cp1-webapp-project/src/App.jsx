@@ -17,6 +17,7 @@ import { evaluateSensorReading } from './utils/SensorLogic';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
+import AdminPanel from './Components/Admin/AdminPanel';
 
 // =================================================================================
 // CONFIGURATION
@@ -463,7 +464,7 @@ function App() {
 
     // UPDATED: We now have two separate checks for the header and the sidebar navigation.
     const noHeaderPaths = ['/login']; // Only hide header on the login page.
-    const noNavPaths = ['/login', '/account-settings', '/logs']; // Hide sidebar on login AND account settings.
+    const noNavPaths = ['/login', '/account-settings', '/logs', '/admin-panel']; // Hide sidebar on login AND account settings.
 
     const showHeader = !noHeaderPaths.includes(location.pathname);
     const showSidebar = !noNavPaths.includes(location.pathname);
@@ -726,7 +727,15 @@ function App() {
                 <Routes>
                     <Route path="/login" element={<Login onLogin={handleLogin} />} />
 
-                    {/* NEW: Add the route for the AccountSettings page */}
+                    <Route
+                        path="/admin-panel"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <AdminPanel />
+                            </ProtectedRoute>
+                        }
+                    />
+
                     <Route
                         path="/account-settings"
                         element={

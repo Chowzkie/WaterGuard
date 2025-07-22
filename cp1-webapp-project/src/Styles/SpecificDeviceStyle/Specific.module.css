@@ -122,15 +122,16 @@
 
 @media (max-width: 1024px) {
   .page-container {
+   /* Stack components into a single column */
     grid-template-areas:
       "chart"
       "readings"
       "bottom-left"
       "valve";
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    height: auto;
-    overflow-y: auto;
+    grid-template-rows: 300px auto auto auto;
+
+    overflow-y: scroll;
   }
   
   /* On smaller screens, stack the alerts and details again */

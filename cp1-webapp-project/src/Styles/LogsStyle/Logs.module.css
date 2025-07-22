@@ -1,10 +1,20 @@
+/* LogsStyle/Logs.module.css */
+
+/* --- Page Container --- */
+/* This is the most important change. It makes the entire page a flex container
+   that is exactly the height of the browser window. */
 .container {
     background-color: #f4f5f7;
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
     box-sizing: border-box;
-    padding: 0 10px 10px 10px;
+    padding: 50px 20px 20px 20px;
     animation: fadeIn 0.5s ease-in-out;
+
+    /* Flexbox setup */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Manages space between the back button, tabs, and content area */
 }
 
 @keyframes fadeIn {
@@ -18,59 +28,12 @@
     }
 }
 
+/* --- Header & Back Button --- */
+/* We make the header a non-shrinking flex item. */
 .header {
-    /* This padding pushes the content down to avoid a fixed navbar. */
-    padding-top: 60px;
-}
-
-.tabs {
-    display: flex;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 10px;
-    overflow-x: auto; /* Enable horizontal scrolling for tabs on small screens */
-}
-
-.tabs::-webkit-scrollbar {
-    /* Hide scrollbar for Chrome/Safari */
-    display: none;
-}
-
-.tabButton {
-    flex-shrink: 0;
-    /* Prevent buttons from shrinking */
-    background: none;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    color: #888;
-    position: relative;
-    outline: none;
-    transition: color 0.3s ease;
-    white-space: nowrap;
-    /* Keep tab text on one line */
-    font-weight: 600;
-}
-
-.tabButton:hover {
-    color: #555;
-}
-
-.activeTab {
-    color: #1a73e8;
-    /* Blue color for active tab */
-    font-weight: 600;
-}
-
-.activeTab::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #1a73e8;
-    /* Blue underline for active tab */
+    box-sizing: border-box;
+    flex-shrink: 0; /* Prevents this from shrinking */
+    /* All padding is now handled by the main .container */
 }
 
 .backButton {
@@ -87,18 +50,72 @@
     background-color: #fff;
     border-color: #d1d5db;
     color: #374151;
-    /* NEW: Added margin for spacing between the button and the tabs below it. */
-    margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 .backButton:hover {
     background-color: #f9fafb;
 }
 
+/* --- Tabs --- */
+/* Tabs are also a non-shrinking flex item. */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    overflow-x: auto;
+    flex-shrink: 0; /* Prevents this from shrinking */
+     /* REMOVED: margin-bottom, as the parent 'gap' handles spacing. */
+}
 
-/* Responsive adjustments for smaller screens */
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tabButton {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #888;
+    position: relative;
+    outline: none;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.tabButton:hover {
+    color: #555;
+}
+
+.activeTab {
+    color: #1a73e8;
+    font-weight: 600;
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #1a73e8;
+}
+
+/* --- Content Area --- */
+/* This is the container that holds the table. It is set to grow
+   and fill all remaining vertical space on the page. */
+.logContent {
+    flex-grow: 1;
+    min-height: 0; /* Crucial fix for flexbox scrolling */
+    display: flex;   /* Allows the child component to fill this container */
+}
+
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-    
     .tabButton {
         font-size: 14px;
         padding: 8px 15px;

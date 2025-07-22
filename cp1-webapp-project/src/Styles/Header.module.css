@@ -374,3 +374,8 @@
   background-color: #ebffee;
   font-weight: 500;
 }
+
+.dropdownItemU.admin:hover{
+  background-color: hsla(0, 0%, 60%, 0.13);
+  font-weight: 500;
+}

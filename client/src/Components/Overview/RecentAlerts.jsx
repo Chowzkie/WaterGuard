@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, CircleCheckBig, CircleAlert } from 'lucide-react';
+import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/RecentAlerts.module.css';
 
 const RecentAlerts = ({ 
@@ -29,13 +30,6 @@ const RecentAlerts = ({
     ? [...(recentAlerts || [])]
     : (recentAlerts || []).filter(alert => alert.originator === selectedDevice)
   ).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
-
-  const formatDateTime = (dateTimeStr) => {
-    const date = new Date(dateTimeStr);
-    if (isNaN(date)) return dateTimeStr;
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-    return date.toLocaleString('en-US', options);
-  };
 
   return (
     <div className={styles['alerts-section']}>

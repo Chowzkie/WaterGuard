@@ -69,85 +69,86 @@ export const systemLogsData = [
 
 export const userLogs = [
   {
-    dateTime: "2025-07-20T09:00:00Z",
+    dateTime: "2025-07-20 09:00:00", // Format changed
     username: "john.doe",
     fullname: "John Doe",
     action: "Logged in successfully",
   },
   {
-    dateTime: "2025-07-20T09:05:15Z",
+    dateTime: "2025-07-20 09:05:15", // Format changed
     username: "jane.smith",
     fullname: "Jane Smith",
     action: "Shut off water valve: 'Main Inlet Valve'",
   },
   {
-    dateTime: "2025-07-20T09:10:30Z",
+    dateTime: "2025-07-20 09:10:30", // Format changed
     username: "alice.wonder",
     fullname: "Alice Wonderland",
     action: "Changed hardware device parameter: 'pH sensor' to 7.2 (from 6.8)",
   },
   {
-    dateTime: "2025-07-20T09:15:45Z",
+    dateTime: "2025-07-20 09:15:45", // Format changed
     username: "john.doe",
     fullname: "John Doe",
     action: "Updated water change interval: 'Tank 1' to 24 hours (from 48 hours)",
   },
   {
-    dateTime: "2025-07-20T09:20:00Z",
+    dateTime: "2025-07-20 09:20:00", // Format changed
     username: "bob.builder",
     fullname: "Bob Builder",
     action: "Changed hardware device parameter: 'Turbidity sensor' to 5 NTU (from 8 NTU)",
   },
   {
-    dateTime: "2025-07-20T09:25:20Z",
+    dateTime: "2025-07-20 09:25:20", // Format changed
     username: "jane.smith",
     fullname: "Jane Smith",
     action: "Updated account details for 'john.doe': changed password",
   },
   {
-    dateTime: "2025-07-20T09:30:40Z",
+    dateTime: "2025-07-20 09:30:40", // Format changed
     username: "alice.wonder",
     fullname: "Alice Wonderland",
     action: "Changed hardware device parameter: 'TDS sensor' to 150 ppm (from 180 ppm)",
   },
   {
-    dateTime: "2025-07-20T09:35:05Z",
+    dateTime: "2025-07-20 09:35:05", // Format changed
     username: "john.doe",
     fullname: "John Doe",
     action: "Opened water valve: 'Discharge Valve Unit B'",
   },
   {
-    dateTime: "2025-07-20T09:40:10Z",
+    id: 9, // Added ID
+    dateTime: "2025-07-20 09:40:10", // Format changed
     username: "bob.builder",
     fullname: "Bob Builder",
     action: "Changed hardware device parameter: 'Temperature sensor' to 25.0 °C (from 26.5 °C)",
   },
   {
-    dateTime: "2025-07-20T09:45:30Z",
+    dateTime: "2025-07-20 09:45:30", // Format changed
     username: "jane.smith",
     fullname: "Jane Smith",
     action: "Logged out",
   },
   {
-    dateTime: "2025-07-20T10:00:10Z",
+    dateTime: "2025-07-20 10:00:10", // Format changed
     username: "john.doe",
     fullname: "John Doe",
     action: "Created new user account: 'new.engineer'",
   },
   {
-    dateTime: "2025-07-20T10:05:00Z",
+    dateTime: "2025-07-20 10:05:00", // Format changed
     username: "alice.wonder",
     fullname: "Alice Wonderland",
     action: "Performed system diagnostic on 'Sensor Hub 3'",
   },
   {
-    dateTime: "2025-07-20T10:10:20Z",
+    dateTime: "2025-07-20 10:10:20", // Format changed
     username: "bob.builder",
     fullname: "Bob Builder",
     action: "Acknowledged low pressure alarm: 'Pump Station 1'",
   },
   {
-    dateTime: "2025-07-14T09:24:3Z",
+    dateTime: "2025-07-14 09:24:03", // Format changed (added leading zero to seconds for consistency)
     username: "dora.explo",
     fullname: "Dora The Explorer",
     action: "fucked up the system",

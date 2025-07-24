@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Trash2, Download, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
+import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/AlertsHistory.module.css';
 
 // The component now accepts onDeleteHistoryAlerts and onRestoreHistoryAlerts
@@ -165,13 +166,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             case 'warning': return styles['severity-warning'];
             default: return styles['severity-normal'];
         }
-    };
-
-    const formatDateTime = (dateTimeStr) => {
-        const date = new Date(dateTimeStr);
-        if (isNaN(date)) return dateTimeStr;
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-        return date.toLocaleString('en-US', options);
     };
 
      // --- NEW: Handler to toggle the expanded/collapsed state of a row ---

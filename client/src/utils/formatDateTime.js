@@ -1,5 +1,5 @@
 
-export function formatDate(dateString) {
+export function formatDateTime(dateString) {
     const date = new Date(dateString);
     const options = { month: 'long' }; // Full month name like "July"
     const month = new Intl.DateTimeFormat('en-US', options).format(date);
@@ -11,5 +11,5 @@ export function formatDate(dateString) {
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
 
-    return `${month}-${day}-${year} ${hours}:${minutes} ${ampm}`;
+    return `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`;
 }

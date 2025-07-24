@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css';
 import { ListFilter, Download, X, ChevronDown } from 'lucide-react';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 function SystemLogs({ logs }) {
     // State for applied filters
@@ -102,14 +103,6 @@ function SystemLogs({ logs }) {
     const clearFilters = () => {
         setDraftFilters({ startDate: '', endDate: '', deviceId: [] });
         setDeviceIdSearchTerm('');
-    };
-
-    // Helper function to format date/time strings for display
-    const formatDateTime = (dateTimeStr) => {
-        const date = new Date(dateTimeStr);
-        if (isNaN(date)) return dateTimeStr; // Return original string if invalid
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-        return date.toLocaleString('en-US', options);
     };
 
     return (

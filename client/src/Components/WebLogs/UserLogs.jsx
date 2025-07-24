@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
 import { ListFilter, Download, X, ChevronDown } from 'lucide-react';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 function UserLogs({ logs }) {
     const [filters, setFilters] = useState({
@@ -94,14 +95,6 @@ function UserLogs({ logs }) {
     const clearFilters = () => {
         setDraftFilters({ startDate: '', endDate: '', username: [] });
         setUsernameSearchTerm('');
-    };
-
-    // Helper to format date/time for display
-    const formatDateTime = (dateTimeStr) => {
-        const date = new Date(dateTimeStr);
-        if (isNaN(date)) return dateTimeStr;
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-        return date.toLocaleString('en-US', options);
     };
 
     return (

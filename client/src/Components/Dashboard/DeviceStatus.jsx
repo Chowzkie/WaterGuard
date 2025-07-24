@@ -25,7 +25,7 @@ const DeviceStatus = ({ devicesData, selectedDeviceId, setSelectedDeviceId }) =>
                                     className={`${styles['devices-row']} ${device.id === selectedDeviceId ? styles.selected : ''}`}
                                     onClick={() => setSelectedDeviceId(device.id)}
                                 >
-                                    <div>{device.id}</div>
+                                    <div>{device.label}</div>
                                     <div>{device.location}</div>
                                     <div className={`${styles['status-indicator']} ${styles[device.status.toLowerCase()]}`}>
                                         <div className={styles['status-dot']}></div>

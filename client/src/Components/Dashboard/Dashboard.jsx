@@ -1,4 +1,4 @@
-// dashboard.jsx
+// Dashboard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import DeviceStatus from './DeviceStatus';
 import Readings from './Readings';
@@ -10,14 +10,18 @@ function Dashboard() {
     const { devices: deviceLocationsFromContext } = useContext(AlertsContext);
 
     const [devices, setDevices] = useState([]);
+    // IMPORTANT: selectedDeviceId should now match the actual 'id' from your FAKE_API_DATA
     const [selectedDeviceId, setSelectedDeviceId] = useState(null);
 
     // Update internal state when context data changes
     useEffect(() => {
         if (deviceLocationsFromContext && deviceLocationsFromContext.length > 0) {
             // Transform FAKE_API_DATA into the format expected by Dashboard, DeviceStatus, and Readings
+            // Make sure the 'id' here matches the actual 'id' from FAKE_API_DATA ('ps01-dev', etc.)
+            // so that setSelectedDeviceId works correctly with the original IDs.
             const transformedDevices = deviceLocationsFromContext.map(device => ({
-                id: device.label, // Use label as id as per your original mock data structure
+                id: device.id, // <--- CHANGE IS HERE: Use device.id (e.g., 'ps01-dev')
+                label: device.label, // Keep label if needed for display
                 location: device.location,
                 status: device.status,
                 readings: [ // This array needs to be constructed from the 'readings' object
@@ -33,7 +37,7 @@ function Dashboard() {
             // or if the previously selected device is no longer in the list
             if (selectedDeviceId === null || !transformedDevices.some(d => d.id === selectedDeviceId)) {
                 if (transformedDevices.length > 0) {
-                    setSelectedDeviceId(transformedDevices[0].id);
+                    setSelectedDeviceId(transformedDevices[0].id); // Set the original 'id'
                 } else {
                     setSelectedDeviceId(null); // No devices available
                 }
@@ -44,13 +48,18 @@ function Dashboard() {
         }
     }, [deviceLocationsFromContext, selectedDeviceId]); // Re-run when context data changes or selectedDeviceId changes
 
+    // Ensure selectedDevice is found using the correct 'id'
     const selectedDevice = devices.find((device) => device.id === selectedDeviceId);
 
     return (
         <div className='component-wrapper-dashboard'>
             <Readings 
                 selectedDevice={selectedDevice} 
-                device={devices}
+                // You pass `device` here, which is the `transformedDevices` array.
+                // Depending on `Readings` component, it might expect `selectedDevice.readings`
+                // rather than the whole `devices` array for its `readings` prop.
+                // Please double-check how your `Readings` component uses this `device` prop.
+                device={selectedDevice} // Often, Readings component only needs the selected device itself
                 deviceStatus={selectedDevice ? selectedDevice.status : null}
             />
             <DeviceStatus

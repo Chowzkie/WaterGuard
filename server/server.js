@@ -8,6 +8,7 @@ require('dotenv').config(); // Load environment variables from .env file
 const FAKE_API_DATA = require('./mockData/devices');
 const FAKE_STATIONS_DATA = require('./mockData/stations');
 const MOCK_SENSOR_READINGS = require('./mockData/sensorReading');
+const MOCK_USERS = require('./mockData/users');
 
 const PORT = process.env.PORT || 8080;
 
@@ -53,6 +54,22 @@ app.put("/api/devices/:deviceId/configurations", (req, res) => {
     }
 });
 
+app.post("/api/login", (req, res) => {
+    const { username, password } = req.body; // Get username and password from the request body
+
+    // Find if a user with the provided credentials exists in our mock data
+    const user = MOCK_USERS.find(
+        (u) => u.username === username && u.password === password
+    );
+
+    if (user) {
+        // If user found, send a success response
+        res.status(200).json({ message: "Login successful", username: user.username });
+    } else {
+        // If no user found, send an unauthorized response
+        res.status(401).json({ message: "Invalid Username or Password!" });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

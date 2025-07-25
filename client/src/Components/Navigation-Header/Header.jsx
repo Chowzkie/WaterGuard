@@ -6,7 +6,7 @@ import styles from '../../Styles/Header.module.css';
 import ProfilePic from '../../assets/ProfilePic.png';
 import Logo from '../../assets/Logo.png';
 
-function Header({ onLogout, deviceLabelForHeader }) {
+function Header({ onLogout, deviceLabelForHeader, username }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [subTitle, setSubTitle] = useState('WaterGuard');
@@ -127,7 +127,7 @@ function Header({ onLogout, deviceLabelForHeader }) {
                 <div className={styles.headerDropdown}>
                     <button className={styles.userBtn} onClick={toggleMenu}>
                         <img className={styles.profileImg} src={ProfilePic} alt="Profile" />
-                        <p>Username {open ? '⏶' : '⏷'}</p>
+                        <p>{username} {open ? '⏶' : '⏷'}</p>
                     </button>
                     <div className={`${styles.dropdownMenu} ${open ? styles.show : ''}`}>
                         <div className={`${styles.dropdownItemU} ${styles.manageProfile}`} onClick={handleAccountSettings}>

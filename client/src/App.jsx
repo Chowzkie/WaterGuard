@@ -239,14 +239,17 @@ function App() {
     const showSidebar = !noNavPaths.includes(location.pathname);
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loggedInUsername, setLoggedInUsername] = useState(null);
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
 
-    const handleLogin = () => {
+    const handleLogin = (username) => {
         setIsAuthenticated(true);
+        setLoggedInUsername(username); // Store the username
     };
 
     const handleLogout = () => {
         setIsAuthenticated(false);
+        setLoggedInUsername(null)
     };
 
     // --- State Management ---
@@ -530,7 +533,7 @@ function App() {
 
     return (
         <AlertsContext.Provider value={contextValue}>
-            {isAuthenticated && showHeader && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} />}
+            {isAuthenticated && showHeader && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} username={loggedInUsername}/>}
             {isAuthenticated && showSidebar && <Navigation />}
             <main>
                 <Routes>

@@ -2,7 +2,6 @@
    General Page & View Styles
    ========================================================================== */
 .pageContainer {
-  background-color: #f9fafb;
   min-height: 100vh;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   color: #111827;

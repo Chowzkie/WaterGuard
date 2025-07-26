@@ -17,6 +17,7 @@ import { evaluateSensorReading } from './utils/SensorLogic';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
+import AdminPanel from './Components/Admin/AdminPanel';
 
 // =================================================================================
 // CONFIGURATION
@@ -538,7 +539,12 @@ function App() {
             <main>
                 <Routes>
                     <Route path="/login" element={<Login onLogin={handleLogin} />} />
-
+                    <Route path="admin-panel" element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                                <AdminPanel />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/account-settings"
                         element={

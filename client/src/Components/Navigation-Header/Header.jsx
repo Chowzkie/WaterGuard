@@ -31,7 +31,7 @@ function Header({ onLogout, deviceLabelForHeader, username }) {
         }
         setSubTitle(currentSubTitle);
         document.title = `WaterGuard | ${currentSubTitle}`;
-    }, [location.pathname, deviceLabelForHeader, routeTitleMap]);
+    }, [location.pathname, deviceLabelForHeader]);
 
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);

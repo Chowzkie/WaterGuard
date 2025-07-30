@@ -1,0 +1,119 @@
+/* src/Styles/AdminStyle/SharedAdmin.module.css */
+/* This file contains styles for components used across multiple admin pages,
+   like buttons, modals, toasts, and view titles to ensure a consistent look. */
+
+/* Back Button */
+.backButton {
+  position: absolute;
+  top: 80px;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  color: #4b5563;
+  transition: color 0.3s;
+  z-index: 10;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+.backButton:hover { color: #111827; }
+.backButtonIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-right: 0.375rem;
+}
+
+/* General View Container and Titles */
+.viewContainer {
+  width: 100%;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.viewTitle, .viewTitle2 {
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+}
+.viewTitle {
+  font-size: 1.75rem;
+  margin-bottom: 0;
+  padding-top: 16px;
+}
+.viewTitle2 {
+  margin-bottom: 2rem;
+  padding-top: 20px;
+  font-size: 1.7rem;
+}
+.viewSubtitle {
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Shared Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Style for secondary actions, like the new "Cancel" button */
+.btnSecondary {
+  background-color: #f3f4f6; /* A very light gray background */
+  color: #374151; /* Darker text */
+  border: 1px solid #d1d5db; /* A visible border */
+  padding: 0.75rem 2rem; /* Match padding of the submit button */
+  font-weight: 600; /* Match font weight */
+  border-radius: 0.5rem; /* Match border radius */
+}
+
+.btnSecondary:hover {
+  background-color: #e5e7eb; /* Slightly darker on hover */
+}
+
+.btnEdit { background-color: #e5e7eb; color: #374151; }
+.btnEdit:hover { background-color: #d1d5db; }
+.btnDelete { background-color: #dc2626; color: #ffffff; }
+.btnDelete:hover { background-color: #b91c1c; }
+.btnSecondary { background-color: #e5e7eb; color: #1f2937; }
+.btnSecondary:hover { background-color: #d1d5db; }
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal {
+  background-color: #ffffff; border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 1.5rem; max-width: 22rem; width: 100%; margin: 1rem;
+  animation: zoomIn 0.2s ease-out;
+}
+@keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.modalTitle { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 0.75rem; }
+.modalText { color: #4b5563; margin-bottom: 1.5rem; font-size: 0.875rem; }
+.modalActions { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+/* Toast Styles */
+.toastContainerWrapper {
+  position: fixed; top: 0; right: 0; left: 0; padding-top: 80px; 
+  padding-right: 1.5rem; pointer-events: none; z-index: 50;
+}
+.toastContainer { width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 1rem; }
+.toast {
+  position: relative; max-width: 24rem; padding: 1rem; border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  color: #ffffff; display: flex; align-items: center; pointer-events: auto;
+}
+.toastSuccess { background-color: #10b981; }
+.toastError { background-color: #ef4444; }
+.toastIcon { height: 1.5rem; width: 1.5rem; margin-right: 0.75rem; flex-shrink: 0; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(120%); } }
+.toastIn { animation: slideDown 0.5s ease-out forwards; }
+.toastOutRight { animation: slideOutRight 0.5s ease-in forwards; }

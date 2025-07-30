@@ -1,0 +1,71 @@
+/* src/Styles/AdminStyle/AdminDashboard.module.css */
+/* Contains styles specific to the main dashboard cards and layout. */
+
+.dashboardContainer {
+  width: 100%;
+  max-width: 960px;
+  margin: 50px auto 0 auto;
+}
+
+.dashboardTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.dashboardSubtitle {
+  color: #6b7280;
+  text-align: center;
+  font-size: 1.125rem;
+  margin-bottom: 2.5rem;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+@media (min-width: 768px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dashboardCard {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.dashboardCard:hover {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: translateY(-4px);
+}
+.dashboardCardIconContainer {
+  height: 3rem;
+  width: 3rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  margin: 0 auto 1rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+}
+.dashboardCardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+.dashboardCardDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+}

@@ -1,0 +1,64 @@
+/* src/Styles/AdminStyle/AdminManageUsers.module.css */
+/* Contains styles for the user data table. */
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+}
+
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.userTable th,
+.userTable td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.userTable thead {
+  background-color: #f9fafb;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.userTable tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.userTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.userTable tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.tableRolesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.tableRoleTag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.tableActions {
+  display: flex;
+  gap: 0.5rem;
+}

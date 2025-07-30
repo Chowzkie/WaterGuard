@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'; // Import useEffect
 import Style from '../../../Styles/SpecificDeviceStyle/ValveSwitch.module.css';
 
 // Add deviceStatus to the props
-function ValveSwitch({ deviceId, deviceStatus }) {
+function ValveSwitch({ deviceId, deviceStatus, onToggle }) {
     // Initialize isValveOpen based on deviceStatus
     const [isValveOpen, setIsValveOpen] = useState(deviceStatus === 'Online');
     const [showPopup, setShowPopup] = useState(false);
@@ -27,6 +27,13 @@ function ValveSwitch({ deviceId, deviceStatus }) {
 
         setIsValveOpen(prev => !prev);
         const newState = !isValveOpen; // isValveOpen will still hold the previous state for this line, so use newState
+
+        // --- NEW: Call the onToggle function passed from the parent ---
+        // This will trigger the logging logic in App.jsx
+        if (onToggle) {
+            onToggle(deviceId, newState);
+        }
+
         
         // Set popup message based on the new state
         setPopupOpen(true); // Using a separate state for popup for clarity

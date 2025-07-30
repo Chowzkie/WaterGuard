@@ -57,7 +57,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
     const { deviceId } = useParams();
     const navigate = useNavigate();
     const [currentDevice, setCurrentDevice] = useState(null);
-    const { devices } = useContext(AlertsContext);
+    const { devices, onValveToggle } = useContext(AlertsContext);
 
     // useEffect and other logic remains unchanged
     useEffect(() => {
@@ -96,7 +96,11 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
                 <DetailsPanel device={currentDevice} />
             </div>
             
-            <ValveSwitch deviceId={deviceId} deviceStatus={currentDevice.status} />
+            <ValveSwitch 
+                deviceId={deviceId} 
+                deviceStatus={currentDevice.status}
+                onToggle={onValveToggle} 
+            />
         </div>
     );
 }

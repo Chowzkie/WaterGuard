@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Phone, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera } from 'lucide-react';
+import { User, Lock, Phone, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera, Check, X as CancelIcon } from 'lucide-react';
 import Styles from '../../Styles/AccountSettStyle/AccountSettings.module.css';
+import AlertsContext from '../../utils/AlertsContext';
 
 const AccountSettings = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
+
+    // Get the logging functions from the global context in App.jsx
+    const { onProfileUpdate, onPasswordChange } = useContext(AlertsContext);
 
     // --- STATE MANAGEMENT ---
 
@@ -38,8 +42,6 @@ const AccountSettings = () => {
      * @state {boolean} isEditingPhone - Toggles the edit mode for the phone number field.
      */
     const [isEditingPhone, setIsEditingPhone] = useState(false);
-    
-    // Note: isEditingFullName and isEditingPhoto are removed as per the latest design changes.
 
     /**
      * @state {string} phoneNumber - Holds the value of the phone number input field while editing.
@@ -49,7 +51,7 @@ const AccountSettings = () => {
     /**
      * @state {string|null} newProfilePic - Holds the base64 data URL for the new profile picture preview.
      */
-    const [newProfilePic, setNewProfilePic] = useState(null);
+    const [newProfilePic, setNewProfilePic] = useState(null); 
 
     /**
      * @state {string} currentPassword - Holds the value for the 'Current Password' input field.
@@ -67,9 +69,11 @@ const AccountSettings = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     /**
-     * @state {boolean} isProfileDirty - Tracks if any changes have been made in the profile form to enable/disable the save button.
+     * @state {boolean} isPhoneDirty - Tracks if the phone number has been changed from its original value.
      */
-    const [isProfileDirty, setIsProfileDirty] = useState(false);
+    const [isPhoneDirty, setIsPhoneDirty] = useState(false);
+    
+    // --- useEffect Hooks ---
 
     /**
      * @effect - Automatically clears success or error messages after a 4-second delay.
@@ -85,15 +89,17 @@ const AccountSettings = () => {
     }, [successMessage, errorMessage]);
 
     /**
-     * @effect - Checks if the profile form is "dirty" (has changes).
-     * This is used to enable or disable the main "Save" button.
+     * @effect - Checks if the phone number form is "dirty" (has changes) to enable/disable the save button.
      */
     useEffect(() => {
-        const hasChanged = 
-            phoneNumber !== currentUser.phone || 
-            newProfilePic !== null;
-        setIsProfileDirty(hasChanged);
-    }, [phoneNumber, newProfilePic, currentUser]);
+        // This check is only relevant when in edit mode.
+        if (isEditingPhone) {
+            setIsPhoneDirty(phoneNumber !== currentUser.phone);
+        } else {
+            // If not in edit mode, the form is not considered dirty.
+            setIsPhoneDirty(false);
+        }
+    }, [phoneNumber, currentUser.phone, isEditingPhone]);
 
     // --- HANDLERS ---
 
@@ -103,67 +109,75 @@ const AccountSettings = () => {
     const handleBack = () => navigate('/overview');
 
     /**
-     * Handles the file selection for the profile picture.
-     * Reads the selected file and converts it to a base64 data URL for preview.
+     * A dedicated function to instantly save the new profile picture.
+     * It is called immediately after a new image is selected. It logs the action,
+     * updates the main user state, shows a success message, and clears the preview state.
+     * @param {string} newPicDataUrl - The base64 data URL of the new image.
+     */
+    const handleSaveProfilePic = (newPicDataUrl) => {
+        onProfileUpdate({ profilePic: true });
+        setCurrentUser(prev => ({ ...prev, profilePic: newPicDataUrl }));
+        setSuccessMessage("Profile picture updated successfully!");
+        setNewProfilePic(null);
+    };
+
+    /**
+     * The file selection handler triggers the auto-save for the profile picture.
+     * It reads the selected file, converts it to a data URL, and then calls
+     * the dedicated save function to complete the update.
      * @param {React.ChangeEvent<HTMLInputElement>} e - The file input change event.
      */
     const handleProfilePicChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => setNewProfilePic(reader.result);
+            reader.onloadend = () => {
+                const newPicDataUrl = reader.result;
+                setNewProfilePic(newPicDataUrl); 
+                handleSaveProfilePic(newPicDataUrl); 
+            };
             reader.readAsDataURL(file);
         }
     };
 
     /**
-     * Cancels any ongoing edits in the profile section.
-     * Resets edit modes and form fields to their original state.
+     * Saves the changes made to the user's phone number. This function is called
+     * by the "Save" button in the header. It validates the phone number format,
+     * logs the change to the audit trail, updates the main user state, exits
+     * edit mode, and displays a success notification.
      */
-    const handleCancel = () => {
-        setIsEditingPhone(false);
-        setPhoneNumber(currentUser.phone);
-        setNewProfilePic(null);
+    const handleSave = () => {
         setErrorMessage('');
-    };
-
-    /**
-     * Saves the changes made to the user's profile.
-     * Validates all editable fields before proceeding.
-     * On success, it updates the main user state and shows a success message.
-     * @param {React.FormEvent<HTMLButtonElement>} e - The button click event.
-     */
-    const handleSave = (e) => {
-        e.preventDefault();
-        setErrorMessage('');
-        
         const phPhoneRegex = /^\+639\d{9}$/;
         if (!phPhoneRegex.test(phoneNumber)) {
             setErrorMessage("Please enter a valid Philippine phone number (e.g., +639123456789).");
             return;
         }
-
-        console.log("Saving profile:", { phoneNumber });
-        setCurrentUser(prev => ({ 
-            ...prev, 
-            phone: phoneNumber, 
-            profilePic: newProfilePic || prev.profilePic 
-        }));
+        onProfileUpdate({ phone: { old: currentUser.phone, new: phoneNumber } });
+        setCurrentUser(prev => ({ ...prev, phone: phoneNumber }));
         setIsEditingPhone(false);
-        setNewProfilePic(null);
-        setSuccessMessage("Profile updated successfully!");
+        setSuccessMessage("Phone number updated successfully!");
     };
 
     /**
-     * Handles the password change form submission.
-     * Validates that the new passwords match and meet the strength requirements.
-     * On success, it clears the form fields and shows a success message.
+     * Cancels any ongoing edits for the phone number. It reverts the phone number
+     * field to its original value and exits the edit mode.
+     */
+    const handleCancel = () => {
+        setIsEditingPhone(false);
+        setPhoneNumber(currentUser.phone);
+        setErrorMessage('');
+    };
+
+    /**
+     * Handles the password change form submission. It validates that the new
+     * passwords match and meet security requirements. On success, it logs the
+     * action, clears the form fields, and shows a success message.
      * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
      */
     const handleChangePassword = (e) => {
         e.preventDefault();
         setErrorMessage('');
-
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         if (!passwordRegex.test(newPassword)) {
             setErrorMessage("Password does not meet the strength requirements.");
@@ -173,32 +187,23 @@ const AccountSettings = () => {
             setErrorMessage("New passwords do not match.");
             return;
         }
-
-        console.log("Changing password...");
+        onPasswordChange();
         setSuccessMessage("Password changed successfully!");
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
     };
     
-    /**
-     * @variable {string} profilePicToShow - Determines which profile picture to display (the new preview or the current one).
-     */
+    // --- RENDER ---
+    
     const profilePicToShow = newProfilePic || currentUser.profilePic;
 
-    /**
-     * @variable {boolean} showSaveCancel - Determines if the main Save/Cancel buttons should be visible.
-     * It checks if any profile field is in edit mode OR a new photo is staged, AND the profile tab is active.
-     */
-    const showSaveCancel = (isEditingPhone || newProfilePic) && activeTab === 'profile';
-
-    // --- RENDER ---
     return (
         <div className={Styles['pageWrapper']}>
             <div className={Styles['layoutGrid']}>
                 {/* Left Sidebar */}
                 <aside className={Styles['sidebar']}>
-                    <button onClick={handleBack} className={Styles['backButton']}>
+                     <button onClick={handleBack} className={Styles['backButton']}>
                         <ArrowLeft size={16} /> Back
                     </button>
                     <div className={Styles['profileHeader']}>
@@ -209,7 +214,7 @@ const AccountSettings = () => {
                             </div>
                         </div>
                         <h2 className={Styles['profileName']}>{currentUser.fullName}</h2>
-                        <p className={Styles['profilePhone']}>{currentUser.username}</p>
+                        <p className={Styles['profilePhone']}>@{currentUser.username}</p>
                         <p className={Styles['profilePhone']}>{currentUser.phone}</p>
                     </div>
                     <nav className={Styles['sidebarNav']}>
@@ -222,42 +227,33 @@ const AccountSettings = () => {
                     </nav>
                 </aside>
 
-                {/* Main Content */}
+                {/* --- Main Content (Layout Corrected) --- */}
                 <main className={Styles['mainContent']}>
                     <div className={Styles['contentHeader']}>
                         <h1 className={Styles['contentTitle']}>
                             {activeTab === 'profile' ? 'Personal Information' : 'Password & Security'}
                         </h1>
-                        {showSaveCancel && (
+                        {/* The header Save/Cancel buttons now only appear when editing the phone number */}
+                        {isEditingPhone && activeTab === 'profile' && (
                             <div className={Styles['headerActions']}>
                                 <button onClick={handleCancel} className={`${Styles['button']} ${Styles['buttonSecondary']}`}>Cancel</button>
-                                <button onClick={handleSave} className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!isProfileDirty}>Save</button>
+                                <button onClick={handleSave} className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!isPhoneDirty}>Save</button>
                             </div>
                         )}
                     </div>
 
+                    {/* This is the main content area that now correctly renders the cards */}
                     {activeTab === 'profile' && (
                         <div className={Styles['card']}>
                             <div className={Styles['cardBody']}>
-                                {/* Full Name Row - NOT EDITABLE */}
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Full Name</p>
-                                    <div className={Styles['rowDetails']}>
-                                        <p className={Styles['rowValue']}>{currentUser.fullName}</p>
-                                    </div>
-                                    {/* Full Name is not editable, so no edit button */}
+                                    <div className={Styles['rowDetails']}><p className={Styles['rowValue']}>{currentUser.fullName}</p></div>
                                 </div>
-
-                                {/* Username Row - NOT EDITABLE */}
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Username</p>
-                                    <div className={Styles['rowDetails']}>
-                                        <p className={Styles['rowValue']}>{currentUser.username}</p>
-                                    </div>
-                                    {/* Username is not editable, so no edit button */}
+                                    <div className={Styles['rowDetails']}><p className={Styles['rowValue']}>@{currentUser.username}</p></div>
                                 </div>
-
-                                {/* Phone Number Row */}
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Phone Number</p>
                                     <div className={Styles['rowDetails']}>
@@ -270,14 +266,17 @@ const AccountSettings = () => {
                                             <p className={Styles['rowValue']}>{currentUser.phone}</p>
                                         )}
                                     </div>
-                                    <button onClick={() => setIsEditingPhone(!isEditingPhone)} className={Styles['editButton']}><Edit2 size={16} /></button>
+                                    {/* The simple edit icon is used again, and inline buttons are removed */}
+                                    {!isEditingPhone && (
+                                        <button onClick={() => setIsEditingPhone(true)} className={Styles['editButton']}><Edit2 size={16} /></button>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {activeTab === 'password' && (
-                        <form onSubmit={handleChangePassword}>
+                         <form onSubmit={handleChangePassword}>
                             <div className={Styles['card']}>
                                 <div className={Styles['cardBody']}>
                                     <div className={Styles['cardRow']}>
@@ -304,14 +303,13 @@ const AccountSettings = () => {
                                     <button type="submit" className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!currentPassword || !newPassword || !confirmPassword}>Set New Password</button>
                                 </div>
                             </div>
-                        </form>
+                         </form>
                     )}
                 </main>
             </div>
             
-            {/* This hidden file input is triggered by the clickable avatar in the sidebar */}
+            {/* Hidden file input and notifications */}
             <input type="file" ref={fileInputRef} onChange={handleProfilePicChange} className={Styles['hiddenInput']} accept="image/*" />
-
             {successMessage && 
                 <div className={`${Styles['alert']} ${Styles['alertSuccess']}`}>
                     <ShieldCheck size={20}/>

@@ -44,7 +44,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     const [saveSuccess, setSaveSuccess] = useState(false);
 
     /**
-     * @state {object} openPanels - NEW: Manages the open/closed state of the collapsible panels.
+     * @state {object} openPanels - Manages the open/closed state of the collapsible panels.
      */
     const [openPanels, setOpenPanels] = useState({
         alerts: true, // Start with the main panel open
@@ -73,7 +73,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     // --- UTILITY & EVENT HANDLERS ---
     
     /**
-     * @function handleTogglePanel - NEW: Toggles the open/closed state of a specific panel.
+     * @function handleTogglePanel - Toggles the open/closed state of a specific panel.
      * @param {string} panelName - The key of the panel to toggle (e.g., 'alerts').
      */
     const handleTogglePanel = (panelName) => {
@@ -105,8 +105,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     };
     
     /**
-     * @function handleIntervalChange - Generic handler for select/dropdown fields.
-     * Updates the correct nested property within the `draftConfigs` state.
+     * @function handleIntervalChange - Generic handler for integer-based select/dropdown fields.
      * @param {string} category - The top-level key in the config object (e.g., 'alertLoggingIntervals').
      * @param {string} field - The nested key to update (e.g., 'activeToRecent').
      * @param {string} value - The new value from the select field.
@@ -115,6 +114,19 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         setDraftConfigs(prev => ({
             ...prev,
             [category]: { ...prev[category], [field]: parseInt(value) }
+        }));
+    };
+
+    /**
+     * @function handleSelectChange - Generic handler for string-based select fields (like Yes/No).
+     * @param {string} category - The top-level key in the config object (e.g., 'valveShutOff').
+     * @param {string} field - The nested key to update (e.g., 'reopenOnNormalPH').
+     * @param {string} value - The new value from the select field ('yes' or 'no').
+     */
+    const handleSelectChange = (category, field, value) => {
+        setDraftConfigs(prev => ({
+            ...prev,
+            [category]: { ...prev[category], [field]: value }
         }));
     };
 
@@ -212,8 +224,8 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                 </div>
 
                 {device.status === 'Online' ? (
-                    // NEW: Main container for the single-column accordion layout
                     <div className={styles['settings-container']}>
+                        {/* --- Alert Thresholds Panel --- */}
                         <CollapsiblePanel
                             title="Alert Thresholds"
                             icon={<AlertTriangle size={18} className={`${styles['header-icon']} ${styles['icon-alerts']}`} />}
@@ -254,6 +266,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             </ThresholdGroup>
                         </CollapsiblePanel>
 
+                        {/* --- Alert Logging Intervals Panel --- */}
                         <CollapsiblePanel
                             title="Alert Logging Intervals"
                             icon={<History size={18} className={`${styles['header-icon']} ${styles['icon-logging']}`} />}
@@ -264,6 +277,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             <ThresholdGroup label="Recent Alert → History"><SelectField value={draftConfigs.alertLoggingIntervals?.recentToHistory} onChange={e => handleIntervalChange('alertLoggingIntervals', 'recentToHistory', e.target.value)} options={[5, 10, 15, 30, 60]} unit="minutes" /></ThresholdGroup>
                         </CollapsiblePanel>
 
+                        {/* --- Testing Container Water Change Intervals Panel --- */}
                         <CollapsiblePanel
                             title="Testing Container Water Change Intervals"
                             icon={<RefreshCw size={18} className={`${styles['header-icon']} ${styles['icon-testing']}`} />}
@@ -274,24 +288,55 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             <ThresholdGroup label="Delay before Filling"><SelectField value={draftConfigs.testingIntervals?.delay} onChange={e => handleIntervalChange('testingIntervals', 'delay', e.target.value)} options={[1, 2, 3, 4, 5]} unit="minutes" /></ThresholdGroup>
                             <ThresholdGroup label="Filling Duration"><SelectField value={draftConfigs.testingIntervals?.fill} onChange={e => handleIntervalChange('testingIntervals', 'fill', e.target.value)} options={[1, 2, 3, 4, 5]} unit="minutes" /></ThresholdGroup>
                         </CollapsiblePanel>
-
+                        
+                        {/* --- CORRECTED: Valve Shut-off Thresholds Panel --- */}
                         <CollapsiblePanel
                             title="Valve Shut-off Thresholds"
                             icon={<PowerOff size={18} className={`${styles['header-icon']} ${styles['icon-shutoff']}`} />}
                             isOpen={openPanels.shutoff}
                             onToggle={() => handleTogglePanel('shutoff')}
                         >
-                            <ThresholdGroup label="Shut-Off on pH">{draftConfigs?.valveShutOff ? <div className={styles['input-row-2-col']}><InputField label="Critical Low" value={draftConfigs.valveShutOff.phLow} onChange={e => handleChange('valveShutOff', 'phLow', e.target.value)} /><InputField label="Critical High" value={draftConfigs.valveShutOff.phHigh} onChange={e => handleChange('valveShutOff', 'phHigh', e.target.value)} /></div> : <NotConfiguredMessage />}</ThresholdGroup>
-                            <ThresholdGroup label="Shut-Off on Turbidity">{draftConfigs?.valveShutOff ? <div className={styles['input-row-1-col']}><InputField label="Critical Threshold" value={draftConfigs.valveShutOff.turbidityCrit} onChange={e => handleChange('valveShutOff', 'turbidityCrit', e.target.value)} /></div> : <NotConfiguredMessage />}</ThresholdGroup>
-                            <ThresholdGroup label="Shut-Off on TDS">{draftConfigs?.valveShutOff ? <div className={styles['input-row-1-col']}><InputField label="Critical Threshold" value={draftConfigs.valveShutOff.tdsCrit} onChange={e => handleChange('valveShutOff', 'tdsCrit', e.target.value)} /></div> : <NotConfiguredMessage />}</ThresholdGroup>
+                            {draftConfigs?.valveShutOff ? (
+                                <>
+                                    {/* pH Section */}
+                                    <ThresholdGroup label="Shut-Off on pH">
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Critical Low" value={draftConfigs.valveShutOff.phLow} onChange={e => handleChange('valveShutOff', 'phLow', e.target.value)} />
+                                            <InputField label="Critical High" value={draftConfigs.valveShutOff.phHigh} onChange={e => handleChange('valveShutOff', 'phHigh', e.target.value)} />
+                                        </div>
+                                    </ThresholdGroup>
+
+                                    {/* Turbidity Section */}
+                                    <ThresholdGroup label="Shut-Off on Turbidity">
+                                        <div className={styles['input-row-1-col']}>
+                                            <InputField label="Critical Threshold" value={draftConfigs.valveShutOff.turbidityCrit} onChange={e => handleChange('valveShutOff', 'turbidityCrit', e.target.value)} />
+                                        </div>
+                                    </ThresholdGroup>
+
+                                    {/* TDS Section */}
+                                    <ThresholdGroup label="Shut-Off on TDS">
+                                        <div className={styles['input-row-1-col']}>
+                                            <InputField label="Critical Threshold" value={draftConfigs.valveShutOff.tdsCrit} onChange={e => handleChange('valveShutOff', 'tdsCrit', e.target.value)} />
+                                        </div>
+                                    </ThresholdGroup>
+
+                                    {/* NEW: Global Rule Section */}
+                                    <div className={styles['global-rule-divider']}></div>
+                                    <ThresholdGroup label="Global Valve Rule">
+                                        <YesNoSelect
+                                            label="Auto Re-open Valve on Normal?"
+                                            value={draftConfigs.valveShutOff.autoReopenGlobal || 'no'}
+                                            onChange={e => handleSelectChange('valveShutOff', 'autoReopenGlobal', e.target.value)}
+                                        />
+                                    </ThresholdGroup>
+                                </>
+                            ) : <NotConfiguredMessage />}
                         </CollapsiblePanel>
                     </div>
                 ) : (
                     <div className={styles['offline-device']}>
                         <div className={styles['offline-card']}>
-                            <div className={styles['icon-wrapper']}>
-                                <WifiOff size={50}/>
-                            </div>
+                            <div className={styles['icon-wrapper']}><WifiOff size={50}/></div>
                             <h4>{device.label} is currently offline</h4>
                             <p>You cannot configure this device's <br /> settings while its offline.</p>
                         </div>
@@ -321,12 +366,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 // --- HELPER COMPONENTS ---
 
 /**
- * NEW: A reusable collapsible panel component for the accordion layout.
- * @param {React.ReactNode} icon - The icon to display before the title.
- * @param {string} title - The title displayed in the header.
- * @param {boolean} isOpen - Whether the panel is currently open.
- * @param {function} onToggle - The function to call when the header is clicked.
- * @param {React.ReactNode} children - The content to display inside the panel.
+ * A reusable collapsible panel component for the accordion layout.
  */
 const CollapsiblePanel = ({ icon, title, isOpen, onToggle, children }) => {
     return (
@@ -365,6 +405,22 @@ const SelectField = ({ value, onChange, options, unit = "minutes" }) => (
     <select value={value} onChange={onChange} className={styles['select-field']}>
         {options && options.map(o => <option key={o} value={o}>Every {o} {unit}</option>)}
     </select>
+);
+
+/**
+ * NEW: A reusable select component for Yes/No options.
+ * @param {string} label - The label for the select field.
+ * @param {string} value - The current value ('yes' or 'no').
+ * @param {function} onChange - The function to call when the value changes.
+ */
+const YesNoSelect = ({ label, value, onChange }) => (
+    <div className={styles['input-field']}>
+        <label>{label}</label>
+        <select value={value} onChange={onChange} className={styles['select-field']}>
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+        </select>
+    </div>
 );
 
 export default ConfigurationSettings;

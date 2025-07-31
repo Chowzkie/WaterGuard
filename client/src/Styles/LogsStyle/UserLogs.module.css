@@ -14,12 +14,6 @@
     
     /* NEW: Hide overflow from the container, as scrolling is handled by the body */
     overflow: hidden;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .tableTitle{
@@ -406,4 +400,222 @@
 .tableBody::-webkit-scrollbar-thumb {
   background-color: #bbb;
   border-radius: 4px;
+}
+
+/* Add these styles to UserLogs.module.css and remove the old delete styles */
+
+.trash-icon {
+    cursor: pointer;
+    color: #6c757d;
+    transition: color 0.2s;
+}
+.trash-icon:hover {
+    color: rgb(245, 70, 70);
+}
+
+.delete-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.delete-slider {
+    display: flex;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.delete-slider button {
+    padding: 4px 12px;
+    border: none;
+    background-color: transparent;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #495057;
+}
+
+.delete-slider button.active {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: #0056b3;
+}
+
+.delete-controls span {
+    font-size: 13px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.delete-button {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #fa5252;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #e03131;
+}
+
+.delete-cancel-button {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #495057;
+}
+.delete-cancel-button:hover {
+    background-color: #f1f3f5;
+}
+
+.select-delete-grid {
+    grid-template-columns: 1.5fr 1.2fr 1.8fr 2.5fr auto; /* Adjust columns to make space for checkbox */
+}
+
+.checkbox-cell-header, .checkbox-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-right: 10px;
+}
+
+.checkbox-cell input, .checkbox-cell-header input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.confirmation-modal {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 400px;
+    text-align: center;
+    animation: zoomIn 0.2s ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.confirmation-modal h4 {
+    margin-top: 0;
+    font-size: 1.25rem;
+}
+
+.confirmation-modal p {
+    margin: 8px 0 24px;
+    color: #495057;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.button-secondary {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    background-color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+.button-secondary:hover {
+    background-color: #f1f3f5;
+}
+
+.button-danger {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background-color: #e03131;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+.button-danger:hover {
+    background-color: #c92a2a;
+}
+
+.undo-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 24px; /* Changed from 50% */
+    background-color: #343a40;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 1001;
+    /* This transform is for the slide-up animation */
+    transform: translateY(150%);
+    opacity: 0;
+    transition: all 0.4s ease-in-out;
+}
+
+.undo-toast.show {
+    transform: translateY(0); /* The final position */
+    opacity: 1;
+}
+
+/* The button style inside the toast remains the same */
+.undo-toast button {
+    background: none;
+    border: none;
+    color: #4dabf7;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+}
+.undo-toast button:hover {
+    text-decoration: underline;
 }

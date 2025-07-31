@@ -1,6 +1,4 @@
-/*
-  SystemLogs.module.css
-*/
+/*SystemLogs.module.css*/
 
 .container {
     width: 100%;
@@ -16,12 +14,6 @@
     
     /* Hide overflow from the container itself, as scrolling is now handled by the body */
     overflow: hidden;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .tableTitle{

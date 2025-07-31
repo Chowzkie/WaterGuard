@@ -350,3 +350,10 @@
     font-size: 14px;
     font-weight: lighter;
 }
+
+/* Add this to your existing CSS file */
+
+.global-rule-divider {
+    border-top: 1px solid #e2e8f0; /* A soft line color */
+    margin: 0; /* Creates space above and below the line */
+}

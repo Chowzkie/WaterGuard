@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
-// --- NEW: Import new icons for the delete functionality ---
-import { ListFilter, Download, X, ChevronDown, Trash2, Undo } from 'lucide-react';
+import { ListFilter, Download, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
 
 /**
  * UserLogs Component: Displays user activity logs with filtering and deletion capabilities.
@@ -11,12 +10,12 @@ import { ListFilter, Download, X, ChevronDown, Trash2, Undo } from 'lucide-react
  */
 function UserLogs({ logs, onDelete, onRestore }) {
     // --- STATE MANAGEMENT ---
-
     // State for the currently applied filters
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
-        username: [], // Can filter by multiple usernames
+        category: [],
+        username: [],
     });
 
     // State for filters being edited in the filter panel, but not yet applied
@@ -42,7 +41,6 @@ function UserLogs({ logs, onDelete, onRestore }) {
     const [lastDeletedCount, setLastDeletedCount] = useState(0);
 
     // --- REFS ---
-
     // Refs to detect clicks outside of the filter panel and dropdowns to close them
     const filterPanelRef = useRef(null);
     const usernameDropdownRef = useRef(null);
@@ -50,7 +48,6 @@ function UserLogs({ logs, onDelete, onRestore }) {
     const undoTimerRef = useRef(null);
 
     // --- MEMOIZED VALUES (for performance) ---
-
     // Creates a sorted list of unique usernames for the filter dropdown.
     // This only recalculates when the main 'logs' prop changes.
     const uniqueUsernames = useMemo(() => {
@@ -58,27 +55,49 @@ function UserLogs({ logs, onDelete, onRestore }) {
         return Array.from(usernames).sort();
     }, [logs]);
 
-    // Filters and sorts the logs that are displayed in the table.
-    // This only recalculates when the 'logs' prop or the applied 'filters' change.
+    // --- BUG FIX: The filtering logic is rewritten to be more robust and explicit ---
     const filteredDisplayLogs = useMemo(() => {
-        return logs.filter(log => {
-            const logDate = new Date(log.dateTime);
-            const startDate = filters.startDate ? new Date(filters.startDate) : null;
-            const endDate = filters.endDate ? new Date(filters.endDate) : null;
+        // Start with the full list of logs
+        let logsToFilter = [...logs];
 
-            if (startDate) { startDate.setHours(0, 0, 0, 0); }
-            if (endDate) { endDate.setHours(23, 59, 59, 999); }
+        // Apply date range filter
+        const { startDate, endDate } = filters;
+        if (startDate || endDate) {
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(endDate) : null;
+            if (start) start.setHours(0, 0, 0, 0);
+            if (end) end.setHours(23, 59, 59, 999);
 
-            const dateMatch = (!startDate || logDate >= startDate) && (!endDate || logDate <= endDate);
-            const usernameMatch = filters.username.length === 0 || filters.username.includes(log.username);
+            logsToFilter = logsToFilter.filter(log => {
+                const logDate = new Date(log.dateTime);
+                // Exclude log if it's before the start date
+                if (start && logDate < start) return false;
+                // Exclude log if it's after the end date
+                if (end && logDate > end) return false;
+                // Otherwise, include it
+                return true;
+            });
+        }
 
-            return dateMatch && usernameMatch;
-        }).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime)); // Always show newest logs first
+        // Apply username filter
+        const { username } = filters;
+        if (username.length > 0) {
+            logsToFilter = logsToFilter.filter(log => username.includes(log.username));
+        }
+
+        // Apply category filter
+        const { category } = filters;
+        if (category.length > 0) {
+            // This ensures that only logs whose 'type' is in the selected category array are kept.
+            logsToFilter = logsToFilter.filter(log => log.type && category.includes(log.type));
+        }
+
+        // Finally, sort the remaining logs by date
+        return logsToFilter.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }, [logs, filters]);
 
 
     // --- LIFECYCLE EFFECTS ---
-
     // Effect to sync draft filters with active filters when the panel is opened
     useEffect(() => {
         if (isFilterOpen) {
@@ -188,6 +207,19 @@ function UserLogs({ logs, onDelete, onRestore }) {
     // --- Existing handlers for the filter functionality ---
 
     const handleDateChange = (e) => { setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value })); };
+    
+    const handlePillSelect = (filterType, value) => {
+        setDraftFilters(prev => {
+            const currentValues = new Set(prev[filterType]);
+            if (currentValues.has(value)) {
+                currentValues.delete(value);
+            } else {
+                currentValues.add(value);
+            }
+            return { ...prev, [filterType]: Array.from(currentValues) };
+        });
+    };
+
     const handleUsernameSelect = (username) => {
         setDraftFilters(prev => {
             const currentUsers = new Set(prev.username);
@@ -201,7 +233,7 @@ function UserLogs({ logs, onDelete, onRestore }) {
         setUsernameSearchTerm('');
     };
     const applyFilters = () => { setFilters(draftFilters); setIsFilterOpen(false); };
-    const clearFilters = () => { setDraftFilters({ startDate: '', endDate: '', username: [] }); setUsernameSearchTerm(''); };
+    const clearFilters = () => { setDraftFilters({ startDate: '', endDate: '', category: [], username: [] }); setUsernameSearchTerm(''); };
 
     // --- HELPER FUNCTIONS ---
 
@@ -212,6 +244,25 @@ function UserLogs({ logs, onDelete, onRestore }) {
         if (isNaN(date.getTime())) return 'Invalid Date'; // Handle invalid date values
         const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
         return date.toLocaleString('en-US', options);
+    };
+
+    /**
+     * --- NEW: Helper function to get the CSS class for a log type ---
+     * This function returns a specific CSS class based on the log's type,
+     * allowing for unique color-coding for each category.
+     * @param {string} logType - The 'type' property of the log object.
+     * @returns {string} The corresponding CSS class name from the module.
+     */
+    const getTypeStyle = (logType) => {
+        switch (logType) {
+            case 'Configuration': return Style['type-configuration'];
+            case 'Admin': return Style['type-admin'];
+            case 'Account': return Style['type-account'];
+            case 'Deletion': return Style['type-deletion'];
+            case 'Acknowledgement': return Style['type-acknowledgement'];
+            case 'Valve': return Style['type-valve'];
+            default: return ''; // Return no specific class if type is unknown
+        }
     };
 
     return (
@@ -263,6 +314,25 @@ function UserLogs({ logs, onDelete, onRestore }) {
                                             <input type="date" name="startDate" value={draftFilters.startDate} onChange={handleDateChange} className={Style['date-input']} />
                                             <span>to</span>
                                             <input type="date" name="endDate" value={draftFilters.endDate} onChange={handleDateChange} className={Style['date-input']} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Category Filter */}
+                                <div className={Style['filter-row']}>
+                                    <label className={Style['filter-label']}>Category</label>
+                                    <div className={Style['filter-control']}>
+                                        <div className={Style['pill-group']}>
+                                            {['Configuration', 'Admin', 'Account', 'Deletion', 'Acknowledgement', 'Valve'].map(category => (
+                                                <button
+                                                    key={category}
+                                                    onClick={() => handlePillSelect('category', category)}
+                                                    className={`${Style['filter-pill']} ${draftFilters.category.includes(category) ? Style.selected : ''}`}
+                                                >
+                                                    {draftFilters.category.includes(category) && <Check size={14} />}
+                                                    {category}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
@@ -343,6 +413,7 @@ function UserLogs({ logs, onDelete, onRestore }) {
                 <div className={Style['headerItem']}>Date & Time</div>
                 <div className={Style['headerItem']}>Username</div>
                 <div className={Style['headerItem']}>Fullname</div>
+                <div className={Style['headerItem']}>Type</div>
                 <div className={Style['headerItem']}>Action</div>
                 {/* The "select all" checkbox is only rendered in select mode */}
                 {deleteMode === 'select' && (
@@ -364,6 +435,12 @@ function UserLogs({ logs, onDelete, onRestore }) {
                             <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
                             <div className={Style['tableCell']} data-label="Username">{log.username}</div>
                             <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
+                            {/* --- MODIFIED: The 'Type' cell now uses a styled span for color-coding --- */}
+                            <div className={Style['tableCell']} data-label="Type">
+                                <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
+                                    {log.type}
+                                </span>
+                            </div>
                             <div className={Style['tableCell']} data-label="Action">{log.action}</div>
                             {/* Each row gets a checkbox, but only in select mode */}
                             {deleteMode === 'select' && (

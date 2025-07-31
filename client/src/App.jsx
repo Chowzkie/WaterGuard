@@ -469,17 +469,20 @@ function App() {
 
      // --- NEW: Backend-ready function to add a new log entry ---
     /**
+     * --- MODIFIED: logUserAction now accepts a 'type' for categorization ---
      * Creates a new log entry and adds it to the userLogs state.
      * In a real application, this function would also make an API call to a backend service.
      * @param {string} actionText - The descriptive text of the action performed.
+     * @param {string} type - The category of the log entry.
      */
-    const logUserAction = (actionText) => {
+    const logUserAction = (actionText, type) => {
         const newLog = {
             id: Date.now(), // Use timestamp for a simple unique ID
             dateTime: new Date().toISOString(),
             username: CURRENT_USER.username,
             fullname: CURRENT_USER.fullname,
             action: actionText,
+            type: type, // The new, explicit type field
         };
 
         // --- SIMULATION LOGIC ---
@@ -635,7 +638,7 @@ function App() {
 
         // If the alert is found, create a log entry
         if (alertToAck) {
-            logUserAction(`Acknowledged alert: '${alertToAck.type}' for device '${alertToAck.originator}'.`);
+            logUserAction(`Acknowledged alert: '${alertToAck.type}' for device '${alertToAck.originator}'.`, 'Acknowledgement');
         }
 
         dispatch({
@@ -678,7 +681,7 @@ function App() {
                 const deviceLabel = device ? device.label : deviceId;
                 logMessage = `Deleted ${count} alert record${pluralS} from history for device '${deviceLabel}'.`;
             }
-            logUserAction(logMessage);
+            logUserAction(logMessage, 'Deletion');
         });
 
         // Finally, dispatch the action to update the state
@@ -715,7 +718,7 @@ function App() {
                 const deviceLabel = device ? device.label : deviceId;
                 logMessage = `Restored ${count} alert record${pluralS} to history for device '${deviceLabel}'.`;
             }
-            logUserAction(logMessage);
+            logUserAction(logMessage, 'Deletion');
         });
         
         dispatch({ type: 'RESTORE_HISTORY_ALERTS' });
@@ -792,11 +795,10 @@ function App() {
             // We can still attempt the API call, but logging is skipped.
         } else {
             // Generate and log changes based on the current state vs. the new configs
-            const oldConfigs = deviceToUpdate.configurations;
-            const changesToLog = generateChangeLogs(oldConfigs, newConfigs); // Assuming this function exists
+            const changesToLog = generateChangeLogs(deviceToUpdate.configurations, newConfigs); // Assuming this function exists
             changesToLog.forEach(change => {
                 // Assuming logUserAction function exists
-                logUserAction(`Device '${deviceToUpdate.label}': ${change}`);
+                logUserAction(`Device '${deviceToUpdate.label}': ${change}`, 'Configuration');
             });
         }
 
@@ -856,7 +858,7 @@ function App() {
             const device = deviceLocations.find(d => d.id === deviceId);
             if (device) {
                 const stateText = newState ? 'Opened' : 'Closed';
-                logUserAction(`${stateText} water valve for device '${device.label}'.`);
+                logUserAction(`${stateText} water valve for device '${device.label}'.`, 'Valve');
             }
         };
 
@@ -866,10 +868,10 @@ function App() {
          */
         const handleProfileUpdate = (changes) => {
             if (changes.phone) {
-                logUserAction(`Changed phone number from ${changes.phone.old} to ${changes.phone.new}.`);
+                logUserAction(`Changed phone number from ${changes.phone.old} to ${changes.phone.new}.`, 'Account');
             }
             if (changes.profilePic) {
-                logUserAction(`Updated profile picture.`);
+                logUserAction(`Updated profile picture.`, 'Account');
             }
         };
 
@@ -877,7 +879,7 @@ function App() {
          * Logs when a user changes their password.
          */
         const handlePasswordChange = () => {
-            logUserAction(`Changed password.`);
+            logUserAction(`Changed password.`, 'Account');
         };
 
     /**
@@ -886,7 +888,7 @@ function App() {
      */
     const onAdminCreateUser = (newUser) => {
         // This function receives the newly created user object to include their username in the log.
-        logUserAction(`Admin '${CURRENT_USER.username}' created new user account: '${newUser.username}'.`);
+        logUserAction(`Admin '${CURRENT_USER.username}' created new user account: '${newUser.username}'.`, 'Admin');
     };
 
     /**
@@ -895,7 +897,7 @@ function App() {
      */
     const onAdminDeleteUser = (deletedUser) => {
         // This function receives the user object just before deletion to log their username.
-        logUserAction(`Admin '${CURRENT_USER.username}' deleted user account: '${deletedUser.username}'.`);
+        logUserAction(`Admin '${CURRENT_USER.username}' deleted user account: '${deletedUser.username}'.`, 'Admin');
     };
 
     /**
@@ -914,14 +916,14 @@ function App() {
         // 1. Compare simple text fields (firstName, lastName, etc.)
         Object.keys(USER_FIELD_MAP).forEach(field => {
             if (oldUser[field] !== newUser[field]) {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Changed ${USER_FIELD_MAP[field]} from '${oldUser[field]}' to '${newUser[field]}'.`);
+                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Changed ${USER_FIELD_MAP[field]} from '${oldUser[field]}' to '${newUser[field]}'.`, 'Admin');
             }
         });
 
         // 2. Check for a password change. This now works correctly because UserForm.jsx
         //    sends an empty password string unless it has been explicitly changed.
         if (newUser.password && newUser.password.length > 0) {
-            logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Changed password.`);
+            logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Changed password.`, 'Admin');
         }
 
         // 3. Compare the 'roles' array to find additions and removals.
@@ -929,12 +931,12 @@ function App() {
         const newRoles = new Set(newUser.roles);
         newUser.roles.forEach(role => {
             if (!oldRoles.has(role)) {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Added role '${role}'.`);
+                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Added role '${role}'.`, 'Admin');
             }
         });
         oldUser.roles.forEach(role => {
             if (!newRoles.has(role)) {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Removed role '${role}'.`);
+                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Removed role '${role}'.`, 'Admin');
             }
         });
 
@@ -948,14 +950,14 @@ function App() {
 
         // Case 1: A single device was replaced with another.
         if (addedDevices.length === 1 && removedDevices.length === 1) {
-            logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Replaced device '${getDeviceLabel(removedDevices[0])}' with '${getDeviceLabel(addedDevices[0])}'.`);
+            logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Replaced device '${getDeviceLabel(removedDevices[0])}' with '${getDeviceLabel(addedDevices[0])}'.`, 'Admin');
         } else {
             // Case 2: Handle all other additions and removals separately.
             addedDevices.forEach(deviceId => {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Added device '${getDeviceLabel(deviceId)}'.`);
+                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Added device '${getDeviceLabel(deviceId)}'.`, 'Admin');
             });
             removedDevices.forEach(deviceId => {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Removed device '${getDeviceLabel(deviceId)}'.`);
+                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Removed device '${getDeviceLabel(deviceId)}'.`, 'Admin');
             });
         }
     };
@@ -985,13 +987,13 @@ function App() {
         newlyAddedId,
         onAnimationComplete: handleAnimationComplete,
         onSaveConfiguration: handleSaveConfiguration,
-        userLogs, 
+        userLogs,
         onValveToggle: handleValveToggle,
         onProfileUpdate: handleProfileUpdate,
         onPasswordChange: handlePasswordChange,
         onAdminCreateUser,
         onAdminUpdateUser,
-        onAdminDeleteUser, 
+        onAdminDeleteUser,
     };
 
     return (

@@ -19,19 +19,29 @@ function Header({ onLogout, deviceLabelForHeader, username }) {
         '/configurations': 'Configuration',
         '/logs': 'Logs',
         '/account-settings': 'Account Settings',
-        '/admin-panel': 'Admin Panel'
+        '/admin': 'Admin Panel',
+        '/admin/create': 'Admin Panel > Create Account',
+        '/admin/manage': 'Admin Panel > Manage Accounts',
     };
 
     useEffect(() => {
-        let currentSubTitle;
-        if (deviceLabelForHeader) {
-            currentSubTitle = `Devices > ${deviceLabelForHeader}`;
+         let currentSubTitle;
+    
+    if (deviceLabelForHeader) {
+        // Check if the current page is a configuration page
+        if (location.pathname.startsWith('/configurations')) {
+            currentSubTitle = `Configuration > ${deviceLabelForHeader}`;
         } else {
-            currentSubTitle = routeTitleMap[location.pathname] || 'WaterGuard';
+           // Fallback for other pages like /devices/:deviceId
+            currentSubTitle = `Devices > ${deviceLabelForHeader}`;
         }
+        } else {
+        // This handles all non-specific pages
+        currentSubTitle = routeTitleMap[location.pathname] || 'WaterGuard';
+    }
         setSubTitle(currentSubTitle);
         document.title = `WaterGuard | ${currentSubTitle}`;
-    }, [location.pathname, deviceLabelForHeader]);
+    },  [location.pathname, deviceLabelForHeader, routeTitleMap]);
 
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
@@ -73,7 +83,7 @@ function Header({ onLogout, deviceLabelForHeader, username }) {
         setOpen(false);
     };
     const handleAdminPanel = () => {
-        navigate('/admin-panel');
+        navigate('/admin');
         setOpen(false);
     }
     const handleLogs = () => {

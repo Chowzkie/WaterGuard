@@ -1,6 +1,7 @@
 .component-wrapper-dashboard {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* Readings take up more space */
+  /* Main layout: 2 columns on larger screens */
+  grid-template-columns: 2fr 1fr; 
   height: calc(100vh - 100px);
   width: 100%;
   gap: 24px;
@@ -15,7 +16,21 @@
 /* Responsive layout for smaller screens */
 @media (max-width: 900px) {
   .component-wrapper-dashboard {
-    grid-template-columns: 1fr; /* Stack components on top of each other */
+    /* Stacks the components vertically */
+    grid-template-columns: 1fr; 
+  }
+
+  /* --- NEW RULES TO REORDER COMPONENTS --- */
+  /* This targets the first component in the JSX (<Readings>) */
+  .component-wrapper-dashboard > :nth-child(1) {
+    /* And moves it to the second row visually */
+    grid-row: 2;
+  }
+
+  /* This targets the second component (<DeviceStatus>) */
+  .component-wrapper-dashboard > :nth-child(2) {
+    /* And moves it to the first row visually */
+    grid-row: 1;
   }
 }
 

@@ -56,7 +56,7 @@
     position: absolute;
     top: 5px;
     right: 5px;
-    width: 450px; /* Adjusted width for new filter options */
+    width: 450px;
     background-color: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -128,6 +128,7 @@
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 0.9rem;
+    font-family: inherit;
 }
 
 .date-input::-webkit-calendar-picker-indicator {
@@ -394,7 +395,7 @@
     padding: 8px 20px;
     border-bottom: 1px solid #eee;
     align-items: center;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, border-left 0.2s ease;
 }
 
 .tableRow:last-child {
@@ -421,53 +422,6 @@
     font-size: 1rem;
 }
 
-/* --- Responsive adjustments --- */
-@media (max-width: 768px) {
-    .tableHeader {
-        display: none;
-    }
-    .tableRow {
-        display: block;
-        padding: 10px 15px;
-        border: 1px solid #eee;
-        margin: 0 10px 10px 10px;
-        border-radius: 5px;
-    }
-    .tableRow:first-child {
-        margin-top: 10px;
-    }
-    .tableRow>.tableCell {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px dashed #eee;
-    }
-    .tableRow>.tableCell:last-child {
-        border-bottom: none;
-    }
-    .tableCell::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: #555;
-        margin-right: 10px;
-    }
-    .filter-panel {
-        width: 90%;
-        left: 5%;
-        right: 5%;
-        top: 60px;
-        max-height: 80vh;
-    }
-}
-
-@media (max-width: 480px) {
-    .tableRow {
-        padding: 8px 12px;
-        margin: 0 5px 10px 5px;
-    }
-}
-
 .tableBody::-webkit-scrollbar {
     width: 6px;
 }
@@ -481,6 +435,7 @@
     border-radius: 4px;
 }
 
+/* --- Delete Functionality Styles --- */
 .trash-icon {
     cursor: pointer;
     color: #6c757d;
@@ -571,6 +526,7 @@
     background-color: #f1f3f5;
 }
 
+/* Add an 'auto' column at the end for the checkbox */
 .select-delete-grid {
     grid-template-columns: 1.6fr 1.2fr 1.2fr 1.2fr 2.8fr auto;
 }
@@ -583,13 +539,84 @@
     padding-right: 10px;
 }
 
-.checkbox-cell input,
-.checkbox-cell-header input {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
+/* Style for highlighting rows selected for deletion */
+.tableRow.selected-for-deletion {
+    background-color: #ffe3e3 !important;
+    border-left: 3px solid #e03131;
 }
 
+/* --- Styles for Custom Checkbox --- */
+.custom-checkbox-container {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    font-size: 16px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    width: 18px;
+    height: 18px;
+}
+
+.custom-checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox-container:hover input ~ .checkmark {
+    background-color: #ccc;
+}
+
+.custom-checkbox-container input:checked ~ .checkmark {
+    background-color: #e03131;
+    border-color: #c92a2a;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox-container .checkmark:after {
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+.custom-checkbox-container input:disabled ~ .checkmark {
+    background-color: #f1f1f1;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
+}
+
+/* --- Confirmation Modal & Undo Toast --- */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -706,15 +733,15 @@
     text-decoration: underline;
 }
 
-/* --- MODIFIED: Styles for color-coding the log types made more compact --- */
+/* --- Log Type Color Coding --- */
 .type-badge {
-    padding: 2px 8px; /* Reduced vertical and horizontal padding */
-    border-radius: 10px; /* Slightly smaller radius */
-    font-size: 11px; /* Smaller font size */
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
     font-weight: 600;
     text-align: center;
     display: inline-block;
-    min-width: 70px; /* Reduced min-width */
+    min-width: 70px;
     border: 1px solid transparent;
 }
 
@@ -724,3 +751,118 @@
 .type-deletion { background-color: #e2e3e5; color: #41464b; border-color: #d3d6d8; }
 .type-acknowledgement { background-color: #fff3cd; color: #664d03; border-color: #ffecb5; }
 .type-valve { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+
+/* --- Responsive adjustments --- */
+@media (max-width: 768px) {
+    /* Responsive Header */
+    .tableTitle {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding-bottom: 10px;
+    }
+
+    .icons {
+        width: 100%;
+    }
+
+    .delete-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    /* Responsive Table */
+    .tableHeader {
+        display: none;
+    }
+    
+    .tableRow {
+        display: block;
+        padding: 10px 15px;
+        border-top: 1px solid #eee;
+        border-right: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+        border-left: 1px solid #eee; /* Default left border */
+        margin: 0 10px 10px 10px;
+        border-radius: 5px;
+    }
+
+    .tableRow:first-child {
+        margin-top: 10px;
+    }
+    
+    .tableRow > .tableCell {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
+    }
+    
+    .tableRow > .tableCell:last-child {
+        border-bottom: none;
+    }
+    
+    .tableCell::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #555;
+        margin-right: 10px;
+    }
+
+    /* Responsive Filter Panel */
+    .filter-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        border-radius: 0;
+        z-index: 9999;
+        overflow-y: auto;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .filter-body {
+        gap: 24px;
+    }
+
+    .date-range-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    .date-range-group span {
+        display: none;
+    }
+
+    /* Responsive Confirmation Modal */
+    .confirmation-modal {
+        width: 90%;
+        max-width: 380px;
+        padding: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-actions > button {
+        width: 100%;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tableRow {
+        padding: 8px 12px;
+        margin: 0 5px 10px 5px;
+    }
+}

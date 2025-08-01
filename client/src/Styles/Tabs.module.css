@@ -1,8 +1,15 @@
-/* components/Tabs.module.css */
+/* src/Styles/Tabs.module.css */
 
 .tabs {
     display: flex;
     border-bottom: 1px solid #dee2e6;
+    /* Allow horizontal scrolling on small screens */
+    overflow-x: auto;
+}
+
+/* Hide scrollbar for a cleaner look but keep functionality */
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
@@ -10,11 +17,13 @@
     padding: 0 20px;
     cursor: pointer;
     border-bottom: 3px solid transparent;
-    margin-bottom: -1px; /* Aligns with the container's border */
+    margin-bottom: -1px;
     color: #6c757d;
     font-weight: 500;
     transition: color 0.2s, border-color 0.2s;
     text-transform: uppercase;
+    /* Prevent tabs from shrinking */
+    white-space: nowrap;
 }
 
 .tab.active {

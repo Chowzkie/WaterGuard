@@ -1,7 +1,4 @@
-/*
-  This file is structured to be visually consistent with the other components
-  like AlertsHistory, using similar class names, colors, and layout rules.
-*/
+/* src/Styles/TestingDevices.module.css */
 
 .devices-section {
   background: white;
@@ -32,17 +29,6 @@
   gap: 18px;
 }
 
-.header-controls .icon {
-  color: #6c757d;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.header-controls .icon:hover {
-  color: #343a40;
-}
-
-/* === Table Layout === */
 .devices-table {
   border: 1px solid #eee;
   border-radius: 6px;
@@ -56,7 +42,6 @@
   color: hsla(0, 0%, 18%, 0.8);
   background: #f0f0f0;
   display: grid;
-  /* Adjusted grid for 3 columns */
   grid-template-columns: 1fr 1.2fr 1fr;
   column-gap: 22px;
   padding: 8px 10px;
@@ -64,7 +49,6 @@
 }
 
 .devices-body {
-  max-height: 260px; /* Adjust as needed */
   overflow-y: auto;
   flex-grow: 1;
 }
@@ -82,7 +66,6 @@
 
 .devices-row {
   display: grid;
-  /* Adjusted grid for 3 columns */
   grid-template-columns: 1fr 1.2fr 1fr;
   column-gap: 22px;
   align-items: center;
@@ -90,13 +73,24 @@
   font-size: 13px;
   border-bottom: 1px solid #eee;
   background: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .devices-row:last-child {
   border-bottom: none;
 }
 
-/* --- NEW: Styles for the status indicator --- */
+.devices-row:hover {
+  background-color: #f8f9fa;
+}
+
+.devices-row.selected {
+  background-color: #e7f5ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
 .status-indicator {
     display: flex;
     align-items: center;
@@ -105,7 +99,6 @@
     font-weight: 500;
     padding: 4px 8px;
     border-radius: 12px;
-    
     width: 80px;
 }
 
@@ -140,22 +133,18 @@
   text-align: center;
 }
 
-/* Make the rows interactive */
-.devices-row {
-    cursor: pointer;
-    /* ADD transform and box-shadow to the transition for the lift effect */
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
+/* === RESPONSIVE STYLES === */
+@media (max-width: 768px) {
+    .devices-header-row,
+    .devices-row {
+        /* Switch to a 2-column layout */
+        grid-template-columns: 1fr 1fr;
+        column-gap: 15px;
+    }
 
-.devices-row:hover {
-    background-color: #f8f9fa; /* A light hover effect */
-}
-
-/* Style for the selected device row */
-.devices-row.selected {
-    background-color: #e7f5ff;
-
-    /* --- ADD THESE NEW PROPERTIES for the lift effect --- */
-    transform: translateY(-2px); /* Lifts the row up by 2 pixels */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Adds a subtle shadow */
+    /* Hide the "Location" column (the 2nd item) on mobile */
+    .devices-header-row > div:nth-child(2),
+    .devices-row > div:nth-child(2) {
+        display: none;
+    }
 }

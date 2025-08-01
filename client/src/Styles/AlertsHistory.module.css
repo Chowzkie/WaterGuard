@@ -1,4 +1,3 @@
-
 .alerts-section {
   background: white;
   border-radius: 5px;
@@ -23,12 +22,10 @@
 
 /* This is the only necessary modification to an existing class */
 .header-controls {
-
   display: flex;
   align-items: center;
   gap: 18px; /* A bit more space for icons */
   position: relative; /* This is needed to position the filter panel correctly */
-
   flex-shrink: 0;
 }
 
@@ -582,13 +579,6 @@
     padding-right: 10px;
 }
 
-.checkbox-cell input, .checkbox-cell-header input {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
-
-
 /* Styles for the confirmation modal */
 .modal-backdrop {
     position: fixed;
@@ -602,15 +592,6 @@
     align-items: center;
     z-index: 1000;
     animation: fadeIn 0.15s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
 }
 
 .confirmation-modal {
@@ -760,4 +741,243 @@
 
 .detail-item svg {
     color: #007bff; /* An accent color for the icons */
+}
+
+/* === RESPONSIVE STYLES FOR FILTER PANEL AND HEADER === */
+
+@media (max-width: 768px) {
+    /* Make the panel a full-screen overlay */
+    .filter-panel {
+        position: fixed; /* Position relative to the viewport */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        max-width: none; /* Remove previous max-width */
+        transform: none; /* Remove previous transform */
+        border-radius: 0; /* Remove rounded corners for full-screen */
+        z-index: 9999; /* Ensure it's on top of everything */
+        background: #fff;
+        
+        /* Make the panel itself scrollable if content overflows */
+        overflow-y: auto; 
+        
+        /* Add some padding for the content inside */
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    /* Stack the label and its control vertically */
+    .filter-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .filter-label {
+        font-weight: 600;
+    }
+
+    /* Allow the pill buttons to wrap to the next line */
+    .pill-group {
+        flex-wrap: wrap;
+    }
+
+    /* Make date inputs take up more space */
+    .date-range-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .date-range-group span {
+        display: none;
+    }
+
+    .date-input {
+        width: 100%;
+    }
+
+    /* Make the footer stick to the bottom of the screen */
+    .filter-footer {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px 20px;
+        background: #fff;
+        border-top: 1px solid #eee;
+
+        /* Sticky position for better UX */
+        bottom: 0;
+    }
+
+    .filter-footer > button {
+        width: 100%;
+    }
+
+    /* --- MODIFIED: Responsive styles for the entire header section --- */
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+      padding-bottom: 10px;
+    }
+
+    .header-controls {
+      width: 100%;
+    }
+
+    .delete-controls {
+        flex-wrap: wrap; /* Allow items to wrap */
+        gap: 10px; /* Adjust gap for smaller screens */
+        justify-content: flex-start; /* Align items to the start */
+        width: 100%; /* Take full width of the header */
+    }
+}
+
+/* ===================================================================
+  NEW RESPONSIVE STYLES FOR TABLE
+===================================================================
+*/
+@media (max-width: 768px) {
+    /* Hide the original table header */
+    .alerts-header-row {
+        display: none;
+    }
+
+    /* Turn each row into a distinct card */
+    .alerts-row {
+        display: block; /* Stack cells vertically */
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+
+    /* Style each cell for the key-value pair layout */
+    .alerts-row > div[data-label] {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
+        text-align: right; /* Align the value to the right */
+    }
+
+    .alerts-row > div[data-label]:last-of-type {
+        border-bottom: none; /* Remove border from the last cell in a card */
+    }
+
+    /* Create the label using the data-label attribute */
+    .alerts-row > div[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #333;
+        text-align: left; /* Align the label to the left */
+    }
+
+    /* --- NEW: Responsive styles for the confirmation modal --- */
+    .confirmation-modal {
+        width: 90%;
+        max-width: 380px;
+        padding: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-actions > button {
+        width: 100%;
+        padding: 12px;
+    }
+}
+
+/* --- NEW: Style for highlighting rows selected for deletion --- */
+.selected-for-deletion {
+    background-color: #ffe3e3 !important; /* A light red background */
+    border-left: 3px solid #e03131; /* A stronger red border on the left for emphasis */
+}
+
+
+/* --- NEW: Styles for Custom Checkbox --- */
+
+/* The container for the custom checkbox */
+.custom-checkbox-container {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    font-size: 16px; /* Increased size for easier clicking */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    width: 18px; /* Set a fixed width */
+    height: 18px; /* Set a fixed height */
+}
+
+/* Hide the browser's default checkbox */
+.custom-checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* On mouse-over, add a grey background color */
+.custom-checkbox-container:hover input ~ .checkmark {
+    background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a red background */
+.custom-checkbox-container input:checked ~ .checkmark {
+    background-color: #e03131; /* Red color for checked state */
+    border-color: #c92a2a;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.custom-checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.custom-checkbox-container .checkmark:after {
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+/* Handle disabled state */
+.custom-checkbox-container input:disabled ~ .checkmark {
+    background-color: #f1f1f1;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
 }

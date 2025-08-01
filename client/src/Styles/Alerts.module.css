@@ -1,15 +1,18 @@
 /* src/Styles/Alerts.module.css */
 
 .component-wrapper-alerts {
+    /* DESKTOP: Fixed height and no scrolling */
     height: calc(100vh - 100px);
+    overflow: hidden;
+
+    /* Common styles */
     width: 100%;
     background-color: #f0f2f5;
     box-sizing: border-box;
-    padding: 5px 24px;
+    padding: 5px 24px 10px 24px;
     margin-top: 10px;
     display: flex;
     gap: 15px;
-    overflow-y: scroll;
     animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -21,9 +24,16 @@
 .alerts-column {
     flex: 4;
     display: flex;
-    flex-direction: column; /* Stack tabs on top of history */
-    gap: 10px; /* Creates space between tabs and the history card */
+    flex-direction: column;
+    gap: 10px;
     min-width: 0;
+    overflow: hidden; 
+}
+
+.alerts-content-wrapper {
+    flex-grow: 1; 
+    min-height: 0; 
+    border-radius: 5px;
 }
 
 .devices-column {
@@ -33,14 +43,49 @@
     min-width: 0;
 }
 
-/* Exact scrollbar styling */
-.component-wrapper-alerts::-webkit-scrollbar {
+/* ... (scrollbar styling remains the same) ... */
+.alerts-content-wrapper::-webkit-scrollbar,
+.devices-column::-webkit-scrollbar {
   width: 6px;
 }
-.component-wrapper-alerts::-webkit-scrollbar-track {
+.alerts-content-wrapper::-webkit-scrollbar-track,
+.devices-column::-webkit-scrollbar-track {
   background: #f5f5f5;
 }
-.component-wrapper-alerts::-webkit-scrollbar-thumb {
+.alerts-content-wrapper::-webkit-scrollbar-thumb,
+.devices-column::-webkit-scrollbar-thumb {
   background-color: #bbb;
   border-radius: 4px;
+}
+
+
+/* === RESPONSIVE STYLES === */
+@media (max-width: 1024px) {
+    .component-wrapper-alerts {
+        flex-direction: column;
+        /* KEY CHANGE: Make this wrapper the scroll container on mobile */
+        overflow-y: auto;
+        /* It still needs a fixed height to enable scrolling */
+        height: calc(100vh - 80px); /* Adjust header height for mobile if needed */
+    }
+
+    /* Disable internal scrolling on children */
+    .alerts-column,
+    .devices-column,
+    .alerts-content-wrapper {
+        overflow: visible;
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+
+    /* --- NEW RULES TO REORDER ON MOBILE --- */
+    .alerts-column {
+        /* Set to a higher order to appear second */
+        order: 2;
+    }
+
+    .devices-column {
+        /* Set to a lower order to appear first */
+        order: 1;
+    }
 }

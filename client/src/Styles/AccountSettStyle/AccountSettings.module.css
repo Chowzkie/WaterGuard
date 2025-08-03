@@ -1,18 +1,37 @@
 /* src/Components/AccountSettings/AccountSettings.module.css */
 
+/*
+  THE FIX:
+  The .pageWrapper is now positioned absolutely to fill the viewport BELOW the 80px header.
+  This makes it a fixed-size container, and adding `overflow-y: auto` makes it the primary
+  scrolling element for the entire component.
+*/
 .pageWrapper {
     background-color: #f4f5f7;
-    min-height: 100vh;
-    width: 100%;
     box-sizing: border-box;
     animation: fadeIn 0.5s ease-in-out;
+
+    /* --- Start of Fix --- */
+    position: absolute;
+    top: 80px; /* Position below the implied 80px fixed header */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto; /* Make this container scrollable */
+    /* --- End of Fix --- */
 }
+
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+/*
+  THE FIX:
+  The .layoutGrid no longer needs any special flex or overflow properties.
+  It can now grow naturally, and its parent (.pageWrapper) will handle the scrolling.
+*/
 .layoutGrid {
     display: grid;
     grid-template-columns: 1fr;
@@ -20,8 +39,9 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 24px;
-    padding-top: 80px;
+    /* The 80px top-padding is removed as the parent is now positioned below the header */
 }
+
 
 @media (min-width: 1024px) {
     .layoutGrid {
@@ -41,7 +61,7 @@
 @media (min-width: 1024px) {
     .sidebar {
         position: sticky;
-        top: 80px;
+        top: 24px; /* Adjusted sticky position to account for new padding */
     }
 }
 
@@ -342,7 +362,7 @@
 /* --- Alert Message Styles --- */
 .alert {
     position: fixed;
-    top: 80px;
+    top: 90px; /* Adjusted to account for new layout */
     left: 16px;
     right: 16px;
     display: flex;
@@ -358,7 +378,7 @@
 @media (min-width: 768px) {
     .alert {
         left: auto;
-        right: 24px; 
+        right: 24px;
         max-width: 420px;
     }
 }

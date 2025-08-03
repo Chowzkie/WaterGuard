@@ -2,16 +2,18 @@
 .readings-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    /* KEY CHANGE: Create 2 rows that share the available height equally */
+    grid-template-rows: repeat(2, 1fr); 
     gap: 20px;
     height: 100%;
     animation: fadeIn 0.5s ease-in-out;
+    /* REMOVED: No longer need overflow or scrollbar styling */
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 
 /* Styling for each individual reading card */
 .readings {
@@ -21,8 +23,9 @@
     background-color: #FFFFFF;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 16px;
+    padding: 10px;
     font-family: 'Poppins', sans-serif;
+    /* REMOVED: min-height is no longer needed, allowing cards to be flexible */
 }
 
 /* Header section of the card */
@@ -35,7 +38,7 @@
 
 .readings-title p {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #333;
 }
 
@@ -51,9 +54,11 @@
     align-items: center;
     width: 100%;
     margin: 10px 0;
+    /* Allow the diagram to shrink if space is limited */
+    flex-grow: 1;
+    overflow: hidden;
 }
 
-/* This container holds the chart canvas and the center text */
 .chart-container {
     position: relative;
     width: 100%;
@@ -61,36 +66,30 @@
     aspect-ratio: 2 / 1;
 }
 
-/* --- CORRECTED PART --- */
-/* This rule now correctly centers the text block inside the arc */
 .chart-center-text {
     position: absolute;
-    top: 65%; /* Positions the text block vertically */
+    top: 65%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Centers the block on the position */
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    line-height: 1.1; /* Adjusts line spacing */
+    line-height: 1.1;
     width: 100%;
 }
 
-/* Style for the main value (e.g., "9.2") */
 .value {
     font-size: 2.2rem;
     font-weight: bold;
     color: #333;
 }
 
-/* Style for the unit (e.g., "NTU") */
 .unit {
     font-size: 1.2rem;
     font-weight: 500;
     color: #444;
 }
-/* --- END OF CORRECTION --- */
 
-/* Footer section for Min and Max values */
 .min-max {
     display: flex;
     justify-content: space-between;
@@ -100,7 +99,7 @@
 
 .min-max p {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 500;
     color: #555;
 }
@@ -109,12 +108,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 16px;
     color: #888;
 }
 
-.offline-readings{
+/* Styles for Offline Card */
+.offline-readings {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -123,6 +122,7 @@
     border-radius: 8px;
     padding: 16px;
 }
+
 .offline-card {
     display: flex;
     flex-direction: column;
@@ -155,18 +155,31 @@
     font-size: 14px;
     font-weight: lighter;
 }
-@media (max-width: 1399px) {
-  .readings-container{
-    height: 0;
-    gap: 10px;
+
+/* === RESPONSIVE STYLES === */
+@media (max-width: 1200px) {
+  .readings-container {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .readings-container {
+    /* On mobile, revert to stacking and let content define height */
+    grid-template-columns: 1fr;
+    grid-template-rows: none; /* Let rows be sized by content on mobile */
+    gap: 15px;
   }
 
-  .readings{
-    padding: 10px;
+  .readings {
+    padding: 12px;
   }
 
-  .icon-wrapper{
-    height: 50px;
-    width: 50px;
+  .value {
+    font-size: 2rem;
+  }
+
+  .unit {
+    font-size: 1rem;
   }
 }

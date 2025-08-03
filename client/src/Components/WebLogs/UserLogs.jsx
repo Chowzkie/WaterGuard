@@ -418,12 +418,15 @@ function UserLogs({ logs, onDelete, onRestore }) {
                 {/* The "select all" checkbox is only rendered in select mode */}
                 {deleteMode === 'select' && (
                     <div className={Style['checkbox-cell-header']}>
-                        <input
-                            type="checkbox"
-                            onChange={handleSelectAll}
-                            checked={filteredDisplayLogs.length > 0 && selectedToDelete.length === filteredDisplayLogs.length}
-                            disabled={filteredDisplayLogs.length === 0}
-                        />
+                        <label className={Style['custom-checkbox-container']}>
+                            <input
+                                type="checkbox"
+                                onChange={handleSelectAll}
+                                checked={filteredDisplayLogs.length > 0 && selectedToDelete.length === filteredDisplayLogs.length}
+                                disabled={filteredDisplayLogs.length === 0}
+                            />
+                            <span className={Style['checkmark']}></span>
+                        </label>
                     </div>
                 )}
             </div>
@@ -431,7 +434,10 @@ function UserLogs({ logs, onDelete, onRestore }) {
             <div className={Style['tableBody']}>
                 {filteredDisplayLogs.length > 0 ? (
                     filteredDisplayLogs.map((log) => (
-                        <div className={`${Style['tableRow']} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''}`} key={log.id}>
+                        <div 
+                            className={`${Style['tableRow']} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
+                            key={log.id}
+                        >
                             <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
                             <div className={Style['tableCell']} data-label="Username">{log.username}</div>
                             <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
@@ -445,11 +451,15 @@ function UserLogs({ logs, onDelete, onRestore }) {
                             {/* Each row gets a checkbox, but only in select mode */}
                             {deleteMode === 'select' && (
                                 <div className={Style['checkbox-cell']}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedToDelete.includes(log.id)}
-                                        onChange={() => handleCheckboxChange(log.id)}
-                                    />
+                                    <label className={Style['custom-checkbox-container']}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedToDelete.includes(log.id)}
+                                            onChange={() => handleCheckboxChange(log.id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <span className={Style['checkmark']}></span>
+                                    </label>
                                 </div>
                             )}
                         </div>

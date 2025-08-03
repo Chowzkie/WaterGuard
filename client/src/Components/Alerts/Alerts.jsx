@@ -94,7 +94,9 @@ const Alerts = () => {
                     activeTab={activeTab}
                     onTabClick={setActiveTab}
                 />
-                {renderActiveComponent()}
+                 <div className={styles['alerts-content-wrapper']}>
+                    {renderActiveComponent()}
+                </div>
             </div>
             <div className={styles['devices-column']}>
                 {/* --- MODIFIED --- Pass new props to make it a navigation menu */}

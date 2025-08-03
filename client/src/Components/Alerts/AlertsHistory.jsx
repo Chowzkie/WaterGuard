@@ -333,12 +333,16 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                     <div>Action</div>
                     {deleteMode === 'select' && (
                         <div className={styles['checkbox-cell-header']}>
-                            <input 
-                                type="checkbox" 
-                                onChange={handleSelectAll} 
-                                checked={filteredDisplayAlerts.length > 0 && selectedToDelete.length === filteredDisplayAlerts.length}
-                                disabled={filteredDisplayAlerts.length === 0}
-                            />
+                            {/* --- MODIFIED: Replaced input with custom checkbox structure --- */}
+                            <label className={styles['custom-checkbox-container']}>
+                                <input 
+                                    type="checkbox" 
+                                    onChange={handleSelectAll} 
+                                    checked={filteredDisplayAlerts.length > 0 && selectedToDelete.length === filteredDisplayAlerts.length}
+                                    disabled={filteredDisplayAlerts.length === 0}
+                                />
+                                <span className={styles['checkmark']}></span>
+                            </label>
                         </div>
                     )}
                 </div>
@@ -354,31 +358,43 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     // --- MODIFIED: Use React.Fragment to group the row and its details panel ---
                                     <React.Fragment key={alert.id}>
                                         <div 
-                                            // --- MODIFIED: Added clickable-row class and onClick handler ---
-                                            className={`${styles['alerts-row']} ${deleteMode === 'select' ? styles['select-delete-grid'] : ''} ${hasAcknowledgement ? styles['clickable-row'] : ''}`}
+                                            // --- MODIFIED: Added class for row highlighting ---
+                                            className={`${styles['alerts-row']} ${deleteMode === 'select' ? styles['select-delete-grid'] : ''} ${hasAcknowledgement ? styles['clickable-row'] : ''} ${selectedToDelete.includes(alert.id) ? styles['selected-for-deletion'] : ''}`}
                                             onClick={() => handleRowClick(alert.id, hasAcknowledgement)}
                                         >
-                                            {/* This is all your existing row content, unchanged */}
-                                            <div>{formatDateTime(alert.dateTime)}</div>
-                                            <div>{alert.originator}</div>
-                                            <div>
+                                            {/* --- MODIFIED: Added data-label attributes for responsiveness --- */}
+                                            <div data-label="Date/Time">{formatDateTime(alert.dateTime)}</div>
+                                            <div data-label="Origin">{alert.originator}</div>
+                                            <div data-label="Type">
                                                 {alert.type}
                                                 {alert.note && <div className={styles['alert-note']}>{alert.note}</div>}
                                             </div>
-                                            <div><span className={`${styles['severity-badge']} ${getSeverityClass(alert.severity)}`}>{alert.severity}</span></div>
-                                            <div><span className={styles['status-acknowledged']}>{alert.status}</span></div>
-                                            <div><span className={alert.acknowledged ? styles['action-acknowledged'] : styles['action-unacknowledged']}>{alert.acknowledged ? 'Acknowledged' : 'Unacknowledged'}</span></div>
+                                            <div data-label="Severity">
+                                                <span className={`${styles['severity-badge']} ${getSeverityClass(alert.severity)}`}>
+                                                    {alert.severity}
+                                                </span>
+                                            </div>
+                                            <div data-label="Status">
+                                                <span className={styles['status-acknowledged']}>{alert.status}</span>
+                                            </div>
+                                            <div data-label="Action">
+                                                <span className={alert.acknowledged ? styles['action-acknowledged'] : styles['action-unacknowledged']}>
+                                                    {alert.acknowledged ? 'Acknowledged' : 'Unacknowledged'}
+                                                </span>
+                                            </div>
                                             
-                                            {/* Your delete mode checkbox logic, unchanged */}
+                                            {/* --- MODIFIED: Replaced input with custom checkbox structure --- */}
                                             {deleteMode === 'select' && (
                                                 <div className={styles['checkbox-cell']}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={selectedToDelete.includes(alert.id)} 
-                                                        // Stop click propagation to prevent row from expanding when checkbox is clicked
-                                                        onClick={(e) => e.stopPropagation()} 
-                                                        onChange={() => handleCheckboxChange(alert.id)} 
-                                                    />
+                                                    <label className={styles['custom-checkbox-container']}>
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={selectedToDelete.includes(alert.id)} 
+                                                            onClick={(e) => e.stopPropagation()} 
+                                                            onChange={() => handleCheckboxChange(alert.id)} 
+                                                        />
+                                                        <span className={styles['checkmark']}></span>
+                                                    </label>
                                                 </div>
                                             )}
                                         </div>

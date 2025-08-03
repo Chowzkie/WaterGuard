@@ -1,5 +1,3 @@
-// src/utils/sensorLogic.js
-
 /**
  * @fileoverview Sensor Evaluation Logic
  * This file contains the core logic for evaluating sensor readings against predefined thresholds.
@@ -106,7 +104,7 @@ const evaluateParameter = (parameter, value) => {
  * @param {object} reading - The sensor data object (e.g., { deviceId, timestamp, pH, ... }).
  * @returns {Array} An array of alert objects for any parameter that is not 'Normal'.
  */
-export const evaluateSensorReading = (reading) => {
+const evaluateSensorReading = (reading) => { // Changed from 'export const' to 'const'
   const alerts = [];
   const parameters = ['pH', 'turbidity', 'temp', 'tds'];
 
@@ -131,4 +129,8 @@ export const evaluateSensorReading = (reading) => {
   });
 
   return alerts;
+};
+
+module.exports = {
+  evaluateSensorReading
 };

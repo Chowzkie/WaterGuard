@@ -1,134 +1,364 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css';
-import { ListFilter, Download, X, ChevronDown } from 'lucide-react';
+import { ListFilter, Download, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
+import { PARAMETER_TO_COMPONENT_MAP } from '../../utils/logMaps';
 
-function SystemLogs({ logs }) {
-    // State for applied filters
+/**
+ * SystemLogs Component: Displays system-generated logs with filtering and deletion capabilities.
+ * @param {object[]} logs - An array of system log objects to display.
+ * @param {function} onDelete - A function passed from the parent to handle the deletion of logs.
+ * @param {function} onRestore - A function passed from the parent to handle restoring deleted logs.
+ */
+function SystemLogs({ logs, onDelete, onRestore }) {
+    // --- STATE MANAGEMENT ---
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
-        deviceId: [], // deviceId supports multi-select
+        component: [],
+        event: [],
+        deviceId: [],
     });
 
-    // State for filters being edited in the filter panel (draft state)
     const [draftFilters, setDraftFilters] = useState(filters);
 
     // UI state for filter panel and dropdowns
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [eventSearchTerm, setEventSearchTerm] = useState('');
+    const [isEventDropdownOpen, setIsEventDropdownOpen] = useState(false);
     const [deviceIdSearchTerm, setDeviceIdSearchTerm] = useState('');
     const [isDeviceIdDropdownOpen, setIsDeviceIdDropdownOpen] = useState(false);
+    
+    // State for the entire delete workflow
+    const [deleteMode, setDeleteMode] = useState('off');
+    const [selectedToDelete, setSelectedToDelete] = useState([]);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showUndoToast, setShowUndoToast] = useState(false);
+    const [lastDeletedCount, setLastDeletedCount] = useState(0);
 
-    // Refs for detecting clicks outside of elements
+    // --- State for managing the draggable panel ---
+    const [isDraggable, setIsDraggable] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    // --- FIX: Position now represents the translation offset ---
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+
+    // --- REFS ---
     const filterPanelRef = useRef(null);
+    const eventDropdownRef = useRef(null);
     const deviceIdDropdownRef = useRef(null);
+    const undoTimerRef = useRef(null);
+    // --- NEW: Ref to store the starting point of a drag ---
+    const dragStartRef = useRef(null);
 
-    // Memoize unique device IDs to prevent recalculation on every render
+    // --- MEMOIZED VALUES ---
     const uniqueDeviceIds = useMemo(() => {
-        const ids = new Set(logs.map(log => log.deviceId));
-        return Array.from(ids).sort(); // Sort alphabetically for better UX
+        const deviceIds = new Set(logs.map(log => log.deviceId));
+        return Array.from(deviceIds).sort();
     }, [logs]);
 
-    // Memoize the filtered and sorted logs for display
+    const uniqueEvents = useMemo(() => {
+        const events = new Set(logs.map(log => log.event));
+        return Array.from(events).sort();
+    }, [logs]);
+
+    const componentTypes = ['Device', 'Valve Actuator', 'pH Sensor', 'TDS Sensor', 'Temp Sensor', 'Turbidity Sensor'];
+
+    // Filters the logs based on the applied filter state.
     const filteredDisplayLogs = useMemo(() => {
-        return logs.filter(log => {
-            const logDate = new Date(log.dateTime);
-            const startDate = filters.startDate ? new Date(filters.startDate) : null;
-            const endDate = filters.endDate ? new Date(filters.endDate) : null;
+        let logsToFilter = [...logs];
 
-            // Normalize dates to ensure the entire day is included in the range
-            if (startDate) { startDate.setHours(0, 0, 0, 0); }
-            if (endDate) { endDate.setHours(23, 59, 59, 999); }
+        // Apply date range filter
+        const { startDate, endDate } = filters;
+        if (startDate || endDate) {
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(endDate) : null;
+            if (start) start.setHours(0, 0, 0, 0);
+            if (end) end.setHours(23, 59, 59, 999);
 
-            // Check if the log date falls within the selected range
-            const dateMatch = (!startDate || logDate >= startDate) && (!endDate || logDate <= endDate);
+            logsToFilter = logsToFilter.filter(log => {
+                const logDate = new Date(log.dateTime);
+                if (start && logDate < start) return false;
+                if (end && logDate > end) return false;
+                return true;
+            });
+        }
+        
+        // Apply component filter
+        const { component } = filters;
+        if (component.length > 0) {
+            logsToFilter = logsToFilter.filter(log => {
+                const logComponent = PARAMETER_TO_COMPONENT_MAP[log.component] || log.component;
+                return component.includes(logComponent);
+            });
+        }
+        
+        // Apply event filter
+        const { event } = filters;
+        if (event.length > 0) {
+            logsToFilter = logsToFilter.filter(log => event.includes(log.event));
+        }
 
-            // Check if the log's deviceId is in the selected list (or if no devices are selected)
-            const deviceIdMatch = filters.deviceId.length === 0 || filters.deviceId.includes(log.deviceId);
+        // Apply device ID filter
+        const { deviceId } = filters;
+        if (deviceId.length > 0) {
+            logsToFilter = logsToFilter.filter(log => deviceId.includes(log.deviceId));
+        }
 
-            return dateMatch && deviceIdMatch;
-        }).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime)); // Sort logs by most recent first
-    }, [logs, filters]); // Re-run only when logs or applied filters change
+        return logsToFilter.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+    }, [logs, filters]);
 
-    // Effect to sync draft filters when the filter panel is opened
+    // --- useEffect to check screen size and enable/disable draggable mode ---
+    useEffect(() => {
+        const checkScreenSize = () => {
+            const isDraggableRange = window.innerWidth > 768 && window.innerWidth <= 1400;
+            setIsDraggable(isDraggableRange);
+            // If screen is resized out of draggable range, reset the position
+            if (!isDraggableRange) {
+                setPosition({ x: 0, y: 0 });
+            }
+        };
+
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+
+        return () => window.removeEventListener('resize', checkScreenSize);
+    }, []);
+
+    // --- useEffect to handle the dragging logic ---
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            setPosition({
+                x: e.clientX - dragStartRef.current.x,
+                y: e.clientY - dragStartRef.current.y,
+            });
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging]);
+
+    // --- LIFECYCLE EFFECTS ---
     useEffect(() => {
         if (isFilterOpen) {
             setDraftFilters(filters);
         }
     }, [isFilterOpen, filters]);
 
-    // Effect for handling clicks outside the filter panel and device ID dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
-            // Close filter panel if the click is outside
             if (filterPanelRef.current && !filterPanelRef.current.contains(event.target) && !event.target.closest(`.${Style['menu']}`)) {
                 setIsFilterOpen(false);
             }
-            // Close device ID dropdown if the click is outside
+            if (eventDropdownRef.current && !eventDropdownRef.current.contains(event.target)) {
+                setIsEventDropdownOpen(false);
+            }
             if (deviceIdDropdownRef.current && !deviceIdDropdownRef.current.contains(event.target)) {
                 setIsDeviceIdDropdownOpen(false);
-                setDeviceIdSearchTerm('');
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Handler for updating date filters in the draft state
-    const handleDateChange = (e) => {
-        setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-
-    // Handler for selecting/deselecting a device ID
-    const handleDeviceIdSelect = (deviceId) => {
-        setDraftFilters(prev => {
-            const currentDevices = new Set(prev.deviceId);
-            if (currentDevices.has(deviceId)) {
-                currentDevices.delete(deviceId);
-            } else {
-                currentDevices.add(deviceId);
+    useEffect(() => {
+        if (showUndoToast) {
+            undoTimerRef.current = setTimeout(() => {
+                setShowUndoToast(false);
+            }, 10000);
+        }
+        return () => {
+            if (undoTimerRef.current) {
+                clearTimeout(undoTimerRef.current);
             }
-            return { ...prev, deviceId: Array.from(currentDevices) };
-        });
-        setDeviceIdSearchTerm(''); // Clear search after selection for better UX
+        };
+    }, [showUndoToast]);
+
+     // --- MouseDown handler to initiate dragging ---
+    const handleMouseDown = (e) => {
+        if (!isDraggable || e.button !== 0) return;
+        
+        setIsDragging(true);
+        // Record the starting mouse position relative to the current translation
+        dragStartRef.current = {
+            x: e.clientX - position.x,
+            y: e.clientY - position.y
+        };
     };
     
-    // Handler to apply the draft filters to the main view
-    const applyFilters = () => {
-        setFilters(draftFilters);
+    // --- FIX: Function to handle closing the panel and resetting its position ---
+    const handleCloseFilterPanel = () => {
         setIsFilterOpen(false);
+        setPosition({ x: 0, y: 0 }); // Reset position on close
     };
 
-    // Handler to reset all filters in the draft state
-    const clearFilters = () => {
-        setDraftFilters({ startDate: '', endDate: '', deviceId: [] });
+    // --- EVENT HANDLERS ---
+    
+    const handleToggleDeleteMode = () => {
+        setDeleteMode(prev => (prev === 'off' ? 'all' : 'off'));
+        setSelectedToDelete([]);
+    };
+
+    const handleCheckboxChange = (logId) => {
+        const newSelection = new Set(selectedToDelete);
+        if (newSelection.has(logId)) {
+            newSelection.delete(logId);
+        } else {
+            newSelection.add(logId);
+        }
+        setSelectedToDelete(Array.from(newSelection));
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedToDelete(filteredDisplayLogs.map(log => log.id));
+        } else {
+            setSelectedToDelete([]);
+        }
+    };
+
+    const handleDeleteClick = () => {
+        const hasSelection = (deleteMode === 'all' && filteredDisplayLogs.length > 0) || (deleteMode === 'select' && selectedToDelete.length > 0);
+        if (hasSelection) {
+            setShowConfirmModal(true);
+        }
+    };
+
+    const handleConfirmDelete = () => {
+        const idsToDelete = deleteMode === 'all'
+            ? new Set(filteredDisplayLogs.map(log => log.id))
+            : new Set(selectedToDelete);
+
+        setLastDeletedCount(idsToDelete.size);
+        onDelete(idsToDelete);
+
+        setShowConfirmModal(false);
+        setDeleteMode('off');
+        setSelectedToDelete([]);
+        setShowUndoToast(true);
+    };
+
+    const handleUndo = () => {
+        onRestore();
+        if (undoTimerRef.current) {
+            clearTimeout(undoTimerRef.current);
+        }
+        setShowUndoToast(false);
+    };
+
+    const handleDateChange = (e) => setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    
+    const handlePillSelect = (filterType, value) => {
+        setDraftFilters(prev => {
+            const currentValues = new Set(prev[filterType]);
+            if (currentValues.has(value)) {
+                currentValues.delete(value);
+            } else {
+                currentValues.add(value);
+            }
+            return { ...prev, [filterType]: Array.from(currentValues) };
+        });
+    };
+
+    // --- NEW: Handlers for the compact multi-select dropdowns ---
+    const handleMultiSelect = (filterType, value) => {
+        setDraftFilters(prev => {
+            const newValues = new Set(prev[filterType]);
+            if (!newValues.has(value)) {
+                newValues.add(value);
+            }
+            return { ...prev, [filterType]: Array.from(newValues) };
+        });
+    };
+
+    const removeMultiSelectItem = (filterType, value) => {
+        setDraftFilters(prev => ({
+            ...prev,
+            [filterType]: prev[filterType].filter(item => item !== value)
+        }));
+    };
+
+    const applyFilters = () => { setFilters(draftFilters); setIsFilterOpen(false); };
+    const clearFilters = () => { 
+        setDraftFilters({ startDate: '', endDate: '', component: [], event: [], deviceId: [] }); 
+        setEventSearchTerm('');
         setDeviceIdSearchTerm('');
     };
 
-    // Helper function to format date/time strings for display
+    // --- HELPER FUNCTIONS ---
     const formatDateTime = (dateTimeStr) => {
+        if (!dateTimeStr) return '–';
         const date = new Date(dateTimeStr);
-        if (isNaN(date)) return dateTimeStr; // Return original string if invalid
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
         return date.toLocaleString('en-US', options);
     };
 
+    const getStatusStyle = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'success': return Style.successStatus;
+            case 'warning': return Style.warningStatus;
+            case 'error': return Style.errorStatus;
+            case 'info': return Style.infoStatus;
+            default: return '';
+        }
+    };
+
     return (
-        <div className={Style['container']}>
-            <div className={Style['tableTitle']}>
+        <div className={Style.container}>
+            <div className={Style.tableTitle}>
                 <p>System Logs</p>
-                <div className={Style['icons']}>
-                    <div className={Style['menu']} onClick={() => setIsFilterOpen(o => !o)}>
-                        <ListFilter size={18}/>
-                    </div>
-                    <div className={Style['download']}>
-                        <Download size={18}/>
-                    </div>
+                <div className={Style.icons}>
+                    {deleteMode !== 'off' ? (
+                        <div className={Style['delete-controls']}>
+                            <div className={Style['delete-slider']}>
+                                <button onClick={() => { setDeleteMode('all'); setSelectedToDelete([]); }} className={deleteMode === 'all' ? Style.active : ''}>Delete All Filtered</button>
+                                <button onClick={() => setDeleteMode('select')} className={deleteMode === 'select' ? Style.active : ''}>Select to Delete</button>
+                            </div>
+                            <span>
+                                {deleteMode === 'all' ? filteredDisplayLogs.length : selectedToDelete.length} selected
+                            </span>
+                            <button className={Style['delete-button']} onClick={handleDeleteClick} disabled={deleteMode === 'select' && selectedToDelete.length === 0}>Delete</button>
+                            <button className={Style['delete-cancel-button']} onClick={handleToggleDeleteMode}><X size={16} /></button>
+                        </div>
+                    ) : (
+                        <>
+                            <Trash2 className={Style['trash-icon']} size={18} onClick={handleToggleDeleteMode} />
+                            <div className={Style['menu']} onClick={() => setIsFilterOpen(o => !o)}>
+                                <ListFilter size={18}/>
+                            </div>
+                            <div className={Style['download']}>
+                                <Download size={18}/>
+                            </div>
+                        </>
+                    )}
 
                     {isFilterOpen && (
-                        <div className={Style['filter-panel']} ref={filterPanelRef}>
-                            <div className={Style['filter-header']}>
+                        <div
+                            ref={filterPanelRef}
+                            className={Style['filter-panel']}
+                            // --- FIX: Use CSS transform for smoother, more reliable dragging ---
+                            style={isDraggable ? { 
+                                transform: `translate(${position.x}px, ${position.y}px)`
+                            } : {}}
+                        >
+                             <div
+                                    className={`${Style['filter-header']} ${isDraggable ? Style['draggable-header'] : ''}`}
+                                    onMouseDown={handleMouseDown}
+                                >
                                 <h4>Filter Logs</h4>
-                                <button onClick={() => setIsFilterOpen(false)} className={Style['close-filter-btn']}>
+                                <button onClick={handleCloseFilterPanel} className={Style['close-filter-btn']}>
                                     <X size={20} />
                                 </button>
                             </div>
@@ -145,64 +375,70 @@ function SystemLogs({ logs }) {
                                     </div>
                                 </div>
 
-                                {/* Device ID Filter */}
+                                {/* Component Filter */}
+                                <div className={Style['filter-row']}>
+                                    <label className={Style['filter-label']}>Component</label>
+                                    <div className={Style['filter-control']}>
+                                        <div className={Style['pill-group']}>
+                                            {componentTypes.map(component => (
+                                                <button
+                                                    key={component}
+                                                    onClick={() => handlePillSelect('component', component)}
+                                                    className={`${Style['filter-pill']} ${draftFilters.component.includes(component) ? Style.selected : ''}`}
+                                                >
+                                                    {draftFilters.component.includes(component) && <Check size={14} />}
+                                                    {component}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* --- FIX: Event Type Filter using new compact dropdown style --- */}
+                                <div className={Style['filter-row']} ref={eventDropdownRef}>
+                                    <label className={Style['filter-label']}>Event Type</label>
+                                    <div className={Style['filter-control']}>
+                                        <div className={Style['type-input-container']} onClick={() => document.getElementById('event-type-input').focus()}>
+                                            {draftFilters.event.length === 0 && !eventSearchTerm && <span className={Style['type-placeholder']}>Any Event Type</span>}
+                                            {draftFilters.event.map(item => (
+                                                <div key={item} className={Style['type-pill']}>
+                                                    <span>{item}</span>
+                                                    <button onClick={(e) => { e.stopPropagation(); removeMultiSelectItem('event', item); }}><X size={12}/></button>
+                                                </div>
+                                            ))}
+                                            <input id="event-type-input" type="text" className={Style['type-input-field']} value={eventSearchTerm} onChange={(e) => setEventSearchTerm(e.target.value)} onFocus={() => setIsEventDropdownOpen(true)} />
+                                        </div>
+                                        {isEventDropdownOpen && (
+                                            <div className={Style['type-dropdown-list']}>
+                                                {uniqueEvents.filter(item => item.toLowerCase().includes(eventSearchTerm.toLowerCase()) && !draftFilters.event.includes(item)).map(item => (
+                                                    <div key={item} className={Style['type-dropdown-item']} onClick={() => { handleMultiSelect('event', item); setEventSearchTerm(''); }}>{item}</div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* --- FIX: Device ID Filter using new compact dropdown style --- */}
                                 <div className={Style['filter-row']} ref={deviceIdDropdownRef}>
                                     <label className={Style['filter-label']}>Device ID</label>
                                     <div className={Style['filter-control']}>
-                                        <div className={`${Style['custom-dropdown']} ${isDeviceIdDropdownOpen ? Style['open'] : ''}`} onClick={() => setIsDeviceIdDropdownOpen(o => !o)}>
-                                            <div className={Style['dropdown-header']}>
-                                                {draftFilters.deviceId.length > 0 ? (
-                                                    <div className={Style['selected-pills-summary']}>
-                                                        {draftFilters.deviceId.map(id => (
-                                                            <span key={id} className={Style['summary-pill']}>{id}</span>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <span>Any Device ID</span>
-                                                )}
-                                                <ChevronDown size={16} className={Style['dropdown-chevron']} />
-                                            </div>
-                                            {isDeviceIdDropdownOpen && (
-                                                <div className={Style['type-dropdown-list']}>
-                                                    <div className={Style['search-input-wrapper']}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Search Device IDs..."
-                                                            className={Style['dropdown-search-input']}
-                                                            value={deviceIdSearchTerm}
-                                                            onChange={(e) => { e.stopPropagation(); setDeviceIdSearchTerm(e.target.value); }}
-                                                            onClick={(e) => e.stopPropagation()} // Prevent dropdown from closing
-                                                            autoFocus
-                                                        />
-                                                    </div>
-                                                    <div className={Style['selected-pills-display']}>
-                                                        {draftFilters.deviceId.length > 0 && <div className={Style['selected-header']}>Selected:</div>}
-                                                        {draftFilters.deviceId.map(id => (
-                                                            <div key={`selected-${id}`} className={Style['type-pill-dropdown']}>
-                                                                <span>{id}</span>
-                                                                <button onClick={(e) => { e.stopPropagation(); handleDeviceIdSelect(id); }}><X size={12}/></button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    {draftFilters.deviceId.length > 0 && <hr className={Style['dropdown-separator']} />}
-                                                    <div className={Style['available-items-scroll']}>
-                                                        {uniqueDeviceIds
-                                                            .filter(id =>
-                                                                id.toLowerCase().includes(deviceIdSearchTerm.toLowerCase()) &&
-                                                                !draftFilters.deviceId.includes(id)
-                                                            )
-                                                            .map(id => (
-                                                                <div key={id} className={Style['type-dropdown-item']} onClick={(e) => { e.stopPropagation(); handleDeviceIdSelect(id); }}>
-                                                                    {id}
-                                                                </div>
-                                                            ))}
-                                                        {uniqueDeviceIds.filter(id => id.toLowerCase().includes(deviceIdSearchTerm.toLowerCase()) && !draftFilters.deviceId.includes(id)).length === 0 && (
-                                                            <div className={Style['no-results']}>No matching Device IDs</div>
-                                                        )}
-                                                    </div>
+                                        <div className={Style['type-input-container']} onClick={() => document.getElementById('device-id-input').focus()}>
+                                            {draftFilters.deviceId.length === 0 && !deviceIdSearchTerm && <span className={Style['type-placeholder']}>Any Device ID</span>}
+                                            {draftFilters.deviceId.map(item => (
+                                                <div key={item} className={Style['type-pill']}>
+                                                    <span>{item}</span>
+                                                    <button onClick={(e) => { e.stopPropagation(); removeMultiSelectItem('deviceId', item); }}><X size={12}/></button>
                                                 </div>
-                                            )}
+                                            ))}
+                                            <input id="device-id-input" type="text" className={Style['type-input-field']} value={deviceIdSearchTerm} onChange={(e) => setDeviceIdSearchTerm(e.target.value)} onFocus={() => setIsDeviceIdDropdownOpen(true)} />
                                         </div>
+                                        {isDeviceIdDropdownOpen && (
+                                            <div className={Style['type-dropdown-list']}>
+                                                {uniqueDeviceIds.filter(item => item.toLowerCase().includes(deviceIdSearchTerm.toLowerCase()) && !draftFilters.deviceId.includes(item)).map(item => (
+                                                    <div key={item} className={Style['type-dropdown-item']} onClick={() => { handleMultiSelect('deviceId', item); setDeviceIdSearchTerm(''); }}>{item}</div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -215,42 +451,76 @@ function SystemLogs({ logs }) {
                 </div>
             </div>
 
-            {/* Table Header: Remains fixed at the top */}
-            <div className={Style['tableHeader']}>
-                <div className={Style['headerItem']}>Date & Time</div>
-                <div className={Style['headerItem']}>Device ID</div>
-                <div className={Style['headerItem']}>Event</div>
-                <div className={Style['headerItem']}>Location</div>
-                <div className={Style['headerItem']}>Status</div>
+            <div className={`${Style.tableHeader} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''}`}>
+                <div className={Style.headerItem}>Date & Time</div>
+                <div className={Style.headerItem}>Device ID</div>
+                <div className={Style.headerItem}>Component</div>
+                <div className={Style.headerItem}>Event</div>
+                <div className={Style.headerItem}>Details</div>
+                <div className={Style.headerItem}>Status</div>
+                 {deleteMode === 'select' && (
+                    <div className={Style['checkbox-cell-header']}>
+                        <label className={Style['custom-checkbox-container']}>
+                            <input
+                                type="checkbox"
+                                onChange={handleSelectAll}
+                                checked={filteredDisplayLogs.length > 0 && selectedToDelete.length === filteredDisplayLogs.length}
+                                disabled={filteredDisplayLogs.length === 0}
+                            />
+                            <span className={Style['checkmark']}></span>
+                        </label>
+                    </div>
+                )}
             </div>
 
-            {/* A dedicated 'tableBody' container that is scrollable */}
-            <div className={Style['tableBody']}>
+            <div className={Style.tableBody}>
                 {filteredDisplayLogs.length > 0 ? (
                     filteredDisplayLogs.map((log) => (
-                        <div className={Style['tableRow']} key={log.id}>
-                            <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                            <div className={Style['tableCell']} data-label="Device ID">{log.deviceId}</div>
-                            <div className={Style['tableCell']} data-label="Event">{log.event}</div>
-                            <div className={Style['tableCell']} data-label="Location">{log.location}</div>
-                            <div className={`${Style['tableCell']} ${
-                                log.status === 'Warning' ? Style['warningStatus'] :
-                                log.status === 'Success' ? Style['successStatus'] :
-                                log.status === 'Error' ? Style['errorStatus'] :
-                                log.status === 'Info' ? Style['infoStatus'] : ''
-                            }`} data-label="Status">
-                                {log.status}
-                            </div>
+                        <div className={`${Style.tableRow} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} key={log.id}>
+                            <div className={Style.tableCell} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                            <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
+                            <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
+                            <div className={Style.tableCell} data-label="Event">{log.event}</div>
+                            <div className={Style.tableCell} data-label="Details">{log.details}</div>
+                            <div className={`${Style.tableCell} ${getStatusStyle(log.status)}`} data-label="Status">{log.status}</div>
+                            {deleteMode === 'select' && (
+                                <div className={Style['checkbox-cell']}>
+                                    <label className={Style['custom-checkbox-container']}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedToDelete.includes(log.id)}
+                                            onChange={() => handleCheckboxChange(log.id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <span className={Style['checkmark']}></span>
+                                    </label>
+                                </div>
+                            )}
                         </div>
                     ))
                 ) : (
-                    <div className={Style['noData']}>
-                        {logs.length === 0 
-                            ? "No system logs available." 
-                            : "No system logs match the current filters."
-                        }
+                    <div className={Style.noData}>
+                        {logs.length === 0 ? "No system logs available." : "No system logs match the current filters."}
                     </div>
                 )}
+            </div>
+
+            {showConfirmModal && (
+                <div className={Style['modal-backdrop']}>
+                    <div className={Style['confirmation-modal']}>
+                        <h4>Confirm Deletion</h4>
+                        <p>Are you sure you want to delete these {deleteMode === 'all' ? filteredDisplayLogs.length : selectedToDelete.length} log records?</p>
+                        <div className={Style['modal-actions']}>
+                            <button onClick={() => setShowConfirmModal(false)} className={Style['button-secondary']}>Cancel</button>
+                            <button onClick={handleConfirmDelete} className={Style['button-danger']}>Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className={`${Style['undo-toast']} ${showUndoToast ? Style.show : ''}`}>
+                <span>{lastDeletedCount} log(s) deleted.</span>
+                <button onClick={handleUndo}><Undo size={16}/> Undo</button>
             </div>
         </div>
     );

@@ -30,7 +30,7 @@ function LoginForm({ onLogin }) {
 
             // If login is successful (status 200 from server.js)
             if (response.status === 200) {
-                onLogin(response.data.username); // Call the onLogin prop from App.jsx
+                onLogin(response.data.user); // Call the onLogin prop from App.jsx
                 navigate('/overview'); // Navigate to the dashboard
                 setMessage('Login successful!'); // display success message briefly
             }

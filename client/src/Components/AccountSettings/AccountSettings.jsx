@@ -3,13 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { User, Lock, Phone, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera, Check, X as CancelIcon } from 'lucide-react';
 import Styles from '../../Styles/AccountSettStyle/AccountSettings.module.css';
 import AlertsContext from '../../utils/AlertsContext';
+import axios from 'axios'; // Import Axios
+
+const API_BASE_URL = 'http://localhost:8080/api'; // Define your API base URL
 
 const AccountSettings = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
-    // Get the logging functions from the global context in App.jsx
-    const { onProfileUpdate, onPasswordChange } = useContext(AlertsContext);
+    // Get the logging functions and loggedInUser from the global context in App.jsx
+    const { onProfileUpdate, onPasswordChange, loggedInUser } = useContext(AlertsContext);
 
     // --- STATE MANAGEMENT ---
 
@@ -19,14 +22,9 @@ const AccountSettings = () => {
     const [activeTab, setActiveTab] = useState('profile');
 
     /**
-     * @state {object} currentUser - Holds the user's current data. In a real app, this would be fetched from an API.
+     * @state {object} currentUser - Holds the user's current data. Fetched from an API.
      */
-    const [currentUser, setCurrentUser] = useState({
-        username: 'TestAccount123',
-        fullName: 'Juan Dela Cruz',
-        phone: '+639812234812',
-        profilePic: `https://placehold.co/128x128/4f46e5/ffffff?text=J`,
-    });
+    const [currentUser, setCurrentUser] = useState(null); // Initialize as null, will be fetched
 
     /**
      * @state {string} successMessage - Stores the text for the success notification pop-up.
@@ -46,7 +44,7 @@ const AccountSettings = () => {
     /**
      * @state {string} phoneNumber - Holds the value of the phone number input field while editing.
      */
-    const [phoneNumber, setPhoneNumber] = useState(currentUser.phone);
+    const [phoneNumber, setPhoneNumber] = useState(''); // Initialize empty, will be set from currentUser
 
     /**
      * @state {string|null} newProfilePic - Holds the base64 data URL for the new profile picture preview.
@@ -76,6 +74,31 @@ const AccountSettings = () => {
     // --- useEffect Hooks ---
 
     /**
+     * @effect - Fetches the current user's profile data on component mount or if loggedInUser changes.
+     */
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (loggedInUser?.username) {
+                console.log("AccountSettings.jsx - fetchUserProfile: Attempting to fetch for username:", loggedInUser.username);
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/users/${loggedInUser.username}`);
+                    setCurrentUser(response.data);
+                    setPhoneNumber(response.data.contact); // Set initial phone number for editing
+                    console.log("AccountSettings.jsx - fetchUserProfile: Successfully fetched currentUser:", response.data); // NEW LOG
+                } catch (error) {
+                    console.error("AccountSettings.jsx - fetchUserProfile: Failed to fetch user profile:", error);
+                    setErrorMessage("Failed to load user profile.");
+                    setCurrentUser(null); // Clear user if fetch fails
+                }
+            }else{
+                console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
+            }
+        };
+        fetchUserProfile();
+    }, [loggedInUser]); // Re-fetch if loggedInUser changes (e.g., after login/logout)
+
+
+    /**
      * @effect - Automatically clears success or error messages after a 4-second delay.
      */
     useEffect(() => {
@@ -92,14 +115,13 @@ const AccountSettings = () => {
      * @effect - Checks if the phone number form is "dirty" (has changes) to enable/disable the save button.
      */
     useEffect(() => {
-        // This check is only relevant when in edit mode.
-        if (isEditingPhone) {
-            setIsPhoneDirty(phoneNumber !== currentUser.phone);
+        // Only set dirty if currentUser is loaded and phone number is different
+        if (currentUser && isEditingPhone) {
+            setIsPhoneDirty(phoneNumber !== currentUser.contact);
         } else {
-            // If not in edit mode, the form is not considered dirty.
             setIsPhoneDirty(false);
         }
-    }, [phoneNumber, currentUser.phone, isEditingPhone]);
+    }, [phoneNumber, currentUser, isEditingPhone]);
 
     // --- HANDLERS ---
 
@@ -114,11 +136,17 @@ const AccountSettings = () => {
      * updates the main user state, shows a success message, and clears the preview state.
      * @param {string} newPicDataUrl - The base64 data URL of the new image.
      */
-    const handleSaveProfilePic = (newPicDataUrl) => {
-        onProfileUpdate({ profilePic: true });
-        setCurrentUser(prev => ({ ...prev, profilePic: newPicDataUrl }));
-        setSuccessMessage("Profile picture updated successfully!");
-        setNewProfilePic(null);
+    const handleSaveProfilePic = async (newPicDataUrl) => {
+        // In a real app, this would involve uploading to a storage service and updating user record in DB
+        // For now, we simulate success and log the action.
+        const result = await onProfileUpdate({ profilePic: { new: newPicDataUrl } });
+        if (result.success) {
+            setCurrentUser(prev => ({ ...prev, profilePic: newPicDataUrl }));
+            setSuccessMessage("Profile picture updated successfully!");
+            setNewProfilePic(null);
+        } else {
+            setErrorMessage(result.message);
+        }
     };
 
     /**
@@ -146,64 +174,148 @@ const AccountSettings = () => {
      * logs the change to the audit trail, updates the main user state, exits
      * edit mode, and displays a success notification.
      */
-    const handleSave = () => {
+    const handleSavePhone = async () => {
         setErrorMessage('');
-        const phPhoneRegex = /^\+639\d{9}$/;
-        if (!phPhoneRegex.test(phoneNumber)) {
-            setErrorMessage("Please enter a valid Philippine phone number (e.g., +639123456789).");
+        
+        // Trim whitespace from phone number
+        const cleanedPhoneNumber = phoneNumber.trim();
+
+        // Regex for 11 digits starting with "09" or 13 digits starting with "+639"
+        const regex09 = /^09\d{9}$/; // 09 + 9 digits = 11 digits
+        const regexPlus63 = /^\+639\d{9}$/; // +639 + 9 digits = 13 digits
+
+        if (!regex09.test(cleanedPhoneNumber) && !regexPlus63.test(cleanedPhoneNumber)) {
+            setErrorMessage("Please enter a valid Philippine phone number. It must be 11 digits starting with '09' (e.g., 09xxxxxxxxx) or 13 digits starting with '+639' (e.g., +639xxxxxxxxx).");
             return;
         }
-        onProfileUpdate({ phone: { old: currentUser.phone, new: phoneNumber } });
-        setCurrentUser(prev => ({ ...prev, phone: phoneNumber }));
-        setIsEditingPhone(false);
-        setSuccessMessage("Phone number updated successfully!");
+
+        // Prevent saving if no actual change
+        if (cleanedPhoneNumber === currentUser.contact) {
+            setErrorMessage("Phone number is the same as current. No changes to save.");
+            setIsEditingPhone(false);
+            return;
+        }
+
+        try {
+            const result = await onProfileUpdate({ phone: { old: currentUser.contact, new: cleanedPhoneNumber } });
+            if (result.success) {
+                setCurrentUser(prev => ({ ...prev, contact: cleanedPhoneNumber }));
+                setIsEditingPhone(false);
+                setSuccessMessage(result.message || "Phone number updated successfully!");
+            } else {
+                setErrorMessage(result.message || "Failed to update phone number.");
+            }
+        } catch (error) {
+            setErrorMessage("An unexpected error occurred while saving the phone number.");
+            console.error("Error saving phone number:", error);
+        }
     };
 
     /**
      * Cancels any ongoing edits for the phone number. It reverts the phone number
      * field to its original value and exits the edit mode.
      */
-    const handleCancel = () => {
+    const handleCancelPhone = () => {
         setIsEditingPhone(false);
-        setPhoneNumber(currentUser.phone);
+        setPhoneNumber(currentUser.contact); // Revert to original phone number
         setErrorMessage('');
     };
 
     /**
      * Handles the password change form submission. It validates that the new
-     * passwords match and meet security requirements. On success, it logs the
-     * action, clears the form fields, and shows a success message.
+     * passwords match and meet security requirements, and also verifies the current password.
+     * On success, it logs the action, clears the form fields, and shows a success message.
      * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
      */
-    const handleChangePassword = (e) => {
+    const handleChangePassword = async (e) => {
         e.preventDefault();
         setErrorMessage('');
+        setSuccessMessage('');
+
+        // Client-side validation for password strength
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        if (!passwordRegex.test(newPassword)) {
-            setErrorMessage("Password does not meet the strength requirements.");
+        
+        if (!currentPassword) {
+            setErrorMessage("Please enter your current password.");
             return;
         }
+        if (!newPassword) {
+            setErrorMessage("Please enter a new password.");
+            return;
+        }
+        if (!confirmPassword) {
+            setErrorMessage("Please confirm your new password.");
+            return;
+        }
+
         if (newPassword !== confirmPassword) {
             setErrorMessage("New passwords do not match.");
             return;
         }
-        onPasswordChange();
-        setSuccessMessage("Password changed successfully!");
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+
+        if (newPassword === currentPassword) {
+            setErrorMessage("New password cannot be the same as the current password.");
+            return;
+        }
+
+        if (!passwordRegex.test(newPassword)) {
+            setErrorMessage("New password does not meet the strength requirements. It must be at least 8 characters long, include one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&).");
+            return;
+        }
+
+        try {
+            // Call the API via the context function
+            const result = await onPasswordChange(currentPassword, newPassword);
+
+            if (result.success) {
+                setSuccessMessage(result.message);
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+            } else {
+                setErrorMessage(result.message);
+            }
+        } catch (error) {
+            setErrorMessage("An unexpected error occurred while changing the password.");
+            console.error("Error changing password:", error);
+        }
     };
     
     // --- RENDER ---
     
-    const profilePicToShow = newProfilePic || currentUser.profilePic;
+    // Show loading or fallback if currentUser is not yet loaded
+    if (!currentUser) {
+        return (
+            <div className={Styles['pageWrapper']}>
+                <div className={Styles['layoutGrid']}>
+                    <aside className={Styles['sidebar']}>
+                        <button onClick={handleBack} className={Styles['backButton']}>
+                            <ArrowLeft size={16} /> Back
+                        </button>
+                        <div className={Styles['profileHeader']}>Loading profile...</div>
+                    </aside>
+                    <main className={Styles['mainContent']}>
+                        <h1 className={Styles['contentTitle']}>Loading...</h1>
+                        {errorMessage && 
+                            <div className={`${Styles['alert']} ${Styles['alertError']}`}>
+                                <AlertTriangle size={20}/>
+                                {errorMessage}
+                            </div>
+                        }
+                    </main>
+                </div>
+            </div>
+        );
+    }
+
+    const profilePicToShow = newProfilePic || currentUser.profilePic || `https://placehold.co/128x128/4f46e5/ffffff?text=${currentUser.username ? currentUser.username.charAt(0).toUpperCase() : '?'}`;
 
     return (
         <div className={Styles['pageWrapper']}>
             <div className={Styles['layoutGrid']}>
                 {/* Left Sidebar */}
                 <aside className={Styles['sidebar']}>
-                     <button onClick={handleBack} className={Styles['backButton']}>
+                    <button onClick={handleBack} className={Styles['backButton']}>
                         <ArrowLeft size={16} /> Back
                     </button>
                     <div className={Styles['profileHeader']}>
@@ -213,9 +325,9 @@ const AccountSettings = () => {
                                 <Camera size={24} />
                             </div>
                         </div>
-                        <h2 className={Styles['profileName']}>{currentUser.fullName}</h2>
+                        <h2 className={Styles['profileName']}>{currentUser.fullname}</h2> {/* Use currentUser.fullname */}
                         <p className={Styles['profilePhone']}>@{currentUser.username}</p>
-                        <p className={Styles['profilePhone']}>{currentUser.phone}</p>
+                        <p className={Styles['profilePhone']}>{currentUser.contact}</p> {/* Display current phone */}
                     </div>
                     <nav className={Styles['sidebarNav']}>
                         <button onClick={() => setActiveTab('profile')} className={`${Styles['navLink']} ${activeTab === 'profile' ? Styles['navLinkActive'] : ''}`}>
@@ -236,8 +348,8 @@ const AccountSettings = () => {
                         {/* The header Save/Cancel buttons now only appear when editing the phone number */}
                         {isEditingPhone && activeTab === 'profile' && (
                             <div className={Styles['headerActions']}>
-                                <button onClick={handleCancel} className={`${Styles['button']} ${Styles['buttonSecondary']}`}>Cancel</button>
-                                <button onClick={handleSave} className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!isPhoneDirty}>Save</button>
+                                <button onClick={handleCancelPhone} className={`${Styles['button']} ${Styles['buttonSecondary']}`}>Cancel</button>
+                                <button onClick={handleSavePhone} className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!isPhoneDirty}>Save</button>
                             </div>
                         )}
                     </div>
@@ -248,7 +360,7 @@ const AccountSettings = () => {
                             <div className={Styles['cardBody']}>
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Full Name</p>
-                                    <div className={Styles['rowDetails']}><p className={Styles['rowValue']}>{currentUser.fullName}</p></div>
+                                    <div className={Styles['rowDetails']}><p className={Styles['rowValue']}>{currentUser.fullname}</p></div> {/* Use currentUser.fullname */}
                                 </div>
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Username</p>
@@ -260,10 +372,10 @@ const AccountSettings = () => {
                                         {isEditingPhone ? (
                                             <div>
                                                 <input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className={Styles['input']} />
-                                                <p className={Styles['helperText']}>Must be a valid PH number (e.g., +639xxxxxxxxx) for SMS alerts.</p>
+                                                <p className={Styles['helperText']}>Must be 11 digits (e.g., 09xxxxxxxxx) or 13 digits (e.g., +639xxxxxxxxx) for SMS alerts.</p>
                                             </div>
                                         ) : (
-                                            <p className={Styles['rowValue']}>{currentUser.phone}</p>
+                                            <p className={Styles['rowValue']}>{currentUser.contact}</p> 
                                         )}
                                     </div>
                                     {/* The simple edit icon is used again, and inline buttons are removed */}
@@ -276,34 +388,34 @@ const AccountSettings = () => {
                     )}
 
                     {activeTab === 'password' && (
-                         <form onSubmit={handleChangePassword}>
-                            <div className={Styles['card']}>
-                                <div className={Styles['cardBody']}>
-                                    <div className={Styles['cardRow']}>
-                                        <label htmlFor="current-password" className={Styles['rowLabel']}>Current Password</label>
-                                        <input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={Styles['input']} required />
-                                    </div>
-                                    <div className={Styles['cardRow']}>
-                                        <label htmlFor="new-password" className={Styles['rowLabel']}>New Password</label>
-                                        <div>
-                                            <input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={Styles['input']} required />
-                                            <ul className={Styles['passwordRequirements']}>
-                                                <li>At least 8 characters</li>
-                                                <li>One uppercase & one lowercase letter</li>
-                                                <li>One number & one special character (@$!%*?&)</li>
-                                            </ul>
+                            <form onSubmit={handleChangePassword}>
+                                <div className={Styles['card']}>
+                                    <div className={Styles['cardBody']}>
+                                        <div className={Styles['cardRow']}>
+                                            <label htmlFor="current-password" className={Styles['rowLabel']}>Current Password</label>
+                                            <input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={Styles['input']} required />
+                                        </div>
+                                        <div className={Styles['cardRow']}>
+                                            <label htmlFor="new-password" className={Styles['rowLabel']}>New Password</label>
+                                            <div>
+                                                <input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={Styles['input']} required />
+                                                <ul className={Styles['passwordRequirements']}>
+                                                    <li>At least 8 characters</li>
+                                                    <li>One uppercase & one lowercase letter</li>
+                                                    <li>One number & one special character (@$!%*?&)</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div className={Styles['cardRow']}>
+                                            <label htmlFor="confirm-password" className={Styles['rowLabel']}>Confirm New Password</label>
+                                            <input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={Styles['input']} required />
                                         </div>
                                     </div>
-                                    <div className={Styles['cardRow']}>
-                                        <label htmlFor="confirm-password" className={Styles['rowLabel']}>Confirm New Password</label>
-                                        <input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={Styles['input']} required />
+                                    <div className={Styles['cardFooter']}>
+                                        <button type="submit" className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!currentPassword || !newPassword || !confirmPassword}>Set New Password</button>
                                     </div>
                                 </div>
-                                <div className={Styles['cardFooter']}>
-                                    <button type="submit" className={`${Styles['button']} ${Styles['buttonPrimary']}`} disabled={!currentPassword || !newPassword || !confirmPassword}>Set New Password</button>
-                                </div>
-                            </div>
-                         </form>
+                            </form>
                     )}
                 </main>
             </div>

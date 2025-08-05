@@ -13,7 +13,6 @@ import Alerts from './Components/Alerts/Alerts';
 import Configuration from './Components/Configuration/Configurations'
 import AlertsContext from './utils/AlertsContext';
 import ProtectedRoute from './Components/Auth/ProtectedRoute';
-// REMOVED: import { evaluateSensorReading } from './utils/SensorLogic'; // This is now a server-side function
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
@@ -365,17 +364,38 @@ function App() {
     const showNavigation = !noNavPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loggedInUsername, setLoggedInUsername] = useState(null);
+    const [loggedInUser, setLoggedInUser] = useState(null);
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
 
-    const handleLogin = (username) => {
+    useEffect(() => {
+        const storedUser = localStorage.getItem('loggedInUser');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                setLoggedInUser(user);
+                setIsAuthenticated(true);
+                console.log("App.jsx - useEffect: loggedInUser restored from localStorage:", user);
+            } catch (e) {
+                console.error("Failed to parse loggedInUser from localStorage", e);
+                localStorage.removeItem('loggedInUser');
+            }
+        }else{
+            console.log("App.jsx - useEffect: No loggedInUser found in localStorage.");
+        }
+    }, []);
+
+    const handleLogin = (user) => { // Expect full user object from Login component
         setIsAuthenticated(true);
-        setLoggedInUsername(username); // Store the username
+        setLoggedInUser(user);
+        localStorage.setItem('loggedInUser', JSON.stringify(user)); // Store user data
+        console.log("App.jsx - handleLogin: User logged in, loggedInUser set to:", user);
     };
 
     const handleLogout = () => {
         setIsAuthenticated(false);
-        setLoggedInUsername(null)
+        setLoggedInUser(null);
+        localStorage.removeItem('loggedInUser'); // Clear user data
+        console.log("App.jsx - handleLogout: User logged out.");
     };
 
     // --- State Management ---
@@ -916,11 +936,12 @@ function App() {
         onAdminDeleteUser,
         // --- Provide systemLogs to the context ---
         systemLogs,
+        loggedInUser,
     };
 
     return (
         <AlertsContext.Provider value={contextValue}>
-            {isAuthenticated && showHeader && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} username={loggedInUsername} />}
+            {isAuthenticated && showHeader && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} username={loggedInUser?.username} />}
             {isAuthenticated && showNavigation && <Navigation />}
             <main>
                 <Routes>

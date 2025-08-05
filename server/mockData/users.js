@@ -1,24 +1,38 @@
 const MOCK_USERS = [
   {
+    "id": "user1", 
+    "fullname": "Ako Si Admin",
     "username": "Admin1234",
-    "password": "password1234"
+    "password": "password1234",
+    "contact": "09231462632"
   },
-  //nag add lang ako hehe alisin nalan tun
   {
+    "id": "user2", 
+    "fullname": "James Duay",
     "username": "JamesD",
-    "password": "jamesduay"
+    "password": "jamesduay",
+    "contact": "09436547324"
   },
   {
+    "id": "user3", 
+    "fullname": "Richard Jian Fa Chow",
     "username": "RichardC",
-    "password": "richardchow"
+    "password": "richardchow",
+    "contact": "+639053053305"
   },
   {
+    "id": "user4", 
+    "fullname": "Ejay Tejano",
     "username": "EjayT",
-    "password": "ejaytejano"
+    "password": "ejaytejano",
+    "contact": "09547623459" 
   },
   {
+    "id": "user5", 
+    "fullname": "Lester Baldivino",
     "username": "LesterB",
-    "password": "lesterbaldivino"
+    "password": "lesterbaldivino",
+    "contact": "+639746385623"
   }
 ];
 

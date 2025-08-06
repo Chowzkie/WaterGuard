@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import styles from "../../Styles/Navigation.module.css";
+import styles from "../../Styles/Nav-Head-Style/Navigation.module.css";
 import { useState } from 'react';
 import {Menu, X} from 'lucide-react'
 

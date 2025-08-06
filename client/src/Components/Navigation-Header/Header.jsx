@@ -1,16 +1,28 @@
 // Components/Navigation-Header/Header.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bell, AlertCircle, Info, CheckCircle, Settings, LogOut, ChevronRight, Logs, ShieldUser  } from 'lucide-react';
-import styles from '../../Styles/Header.module.css';
-import ProfilePic from '../../assets/ProfilePic.png';
-import Logo from '../../assets/Logo.png';
+import { Bell, Settings, LogOut, ChevronRight, Logs, ShieldUser } from 'lucide-react';
+import styles from '../../Styles/Nav-Head-Style/Header.module.css'; // Assuming this is the correct path
+import ProfilePic from '../../assets/ProfilePic.png'; // Assuming this is the correct path
+import Logo from '../../assets/Logo.png'; // Assuming this is the correct path
+import Notifications from './Notifications'; // The separate notifications component
 
-function Header({ onLogout, deviceLabelForHeader, username }) {
+function Header({
+    // Original props
+    onLogout,
+    deviceLabelForHeader,
+    username,
+    // --- NEW: Props for centralized notification system from App.jsx ---
+    notifications,
+    unreadCount,
+    onMarkNotificationAsRead,
+    onMarkAllNotificationsAsRead
+}) {
     const navigate = useNavigate();
     const location = useLocation();
     const [subTitle, setSubTitle] = useState('WaterGuard');
 
+    // --- RESTORED: This logic dynamically sets the subtitle based on the current page ---
     const routeTitleMap = {
         '/overview': 'Overview',
         '/dashboard': 'Readings',
@@ -25,55 +37,53 @@ function Header({ onLogout, deviceLabelForHeader, username }) {
     };
 
     useEffect(() => {
-         let currentSubTitle;
-    
-    if (deviceLabelForHeader) {
-        // Check if the current page is a configuration page
-        if (location.pathname.startsWith('/configurations')) {
-            currentSubTitle = `Configuration > ${deviceLabelForHeader}`;
+        let currentSubTitle;
+        if (deviceLabelForHeader) {
+            if (location.pathname.startsWith('/configurations')) {
+                currentSubTitle = `Configuration > ${deviceLabelForHeader}`;
+            } else {
+                currentSubTitle = `Devices > ${deviceLabelForHeader}`;
+            }
         } else {
-           // Fallback for other pages like /devices/:deviceId
-            currentSubTitle = `Devices > ${deviceLabelForHeader}`;
+            currentSubTitle = routeTitleMap[location.pathname] || 'WaterGuard';
         }
-        } else {
-        // This handles all non-specific pages
-        currentSubTitle = routeTitleMap[location.pathname] || 'WaterGuard';
-    }
         setSubTitle(currentSubTitle);
         document.title = `WaterGuard | ${currentSubTitle}`;
-    },  [location.pathname, deviceLabelForHeader, routeTitleMap]);
+    }, [location.pathname, deviceLabelForHeader]);
 
+
+    // --- RESTORED: State for managing the user and notification dropdowns separately ---
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
+    const userMenuRef = useRef(null);
+    const notifMenuRef = useRef(null);
+
     const toggleMenu = () => {
         setOpen(!open);
-        setNotifOpen(false);
+        setNotifOpen(false); // Close notifications when opening user menu
     };
+
     const toggleNotif = () => {
         setNotifOpen(!notifOpen);
-        setOpen(false);
+        setOpen(false); // Close user menu when opening notifications
     };
-    const [notifications, setNotifications] = useState([
-        { message: "Sensor 1 reported high pH level", type: "critical", time: "1 min ago", read: false },
-        { message: "Sensor 2 is offline", type: "critical", time: "5 min ago", read: false },
-        { message: "Weekly water quality report generated", type: "info", time: "30 min ago", read: false },
-        { message: "New firmware available", type: "info", time: "1 hour ago", read: false },
-        { message: "Sensor 3 is now online", type: "success", time: "2 hours ago", read: false },
-        { message: "System backup completed", type: "success", time: "5 hours ago", read: false }
-    ]);
-    const markAllAsRead = () => setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-    const markAsRead = (index) => {
-        const updated = [...notifications];
-        updated[index].read = true;
-        setNotifications(updated);
-    };
-    const getIcon = (type) => {
-        switch (type) {
-            case 'critical': return <AlertCircle className={`${styles.notifIcon} ${styles.critical}`} />;
-            case 'success': return <CheckCircle className={`${styles.notifIcon} ${styles.success}`} />;
-            default: return <Info className={`${styles.notifIcon} ${styles.info}`} />;
-        }
-    };
+
+    // --- RESTORED: Logic to close dropdowns when clicking outside ---
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setOpen(false);
+            }
+            if (notifMenuRef.current && !notifMenuRef.current.contains(event.target)) {
+                setNotifOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+
+    // --- RESTORED: Navigation handlers for the user dropdown menu ---
     const handleLogout = () => {
         onLogout();
         navigate('/login');
@@ -101,40 +111,23 @@ function Header({ onLogout, deviceLabelForHeader, username }) {
                 </div>
             </div>
             <div className={styles.headerRight}>
-                <div className={styles.notificationWrapper}>
+                {/* --- UPDATED: Notification dropdown now uses props from App.jsx --- */}
+                <div className={styles.notificationWrapper} ref={notifMenuRef}>
                     <div className={styles.notificationIconWrapper} onClick={toggleNotif}>
                         <Bell className={styles.notificationIcon} />
-                        {notifications.some(n => !n.read) && (
-                            <span className={styles.notificationBadge}>{notifications.filter(n => !n.read).length}</span>
+                        {unreadCount > 0 && (
+                            <span className={styles.notificationBadge}>{unreadCount}</span>
                         )}
                     </div>
-                    <div className={`${styles.notifDropdown} ${notifOpen ? styles.show : ''}`}>
-                        <div className={styles.dropdownHeader}>
-                            <span className={styles.dropdownTitle}>Notifications</span>
-                            <span className={styles.notificationHeaderBadge}>{notifications.filter(n => !n.read).length}</span>
-                            <button className={styles.markAllBtn} onClick={markAllAsRead}>Mark all as read</button>
-                        </div>
-                        <div className={styles.dropdownWrapper}>
-                            {notifications.length === 0 ? (
-                                <span className={styles.noNotifs}>No notifications</span>
-                            ) : (
-                                notifications.map((notif, index) => (
-                                    <div className={`${styles.dropdownItemN} ${styles[notif.type]} ${notif.read ? styles.read : ''}`} key={index}>
-                                        <div className={styles.itemLeft}>{getIcon(notif.type)}</div>
-                                        <div className={styles.itemRight}>
-                                            <span>{notif.message}</span>
-                                            <div className={styles.meta}>
-                                                <small>{notif.time}</small>
-                                                {!notif.read && (<button onClick={() => markAsRead(index)}><i>Mark as read</i></button>)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
+                    <Notifications
+                        show={notifOpen}
+                        notifications={notifications}
+                        onMarkAsRead={onMarkNotificationAsRead}
+                        onMarkAllAsRead={onMarkAllNotificationsAsRead}
+                    />
                 </div>
-                <div className={styles.headerDropdown}>
+                {/* --- RESTORED: User dropdown menu with full functionality --- */}
+                <div className={styles.headerDropdown} ref={userMenuRef}>
                     <button className={styles.userBtn} onClick={toggleMenu}>
                         <img className={styles.profileImg} src={ProfilePic} alt="Profile" />
                         <p>{username} {open ? '⏶' : '⏷'}</p>
@@ -144,13 +137,13 @@ function Header({ onLogout, deviceLabelForHeader, username }) {
                             <Settings size={18} color='#0fd1eb' /> <p>Account</p> <ChevronRight size={15} />
                         </div>
                         <div className={`${styles.dropdownItemU} ${styles.admin}`} onClick={handleAdminPanel} >
-                            <ShieldUser  size={18} color='#6d6d6dff' /> <p>Admin</p> <ChevronRight size={15} />
+                            <ShieldUser size={18} color='#6d6d6dff' /> <p>Admin</p> <ChevronRight size={15} />
                         </div>
                         <div className={`${styles.dropdownItemU} ${styles.logs}`} onClick={handleLogs} >
                             <Logs size={17} color='#307e3c' /> <p>View Logs</p> <ChevronRight size={15} />
                         </div>
                         <div className={`${styles.dropdownItemU} ${styles.logout}`} onClick={handleLogout}>
-                            <LogOut size={16} color='#ec515e'/> <p>Log Out</p> <ChevronRight size={15} />
+                            <LogOut size={16} color='#ec515e' /> <p>Log Out</p> <ChevronRight size={15} />
                         </div>
                     </div>
                 </div>

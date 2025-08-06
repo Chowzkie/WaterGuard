@@ -293,21 +293,6 @@ function alertsReducer(state, action) {
     }
 }
 
-//Notification sound function
-function playNotificationSound() {
-    // Make sure your audio file (e.g., 'notification.mp3') is in the 'public' folder.
-    const audio = new Audio('/Notification.mp3'); // The path starts with '/'
-    // The play() method returns a promise. We need to handle potential errors.
-    const playPromise = audio.play();
-
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            // This error often happens if the user hasn't interacted with the page yet.
-            console.warn("Could not play notification sound automatically. User interaction may be required.", error);
-        });
-    }
-}
-
 /**
  * Generates a list of human-readable log messages by comparing old and new configuration objects.
  * @param {object} oldConfigs - The configuration object before changes.
@@ -429,6 +414,46 @@ function App() {
     // --- FIX: Ref to hold previous device state to prevent inaccurate logging ---
     const previousDevicesRef = useRef([]);
 
+     // --- NEW: STATE MANAGEMENT FOR NOTIFICATIONS ---
+    // This state holds all notifications that will be displayed in the dropdown.
+    const [notifications, setNotifications] = useState([]);
+    // A counter to ensure each notification has a unique ID.
+    const notificationIdCounter = useRef(0);
+    // A derived state that calculates the number of unread notifications for the badge.
+    const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+
+     // --- NEW: Function to play notification sound ---
+    // This function is wrapped in useCallback to prevent it from being recreated on every render.
+    const playNotificationSound = useCallback(() => {
+        // Ensure the audio file is in the /public folder of your project.
+        const audio = new Audio('/notification.mp3');
+        const playPromise = audio.play();
+        // The play() method returns a promise. We handle potential errors,
+        // which often occur if the user hasn't interacted with the page yet.
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.warn("Could not play notification sound automatically. User interaction may be required.", error);
+            });
+        }
+    }, []); // Empty dependency array means this function is created only once.
+
+
+    // --- NEW: Centralized function to add a new notification ---
+    // This function handles the creation of a new notification object and adds it to the state.
+    const addNotification = useCallback((notificationData) => {
+        notificationIdCounter.current += 1; // Increment the unique ID counter.
+        const newNotification = {
+            id: notificationIdCounter.current,
+            timestamp: new Date(), // Set the current time for the notification.
+            read: false, // All new notifications are initially unread.
+            ...notificationData, // Merge the specific data (e.g., { type: 'DeviceOffline', message: '...' })
+        };
+        // Use the functional form of setState to ensure we have the latest state.
+        // Add the new notification to the beginning of the array.
+        setNotifications(prev => [newNotification, ...prev]);
+        playNotificationSound(); // Play the sound for each new notification.
+    }, [playNotificationSound]); // This function depends on playNotificationSound.
+
     // --- Utility function for creating System Logs ---
     const logSystemEvent = useCallback((logData) => {
         const newLog = {
@@ -509,7 +534,8 @@ function App() {
         fetchInitialData();
     }, []);
 
-    // --- FIX: This useEffect is now dedicated ONLY to polling for device status ---
+   // --- FIX: This useEffect is now dedicated ONLY to polling for device status ---
+    // --- UPDATED: This useEffect now also creates notifications for device status changes ---
     useEffect(() => {
         const pollDeviceStatus = async () => {
             try {
@@ -529,6 +555,19 @@ function App() {
                             details: `Status changed from ${oldDevice.status} to ${latestDevice.status}.`,
                             status: latestDevice.status === 'Online' ? 'Success' : 'Error',
                         });
+
+                        // --- NEW: Generate Notification based on status change ---
+                        if (latestDevice.status === 'Offline') {
+                            addNotification({
+                                type: 'DeviceOffline',
+                                message: `Device '${latestDevice.label}' is now Offline`,
+                            });
+                        } else {
+                            addNotification({
+                                type: 'DeviceOnline',
+                                message: `Device '${latestDevice.label}' is now Online`,
+                            });
+                        }
                     }
                 });
 
@@ -543,11 +582,18 @@ function App() {
 
         const pollInterval = setInterval(pollDeviceStatus, 10000);
         return () => clearInterval(pollInterval);
-    }, [logSystemEvent]); // This effect only depends on the stable logSystemEvent function
+    }, [logSystemEvent, addNotification]); // This effect now depends on addNotification.
 
     // --- This useEffect runs the sensor reading simulation loop ---
+    // --- UPDATED: This useEffect now also creates notifications for critical events ---
     useEffect(() => {
-        if (mockSensorReadings.length === 0) return;
+        if (mockSensorReadings.length === 0 || deviceLocations.length === 0) return;
+
+        // Helper function to find a device's label by its ID for more descriptive notifications.
+        const getDeviceLabel = (deviceId) => {
+            const device = deviceLocations.find(d => d.id === deviceId);
+            return device ? device.label : deviceId; // Fallback to ID if not found
+        };
 
         let readingIndex = 0;
         const intervalId = setInterval(async () => {
@@ -559,18 +605,24 @@ function App() {
                     const response = await axios.post(`${API_BASE_URL}/evaluate-reading`, currentReading);
                     const { evaluatedAlerts } = response.data;
 
-                    // --- System Log Generation from evaluated alerts ---
+                    // --- System Log and Notification Generation from evaluated alerts ---
                     evaluatedAlerts.forEach(alert => {
+                        // Check for Critical severity alerts
                         if (alert.severity === 'Critical') {
                             logSystemEvent({
                                 deviceId: alert.originator,
-                                // --- FIX: Use the map to set the correct component name for the log data ---
                                 component: alert.parameter.toLowerCase(),
                                 event: 'Critical reading detected',
                                 details: `Reading: ${alert.value}`,
                                 status: 'Warning',
                             });
+                            // --- NEW: Generate Notification for Critical Alert ---
+                            addNotification({
+                                type: 'CriticalAlert',
+                                message: `Critical ${alert.parameter} reading on device '${getDeviceLabel(alert.originator)}'`,
+                            });
                         }
+                        // Check for the automatic valve shut-off note
                         if (alert.note && alert.note.includes('Valve shut off')) {
                             const componentName = PARAMETER_TO_COMPONENT_MAP[alert.parameter] || alert.parameter;
                             logSystemEvent({
@@ -579,6 +631,11 @@ function App() {
                                 event: 'Valve closed automatically',
                                 details: `Triggered by critical ${componentName} reading.`,
                                 status: 'Info',
+                            });
+                            // --- NEW: Generate Notification for Valve Shut-Off ---
+                            addNotification({
+                                type: 'ValveShutOff',
+                                message: `Valve automatically closed on device '${getDeviceLabel(alert.originator)}'`,
                             });
                         }
                     });
@@ -600,7 +657,7 @@ function App() {
             clearInterval(intervalId);
             backToNormalTimers.current.forEach(timerId => clearTimeout(timerId));
         };
-    }, [mockSensorReadings, logSystemEvent]);
+    }, [mockSensorReadings, deviceLocations, logSystemEvent, addNotification]); // Add dependencies
 
     // Timer to periodically check and archive old alerts
     useEffect(() => {
@@ -800,6 +857,17 @@ function App() {
         setRecentlyDeletedSystemLogs([]); // Clear the undo buffer
     };
 
+    // --- NEW: Handlers for managing notification read status ---
+    const handleMarkNotificationAsRead = (notificationId) => {
+        setNotifications(prev =>
+            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        );
+    };
+
+    const handleMarkAllNotificationsAsRead = () => {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
+
     // --- MODIFIED: handleValveToggle now also creates a system log ---
     const handleValveToggle = (deviceId, newState) => {
         const device = deviceLocations.find(d => d.id === deviceId);
@@ -941,7 +1009,18 @@ function App() {
 
     return (
         <AlertsContext.Provider value={contextValue}>
-            {isAuthenticated && showHeader && <Header onLogout={handleLogout} deviceLabelForHeader={headerDeviceLabel} username={loggedInUser?.username} />}
+            {isAuthenticated && showHeader && 
+                <Header 
+                    onLogout={handleLogout}
+                    deviceLabelForHeader={headerDeviceLabel}
+                    username={loggedInUser?.username}
+                    // --- Pass notification state and handlers to Header ---
+                    notifications={notifications}
+                    unreadCount={unreadNotificationsCount}
+                    onMarkNotificationAsRead={handleMarkNotificationAsRead}
+                    onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
+                />
+            }
             {isAuthenticated && showNavigation && <Navigation />}
             <main>
                 <Routes>

@@ -426,7 +426,7 @@ function App() {
     // This function is wrapped in useCallback to prevent it from being recreated on every render.
     const playNotificationSound = useCallback(() => {
         // Ensure the audio file is in the /public folder of your project.
-        const audio = new Audio('/notification.mp3');
+        const audio = new Audio('/Notification.mp3');
         const playPromise = audio.play();
         // The play() method returns a promise. We handle potential errors,
         // which often occur if the user hasn't interacted with the page yet.

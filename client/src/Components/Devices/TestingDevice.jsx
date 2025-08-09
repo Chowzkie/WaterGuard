@@ -1,39 +1,37 @@
 import React, { useState } from 'react';
-import { Menu } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; 
-import Style from '../../Styles/DeviceTesting.module.css'
+// --- NEW: Added Cpu icon for the cards ---
+import { Menu, Cpu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Style from '../../Styles/DeviceTesting.module.css';
 
-
-function TestingDevice({deviceData}){
-
+function TestingDevice({ deviceData }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [showMenu, setShowMenu] = useState(false);
-    const navigate = useNavigate(); // Initialize useNavigate
+    const navigate = useNavigate();
 
     const filterDevice = deviceData.filter(device => {
-        const matchSearch = 
+        const matchSearch =
             device.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             device.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchStatus = 
+        const matchStatus =
             statusFilter === '' || device.status.toLowerCase() === statusFilter.toLowerCase();
         return matchSearch && matchStatus;
-    })
+    });
 
-    // New handler to navigate to the specific device page
     const handleDeviceRowClick = (deviceId) => {
-        navigate(`/devices/${deviceId}`); // Navigate to the new route with the deviceId
+        navigate(`/devices/${deviceId}`);
     };
 
-    return(
+    return (
         <div className={Style['container']}>
             <div className={Style['table']}>
                 <div className={Style['table-title']}>
                     <p>Testing Device</p>
                     <div className={Style['right-pane']}>
-                        <input type="text" placeholder="Search" className={Style['search-box']} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/> 
+                        <input type="text" placeholder="Search" className={Style['search-box']} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         <div className={Style['menu-container']}>
-                            <div onClick={() => setShowMenu(!showMenu)} className={Style["menu-icon"]}><Menu size={32}/></div>
+                            <div onClick={() => setShowMenu(!showMenu)} className={Style["menu-icon"]}><Menu size={32} /></div>
                             {showMenu && (
                                 <div className={Style["menu-dropdown"]}>
                                     <div onClick={() => setStatusFilter('')} className={Style["menu-option-clear"]}>Show All</div>
@@ -45,33 +43,36 @@ function TestingDevice({deviceData}){
                         </div>
                     </div>
                 </div>
-                {/**Table */}
-                <div className={Style['device-table']}>
-                    <div className={Style['devices-header-row']}>
-                        <div>Label</div>
-                        <div>Location</div>
-                        <div>Status</div>
-                    </div>
 
-                    <div className={Style['device-body']}>
-                        {filterDevice.length === 0 ? (
-                            <div className={Style['no-devices']}>No devices found.</div>
-                        ) : (
-                            filterDevice.map(device => (
-                                <div key={device.id} 
-                                    className={Style['devices-row']}
-                                    onClick={() => handleDeviceRowClick(device.id)}
-                                    >{/**in the device-row this is where i want to put the other component it will render this component and move to SpecificDevice.jsx */}
-                                        <div>{device.label}</div>
-                                        <div>{device.location}</div>
-                                        <div className={`${Style['status-badge']} ${Style[device.status.toLowerCase()]}`}>{device.status}</div>
-                                    </div>
-                            ))
-                        )}
-                    </div>
+                {/* --- UPDATED: Table structure changed to a list of cards --- */}
+                <div className={Style['device-list-container']}>
+                    {filterDevice.length === 0 ? (
+                        <div className={Style['no-devices']}>No devices found.</div>
+                    ) : (
+                        filterDevice.map(device => (
+                            // Each device is now a self-contained card
+                            <div
+                                key={device.id}
+                                className={Style['device-card']}
+                                onClick={() => handleDeviceRowClick(device.id)}
+                            >
+                                <div className={Style['card-icon']}>
+                                    <Cpu size={24} />
+                                </div>
+                                <div className={Style['card-content']}>
+                                    <div className={Style['card-label']}>{device.label}</div>
+                                    <div className={Style['card-location']}>{device.location}</div>
+                                </div>
+                                <div className={`${Style['status-badge']} ${Style[device.status.toLowerCase()]}`}>
+                                    {device.status}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+
 export default TestingDevice;

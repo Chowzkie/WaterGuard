@@ -451,8 +451,7 @@ function App() {
         // Use the functional form of setState to ensure we have the latest state.
         // Add the new notification to the beginning of the array.
         setNotifications(prev => [newNotification, ...prev]);
-        playNotificationSound(); // Play the sound for each new notification.
-    }, [playNotificationSound]); // This function depends on playNotificationSound.
+    }, []); 
 
     // --- Utility function for creating System Logs ---
     const logSystemEvent = useCallback((logData) => {
@@ -587,77 +586,76 @@ function App() {
     // --- This useEffect runs the sensor reading simulation loop ---
     // --- UPDATED: This useEffect now also creates notifications for critical events ---
     useEffect(() => {
-        if (mockSensorReadings.length === 0 || deviceLocations.length === 0) return;
+    if (mockSensorReadings.length === 0) return;
 
-        // Helper function to find a device's label by its ID for more descriptive notifications.
-        const getDeviceLabel = (deviceId) => {
-            const device = deviceLocations.find(d => d.id === deviceId);
-            return device ? device.label : deviceId; // Fallback to ID if not found
-        };
+    let readingIndex = 0;
+    const intervalId = setInterval(async () => {
+        if (readingIndex < mockSensorReadings.length) {
+            const currentReading = mockSensorReadings[readingIndex++];
+            setLatestReading(currentReading);
 
-        let readingIndex = 0;
-        const intervalId = setInterval(async () => {
-            if (readingIndex < mockSensorReadings.length) {
-                const currentReading = mockSensorReadings[readingIndex++];
-                setLatestReading(currentReading);
+            try {
+                const response = await axios.post(`${API_BASE_URL}/evaluate-reading`, currentReading);
+                const { evaluatedAlerts } = response.data;
 
-                try {
-                    const response = await axios.post(`${API_BASE_URL}/evaluate-reading`, currentReading);
-                    const { evaluatedAlerts } = response.data;
+                // FIX: Get the most recent device data inside the interval
+                const currentDeviceLocations = deviceLocations;
 
-                    // --- System Log and Notification Generation from evaluated alerts ---
-                    evaluatedAlerts.forEach(alert => {
-                        // Check for Critical severity alerts
-                        if (alert.severity === 'Critical') {
-                            logSystemEvent({
-                                deviceId: alert.originator,
-                                component: alert.parameter.toLowerCase(),
-                                event: 'Critical reading detected',
-                                details: `Reading: ${alert.value}`,
-                                status: 'Warning',
-                            });
-                            // --- NEW: Generate Notification for Critical Alert ---
-                            addNotification({
-                                type: 'CriticalAlert',
-                                message: `Critical ${alert.parameter} reading on device '${getDeviceLabel(alert.originator)}'`,
-                            });
-                        }
-                        // Check for the automatic valve shut-off note
-                        if (alert.note && alert.note.includes('Valve shut off')) {
-                            const componentName = PARAMETER_TO_COMPONENT_MAP[alert.parameter] || alert.parameter;
-                            logSystemEvent({
-                                deviceId: alert.originator,
-                                component: 'valve', // The component is the valve actuator
-                                event: 'Valve closed automatically',
-                                details: `Triggered by critical ${componentName} reading.`,
-                                status: 'Info',
-                            });
-                            // --- NEW: Generate Notification for Valve Shut-Off ---
-                            addNotification({
-                                type: 'ValveShutOff',
-                                message: `Valve automatically closed on device '${getDeviceLabel(alert.originator)}'`,
-                            });
-                        }
-                    });
+                // FIX: Define the helper function here, using the captured data
+                const getDeviceLabel = (deviceId) => {
+                    const device = currentDeviceLocations.find(d => d.id === deviceId);
+                    return device ? device.label : deviceId;
+                };
 
-                    dispatch({
-                        type: 'PROCESS_READING',
-                        payload: { evaluatedAlerts, alertIdCounter },
-                        timers: { start: startTimer }
-                    });
-                } catch (error) {
-                    console.error("Error evaluating sensor reading on backend:", error);
-                }
-            } else {
-                clearInterval(intervalId);
+                evaluatedAlerts.forEach(alert => {
+                    if (alert.severity === 'Critical') {
+                        logSystemEvent({
+                            deviceId: alert.originator,
+                            component: alert.parameter.toLowerCase(),
+                            event: 'Critical reading detected',
+                            details: `Reading: ${alert.value}`,
+                            status: 'Warning',
+                        });
+                        addNotification({
+                            type: 'CriticalAlert',
+                            message: `Critical ${alert.parameter} reading on device '${getDeviceLabel(alert.originator)}'`,
+                        });
+                    }
+                    if (alert.note && alert.note.includes('Valve shut off')) {
+                        const componentName = PARAMETER_TO_COMPONENT_MAP[alert.parameter] || alert.parameter;
+                        logSystemEvent({
+                            deviceId: alert.originator,
+                            component: 'valve',
+                            event: 'Valve closed automatically',
+                            details: `Triggered by critical ${componentName} reading.`,
+                            status: 'Info',
+                        });
+                        addNotification({
+                            type: 'ValveShutOff',
+                            message: `Valve automatically closed on device '${getDeviceLabel(alert.originator)}'`,
+                        });
+                    }
+                });
+
+                dispatch({
+                    type: 'PROCESS_READING',
+                    payload: { evaluatedAlerts, alertIdCounter },
+                    timers: { start: startTimer }
+                });
+            } catch (error) {
+                console.error("Error evaluating sensor reading on backend:", error);
             }
-        }, 10000);
-
-        return () => {
+        } else {
             clearInterval(intervalId);
-            backToNormalTimers.current.forEach(timerId => clearTimeout(timerId));
-        };
-    }, [mockSensorReadings, deviceLocations, logSystemEvent, addNotification]); // Add dependencies
+        }
+    }, 10000);
+
+    return () => {
+        clearInterval(intervalId);
+        backToNormalTimers.current.forEach(timerId => clearTimeout(timerId));
+    };
+    // The dependency array is now correct and will not cause resets.
+}, [mockSensorReadings, logSystemEvent, addNotification]);
 
     // Timer to periodically check and archive old alerts
     useEffect(() => {

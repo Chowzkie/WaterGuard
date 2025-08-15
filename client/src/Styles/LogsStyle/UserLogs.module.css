@@ -878,3 +878,49 @@
     transform: translateY(0);
   }
 }
+
+/* --- NEW: Style for Maintenance log type --- */
+.type-maintenance { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+
+/* --- NEW: Styles for clickable rows and details panel (adapted from AlertsHistory) --- */
+.clickable-row {
+    cursor: pointer;
+}
+
+.tableRow.expanded-row {
+    background-color: #f8f9fa;
+    border-bottom-color: transparent;
+}
+
+.details-panel {
+    background-color: #f8f9fa;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out, padding 0.35s ease-in-out;
+    padding: 0 20px;
+    grid-column: 1 / -1; 
+}
+
+.details-panel.expanded {
+    max-height: 100px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.details-content {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.detail-item svg {
+    color: #007bff;
+}

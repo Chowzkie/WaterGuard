@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SquarePen, X, AlertTriangle } from 'lucide-react';
+import {  SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare } from 'lucide-react';
 import '../../Styles/PumpingStatus.css';
 
 // --- The component now accepts `stations` and `onSave` as props ---
@@ -14,6 +14,10 @@ const PumpingStatus = ({ stations, onSave }) => {
     const [newLocation, setNewLocation] = useState('');
     const [newOperation, setNewOperation] = useState('On-going');
     const [error, setError] = useState('');
+
+    // --- NEW: State for the inline maintenance/offline details form ---
+    const [detailsForStationId, setDetailsForStationId] = useState(null);
+    const [draftDetails, setDraftDetails] = useState({ cause: '', date: '', startTime: '', endTime: '' });
 
     const hasUnsavedChanges = () => {
         if (!draftStations) return false;
@@ -32,6 +36,9 @@ const PumpingStatus = ({ stations, onSave }) => {
         setShowUnsavedPrompt(false);
         setDraftStations(null);
         setError('');
+        // --- NEW: Reset details form state on close ---
+        setDetailsForStationId(null);
+        setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
     };
 
     const handleAttemptClose = () => {
@@ -46,6 +53,13 @@ const PumpingStatus = ({ stations, onSave }) => {
     const handleSaveChanges = () => {
         // Instead of setting its own state, it calls the onSave function
         // passed down from Overview.jsx, sending the updated data back up.
+
+          // --- MODIFIED: Prevent saving if the details form is still open ---
+        if (detailsForStationId) {
+            alert('Please save or cancel the details for the selected station first.');
+            return;
+        }
+
         onSave(draftStations);
         closeAndCleanup();
     };
@@ -78,10 +92,41 @@ const PumpingStatus = ({ stations, onSave }) => {
         setDraftStations(draftStations.filter(station => station.id !== id));
     };
 
+    // --- MODIFIED: This function now triggers the details form ---
     const handleOperationChangeInDraft = (id, newOp) => {
+        if (newOp === 'Maintenance' || newOp === 'Offline') {
+            // Open the details form for this station
+            setDetailsForStationId(id);
+            // Pre-fill date with today's date
+            setDraftDetails({ ...draftDetails, date: new Date().toISOString().split('T')[0] });
+        } else {
+             // If switching back to "On-going", clear any existing maintenance info
+            setDraftStations(draftStations.map(s =>
+                s.id === id ? { ...s, operation: newOp, maintenanceInfo: null } : s
+            ));
+        }
+    };
+
+    // --- NEW: Handler to save the maintenance/offline details ---
+    const handleSaveDetails = () => {
+        if (!draftDetails.cause || !draftDetails.date || !draftDetails.startTime || !draftDetails.endTime) {
+            alert("Please fill in all detail fields.");
+            return;
+        }
+        const stationToUpdate = draftStations.find(s => s.id === detailsForStationId);
+        
         setDraftStations(draftStations.map(s =>
-            s.id === id ? { ...s, operation: newOp } : s
+            s.id === detailsForStationId ? {
+                ...s,
+                // Set the operation status based on what triggered the form
+                operation: stationToUpdate.operation === 'Maintenance' ? 'Maintenance' : 'Offline',
+                // Attach the details
+                maintenanceInfo: { ...draftDetails }
+            } : s
         ));
+        // Close the form
+        setDetailsForStationId(null);
+        setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
     };
 
     return (
@@ -153,6 +198,36 @@ const PumpingStatus = ({ stations, onSave }) => {
                                                 Remove
                                             </button>
                                         </div>
+                                        {/* --- NEW: Inline Details Form --- */}
+                                        {detailsForStationId === station.id && (
+                                            <div className="details-form-container">
+                                                <div className="details-form-header">
+                                                    <h4>Details for {station.operation} Status</h4>
+                                                </div>
+                                                <div className="details-form-body">
+                                                    <div className="details-form-input-group">
+                                                        <label><MessageSquare size={14}/> Cause</label>
+                                                        <input type="text" placeholder="e.g., Pipe leak, pump replacement" value={draftDetails.cause} onChange={e => setDraftDetails({...draftDetails, cause: e.target.value})} />
+                                                    </div>
+                                                    <div className="details-form-input-group">
+                                                        <label><Calendar size={14}/> Date</label>
+                                                        <input type="date" value={draftDetails.date} onChange={e => setDraftDetails({...draftDetails, date: e.target.value})} />
+                                                    </div>
+                                                    <div className="details-form-input-group">
+                                                        <label><Clock size={14}/> Start Time</label>
+                                                        <input type="time" value={draftDetails.startTime} onChange={e => setDraftDetails({...draftDetails, startTime: e.target.value})} />
+                                                    </div>
+                                                    <div className="details-form-input-group">
+                                                        <label><Clock size={14}/> End Time</label>
+                                                        <input type="time" value={draftDetails.endTime} onChange={e => setDraftDetails({...draftDetails, endTime: e.target.value})} />
+                                                    </div>
+                                                </div>
+                                                <div className="details-form-footer">
+                                                    <button className="button-secondary-small" onClick={() => setDetailsForStationId(null)}>Cancel</button>
+                                                    <button className="button-primary-small" onClick={handleSaveDetails}>Set Details</button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

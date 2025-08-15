@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
-import { ListFilter, Download, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
+import { ListFilter, Download, X, ChevronDown, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
 
 /**
  * UserLogs Component: Displays user activity logs with filtering and deletion capabilities.
@@ -39,6 +39,8 @@ function UserLogs({ logs, onDelete, onRestore }) {
     const [showUndoToast, setShowUndoToast] = useState(false);
     // --- FIX: State to store the count of the last deletion, ensuring the toast shows the correct number ---
     const [lastDeletedCount, setLastDeletedCount] = useState(0);
+
+    const [expandedLogId, setExpandedLogId] = useState(null); // NEW: For details panel
 
     // --- REFS ---
     // Refs to detect clicks outside of the filter panel and dropdowns to close them
@@ -261,7 +263,16 @@ function UserLogs({ logs, onDelete, onRestore }) {
             case 'Deletion': return Style['type-deletion'];
             case 'Acknowledgement': return Style['type-acknowledgement'];
             case 'Valve': return Style['type-valve'];
+            case 'Maintenance': return Style['type-maintenance']; // NEW TYPE
             default: return ''; // Return no specific class if type is unknown
+        }
+    };
+    
+     // --- NEW: Handler to toggle the expanded/collapsed state of a log row ---
+    const handleRowClick = (log) => {
+        // Only allow expanding if the log is a Maintenance type and has details
+        if (log.type === 'Maintenance' && log.details) {
+            setExpandedLogId(prevId => (prevId === log.id ? null : log.id));
         }
     };
 
@@ -323,7 +334,7 @@ function UserLogs({ logs, onDelete, onRestore }) {
                                     <label className={Style['filter-label']}>Category</label>
                                     <div className={Style['filter-control']}>
                                         <div className={Style['pill-group']}>
-                                            {['Configuration', 'Admin', 'Account', 'Deletion', 'Acknowledgement', 'Valve'].map(category => (
+                                            {['Configuration', 'Admin', 'Account', 'Deletion', 'Acknowledgement', 'Valve', 'Maintenance'].map(category => (
                                                 <button
                                                     key={category}
                                                     onClick={() => handlePillSelect('category', category)}
@@ -433,37 +444,63 @@ function UserLogs({ logs, onDelete, onRestore }) {
             
             <div className={Style['tableBody']}>
                 {filteredDisplayLogs.length > 0 ? (
-                    filteredDisplayLogs.map((log) => (
-                        <div 
-                            className={`${Style['tableRow']} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
-                            key={log.id}
-                        >
-                            <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                            <div className={Style['tableCell']} data-label="Username">{log.username}</div>
-                            <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
-                            {/* --- MODIFIED: The 'Type' cell now uses a styled span for color-coding --- */}
-                            <div className={Style['tableCell']} data-label="Type">
-                                <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
-                                    {log.type}
-                                </span>
-                            </div>
-                            <div className={Style['tableCell']} data-label="Action">{log.action}</div>
-                            {/* Each row gets a checkbox, but only in select mode */}
-                            {deleteMode === 'select' && (
-                                <div className={Style['checkbox-cell']}>
-                                    <label className={Style['custom-checkbox-container']}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedToDelete.includes(log.id)}
-                                            onChange={() => handleCheckboxChange(log.id)}
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <span className={Style['checkmark']}></span>
-                                    </label>
+                    filteredDisplayLogs.map((log) => {
+                        // --- NEW: Constants for details panel ---
+                        const hasDetails = log.type === 'Maintenance' && log.details;
+                        const isExpanded = expandedLogId === log.id;
+
+                        return (
+                            <React.Fragment key={log.id}>
+                                <div 
+                                    className={`${Style['tableRow']} ${hasDetails ? Style['clickable-row'] : ''} ${isExpanded ? Style['expanded-row'] : ''} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
+                                    onClick={() => handleRowClick(log)}
+                                >
+                                    <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                                    <div className={Style['tableCell']} data-label="Username">{log.username}</div>
+                                    <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
+                                    <div className={Style['tableCell']} data-label="Type">
+                                        <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
+                                            {log.type}
+                                        </span>
+                                    </div>
+                                    <div className={Style['tableCell']} data-label="Action">{log.action}</div>
+                                    {deleteMode === 'select' && (
+                                        <div className={Style['checkbox-cell']}>
+                                            <label className={Style['custom-checkbox-container']}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedToDelete.includes(log.id)}
+                                                    onChange={() => handleCheckboxChange(log.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <span className={Style['checkmark']}></span>
+                                            </label>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))
+                                
+                                {/* --- NEW: The slide-out details panel --- */}
+                                {hasDetails && (
+                                    <div className={`${Style['details-panel']} ${isExpanded ? Style['expanded'] : ''}`}>
+                                        <div className={Style['details-content']}>
+                                            <div className={Style['detail-item']}>
+                                                <MessageSquare size={16} />
+                                                <span>Cause: <strong>{log.details.cause}</strong></span>
+                                            </div>
+                                            <div className={Style['detail-item']}>
+                                                <Calendar size={16} />
+                                                <span>Date: {log.details.date}</span>
+                                            </div>
+                                            <div className={Style['detail-item']}>
+                                                <Clock size={16} />
+                                                <span>Time: {new Date(`1970-01-01T${log.details.startTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - {new Date(`1970-01-01T${log.details.endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </React.Fragment>
+                        )
+                    })
                 ) : (
                     <div className={Style['noData']}>
                         {logs.length === 0 ? "No user logs available." : "No user logs match the current filters."}

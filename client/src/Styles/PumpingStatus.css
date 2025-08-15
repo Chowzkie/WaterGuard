@@ -343,3 +343,85 @@
 .button-secondary:hover {
     background-color: #f8fafc;
 }
+
+/* --- NEW STYLES FOR INLINE DETAILS FORM --- */
+
+.editable-station-item {
+    position: relative; /* Needed for positioning the details form */
+    padding-bottom: 10px;
+}
+
+.details-form-container {
+    grid-column: 1 / -1; /* Make the form span all columns */
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding: 16px;
+    animation: fadeIn 0.3s ease;
+}
+
+.details-form-header h4 {
+    margin: 0 0 16px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.details-form-body {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.details-form-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.details-form-input-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.details-form-input-group input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.details-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.button-primary-small,
+.button-secondary-small {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.button-primary-small {
+    background-color: #2563eb;
+    color: white;
+}
+.button-secondary-small {
+    background-color: #ffffff;
+    color: #475569;
+    border-color: #cbd5e1;
+}

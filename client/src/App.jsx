@@ -466,14 +466,16 @@ function App() {
 
 
     // --- Backend-ready function to add a new user log entry ---
-    const logUserAction = (actionText, type) => {
+    // --- MODIFIED: The function now accepts an optional 'details' object ---
+    const logUserAction = (actionText, type, details = null) => {
         const newLog = {
-            id: Date.now(),
+            id: Date.now() + Math.random(), // Use a more unique ID
             dateTime: new Date().toISOString(),
             username: CURRENT_USER.username,
             fullname: CURRENT_USER.fullname,
             action: actionText,
             type: type,
+            details: details, // Attach the details object to the log
         };
         setUserLogs(prevLogs => [newLog, ...prevLogs]);
     };
@@ -773,8 +775,27 @@ function App() {
     };
 
     // --- MODIFIED: handleSaveStations now sends data to the backend ---
+    // --- MODIFIED: This function now logs detailed changes ---
     const handleSaveStations = async (updatedStations) => {
         try {
+            // --- ADDED: Logic to compare and log changes ---
+            const previousStations = pumpingStations; // Get the state before the update
+
+            updatedStations.forEach(newStation => {
+                const oldStation = previousStations.find(s => s.id === newStation.id);
+                // Check if the operation status changed and if there's new maintenance info
+                if (oldStation && oldStation.operation !== newStation.operation && newStation.maintenanceInfo) {
+                    const { cause, date, startTime, endTime } = newStation.maintenanceInfo;
+                    // Format the time for readability in the log message
+                    const formatTime = (time) => new Date(`1970-01-01T${time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                    const logMessage = `Set station '${newStation.label}' to ${newStation.operation}. Cause: ${cause}. Scheduled: ${date} from ${formatTime(startTime)} to ${formatTime(endTime)}.`;
+                    
+                    // Log the action with the 'Maintenance' type and attach the details object
+                    logUserAction(logMessage, 'Maintenance', newStation.maintenanceInfo);
+                }
+            });
+
             setPumpingStations(updatedStations);
             console.log("Simulated saving stations:", updatedStations);
         } catch (error) {

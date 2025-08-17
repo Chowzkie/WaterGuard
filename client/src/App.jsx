@@ -597,7 +597,7 @@ function App() {
             setLatestReading(currentReading);
 
             try {
-                const response = await axios.post(`${API_BASE_URL}/evaluate-reading`, currentReading);
+                const response = await axios.post(`${API_BASE_URL}/sensor-readings/evaluate`, currentReading);
                 const { evaluatedAlerts } = response.data;
 
                 // FIX: Get the most recent device data inside the interval

@@ -2,12 +2,11 @@
 
 .page-container {
   display: grid;
-  /* Key Change: A simpler 2x2 grid layout */
   grid-template-areas:
     "chart       readings"
     "bottom-left valve";
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  grid-template-rows: 1fr auto; /* Top row grows, bottom row fits content */
+  grid-template-rows: 1fr auto;
   gap: 15px;
   padding: 5px 24px 40px 24px;
   margin-top: 10px;
@@ -16,7 +15,6 @@
   box-sizing: border-box;
   background-color: #f0f2f5;
   overflow-y: scroll;
-
   animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -25,25 +23,27 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Key Change: Assigning 4 children to the new grid areas */
 .page-container > :nth-child(1) { grid-area: chart; }
 .page-container > :nth-child(2) { grid-area: readings; }
 .page-container > :nth-child(3) { grid-area: bottom-left; }
 .page-container > :nth-child(4) { grid-area: valve; }
 
-/* Key Change: This new style arranges the alerts and details panels side-by-side */
 .bottom-left-wrapper {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
-  gap: 1.25rem; /* Space between the two panels */
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  /* ✅ MODIFIED: Set a fixed height for the panels */
+  min-height: 200px; 
 }
 
-/* Styles for the cards inside the wrapper (no changes needed here) */
 .details-card {
   background: #fff;
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
 }
 
 .card-title {
@@ -51,78 +51,101 @@
   margin: 0 0 0.75rem 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
-/* Other existing styles for alerts, details, etc. are unchanged */
-.alert-list { 
-  list-style: none; 
-  padding: 0; 
-  margin: 0; 
-  font-size: 0.9rem; 
+.alert-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 5px;
 }
-.alert { 
-  display: flex; 
-  justify-content: space-between; 
+
+.alert-list::-webkit-scrollbar {
+  width: 5px;
+}
+.alert-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.alert-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+.alert-list::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+.alert {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease-in-out;
-  padding: 4px; 
-  margin: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+.alert:last-child {
+  margin-bottom: 0;
 }
 .alert span:first-child {
-  font-weight: 600; /* Make time stand out a bit */
-  min-width: 80px; /* Ensure time has enough space */
+  font-weight: 600;
+  min-width: 80px;
 }
-
 .alert span:nth-child(2) {
-  flex-grow: 1; /* Allow type to take up available space */
-  margin: 0 10px; /* Space between time, type, and value */
+  flex-grow: 1;
+  margin: 0 10px;
+}
+.alert span:last-child {
+  font-weight: 500;
+  text-align: right;
+  min-width: 60px;
 }
 
-.alert span:last-child {
-  font-weight: 500; /* Make value slightly bold */
-  text-align: right;
-  min-width: 60px; /* Ensure value has enough space */
+.alertNormal {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left: 3px solid #a5d6a7;
 }
-.alertActive {
-  background-color: #e3f2fd; /* Light blue */
-  color: #1a237e; /* Darker blue text */
-  border-left: 3px solid #90caf9; /* Complementary blue border */
+.alertWarning {
+  background-color: #fffde7;
+  color: #f9a825;
+  border-left: 3px solid #ffee58;
 }
 .alertCritical {
-  background-color: #ffebee; /* Softer red */
-  color: #b71c1c; /* Deeper red text */
-  border-left: 3px solid #ef9a9a; /* Complementary border */
-}
-.alertResolved {
-  background-color: #e8f5e9; /* Softer green */
-  color: #2e7d32; /* Deeper green text */
-  border-left: 3px solid #a5d6a7; /* Complementary border */
+  background-color: #ffebee;
+  color: #b71c1c;
+  border-left: 3px solid #ef9a9a;
 }
 
-.alertActive:hover, .alertCritical:hover, .alertResolved:hover {
+
+.alert:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px); /* Subtle lift */
+  transform: translateY(-1px);
 }
-.no-alerts { 
-  color: #9ca3af; 
+
+.no-alerts {
+  color: #9ca3af;
 }
-.device-info p { 
-  margin: 4px 0; 
-  font-size: 0.9rem; 
+.device-info p {
+  margin: 4px 0;
+  font-size: 0.9rem;
 }
-.device-info strong { 
-  color: #374151; 
+.device-info strong {
+  color: #374151;
 }
-.loading-container { 
-  padding: 2rem; 
-  font-size: 1.2rem; 
-  color: #555; 
+.loading-container {
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #555;
 }
 
 @media (max-width: 1024px) {
   .page-container {
-   /* Stack components into a single column */
     grid-template-areas:
       "chart"
       "readings"
@@ -130,17 +153,13 @@
       "valve";
     grid-template-columns: 1fr;
     grid-template-rows: 300px auto auto auto;
-
     overflow-y: scroll;
   }
-  
-  /* On smaller screens, stack the alerts and details again */
   .bottom-left-wrapper {
       grid-template-columns: 1fr;
   }
 }
 
-/* Exact scrollbar styling */
 .page-container::-webkit-scrollbar {
   width: 6px;
 }

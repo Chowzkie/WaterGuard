@@ -30,40 +30,55 @@ const Toast = ({ message, type, status, onClose }) => {
     );
 };
 
-// Helper components remain the same
+// --- MODIFIED: AlertsPanel updated with requested features ---
 function AlertsPanel({ alerts }) {
-    //Use to change the alert color dynnamically
-    const getAlertStatusClass = (status) => {
-        switch(status) {
-            case 'Active':
-                return Style['alertActive'];
-            case 'Critical':
-                return Style['alertCritical'];
-            case 'Resolved':
-                return Style['alertResolved']
+    // 1. Restored the green/yellow/red color scheme logic
+    const getAlertStatusClass = (severity) => {
+        switch (severity.toLowerCase()) {
+            case 'critical':
+                return Style['alertCritical']; // Red
+            case 'warning':
+                return Style['alertWarning'];  // Yellow
+            case 'normal':
+                return Style['alertNormal'];   // Green
             default:
-                return ''
+                return '';
         }
-    }
+    };
+
+    // Time formatting is unchanged
+    const formatTime = (isoString) => {
+        if (!isoString) return '';
+        return new Date(isoString).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
     return (
         <div className={Style['details-card']}>
             <h3 className={Style['card-title']}>Recent Alerts</h3>
             <ul className={Style['alert-list']}>
                 {alerts && alerts.length > 0 ? (
-                    alerts.slice(0, 3).map((alert, index) => (
-                        <li key={index} className={`${Style.alert} ${getAlertStatusClass(alert.status)}`}>
-                            <span>{alert.time}</span>
+                    // 2. Removed .slice() to show all alerts in the scrollable list
+                    alerts.map((alert) => (
+                        <li key={alert.id} className={`${Style.alert} ${getAlertStatusClass(alert.severity)}`}>
+                            <span>{formatTime(alert.dateTime)}</span>
                             <span>{alert.type}</span>
-                            <span>{alert.value} {alert.unit}</span>
+                            <span>
+                                {alert.value !== undefined && alert.unit ? `${alert.value} ${alert.unit}` : ''}
+                            </span>
                         </li>
                     ))
                 ) : (
-                    <li className={Style['no-alerts']}>No recent alerts.</li>
+                    <li className={Style['no-alerts']}>No recent alerts for this device.</li>
                 )}
             </ul>
         </div>
     );
 }
+
+
 function DetailsPanel({ device }) {
     return (
         <div className={Style['details-card']}>
@@ -81,7 +96,8 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
     const { deviceId } = useParams();
     const navigate = useNavigate();
     const [currentDevice, setCurrentDevice] = useState(null);
-    const { devices, onValveToggle } = useContext(AlertsContext);
+    // --- MODIFIED: Get recentAlerts from context ---
+    const { devices, onValveToggle, recentAlerts } = useContext(AlertsContext);
 
     // ✅ Toast state & handlers
     const [toasts, setToasts] = useState([]);
@@ -119,6 +135,11 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
         };
     }, [deviceId, devices, onSetHeaderDeviceLabel]);
 
+    // --- NEW: Filter alerts specifically for this device ---
+    const deviceSpecificAlerts = recentAlerts
+        ? recentAlerts.filter(alert => alert.originator === deviceId)
+        : [];
+
     const handleGoBack = () => navigate('/devices');
 
     if (!currentDevice) {
@@ -140,11 +161,11 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
                 />
 
                 <div className={Style['bottom-left-wrapper']}>
-                    <AlertsPanel alerts={currentDevice.alerts} />
+                    {/* --- MODIFIED: Pass the filtered alerts to the panel --- */}
+                    <AlertsPanel alerts={deviceSpecificAlerts} />
                     <DetailsPanel device={currentDevice} />
                 </div>
 
-                {/* Pass addToast down */}
                 <ValveSwitch 
                     deviceId={deviceId} 
                     deviceStatus={currentDevice.status}

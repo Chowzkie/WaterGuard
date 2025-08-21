@@ -16,7 +16,6 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
-import AdminPanel from './Components/Admin/AdminPanel';
 import { userLogs as mockUserLogs, mockSystemLogs } from './utils/LogsMockUp';
 import { 
     PARAMETER_TO_COMPONENT_MAP, 
@@ -346,7 +345,7 @@ function App() {
     const noNavPaths = ['/login', '/account-settings', '/logs'];
 
     const showHeader = !noHeaderPaths.includes(location.pathname);
-    const showNavigation = !noNavPaths.includes(location.pathname) && !location.pathname.startsWith('/admin');
+    const showNavigation = !noNavPaths.includes(location.pathname);
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loggedInUser, setLoggedInUser] = useState(null);
@@ -922,71 +921,6 @@ function App() {
         logUserAction(`Changed password.`, 'Account');
     };
 
-    /**
-     * --- NEW: Logs the creation of a new user account ---
-     * @param {object} newUser - The user object that was created.
-     */
-    const onAdminCreateUser = (newUser) => {
-        logUserAction(`Admin '${CURRENT_USER.username}' created new user account: '${newUser.username}'.`, 'Admin');
-    };
-
-    /**
-     * --- NEW: Logs the deletion of a user account ---
-     * @param {object} deletedUser - The user object that was deleted.
-     */
-    const onAdminDeleteUser = (deletedUser) => {
-        logUserAction(`Admin '${CURRENT_USER.username}' deleted user account: '${deletedUser.username}'.`, 'Admin');
-    };
-
-    /**
-     * --- REFINED: Compares old and new user data and logs detailed changes ---
-     * This function performs a detailed comparison to generate a log for each modified field,
-     * now with more specific logic for device changes.
-     * @param {object} oldUser - The user object before changes.
-     * @param {object} newUser - The user object after changes.
-     */
-    const onAdminUpdateUser = (oldUser, newUser) => {
-        const adminUsername = CURRENT_USER.username;
-        const targetUsername = oldUser.username;
-        const allDevices = deviceLocations;
-        Object.keys(USER_FIELD_MAP).forEach(field => {
-            if (oldUser[field] !== newUser[field]) {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Changed ${USER_FIELD_MAP[field]} from '${oldUser[field]}' to '${newUser[field]}'.`, 'Admin');
-            }
-        });
-        if (newUser.password && newUser.password.length > 0) {
-            logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Changed password.`, 'Admin');
-        }
-        const oldRoles = new Set(oldUser.roles);
-        const newRoles = new Set(newUser.roles);
-        newUser.roles.forEach(role => {
-            if (!oldRoles.has(role)) {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Added role '${role}'.`, 'Admin');
-            }
-        });
-        oldUser.roles.forEach(role => {
-            if (!newRoles.has(role)) {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Removed role '${role}'.`, 'Admin');
-            }
-        });
-        const getDeviceLabel = (deviceId) => allDevices.find(d => d.id === deviceId) ?.label || deviceId;
-        const oldDeviceIds = new Set(oldUser.devices);
-        const newDeviceIds = new Set(newUser.devices);
-        const addedDevices = newUser.devices.filter(id => !oldDeviceIds.has(id));
-        const removedDevices = oldUser.devices.filter(id => !newDeviceIds.has(id));
-        if (addedDevices.length === 1 && removedDevices.length === 1) {
-            logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Replaced device '${getDeviceLabel(removedDevices[0])}' with '${getDeviceLabel(addedDevices[0])}'.`, 'Admin');
-        } else {
-            addedDevices.forEach(deviceId => {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Added device '${getDeviceLabel(deviceId)}'.`, 'Admin');
-            });
-            removedDevices.forEach(deviceId => {
-                logUserAction(`Admin '${adminUsername}' modified user account '${targetUsername}': Removed device '${getDeviceLabel(deviceId)}'.`, 'Admin');
-            });
-        }
-    };
-
-
     const contextValue = {
         activeAlerts,
         recentAlerts,
@@ -1018,9 +952,6 @@ function App() {
         onValveToggle: handleValveToggle,
         onProfileUpdate: handleProfileUpdate,
         onPasswordChange: handlePasswordChange,
-        onAdminCreateUser,
-        onAdminUpdateUser,
-        onAdminDeleteUser,
         // --- Provide systemLogs to the context ---
         systemLogs,
         loggedInUser,
@@ -1044,12 +975,6 @@ function App() {
             <main>
                 <Routes>
                     <Route path="/login" element={<Login onLogin={handleLogin} />} />
-                    <Route path="admin/*" element={
-                        <ProtectedRoute isAuthenticated={isAuthenticated}>
-                            <AdminPanel />
-                        </ProtectedRoute>
-                    }
-                    />
                     <Route
                         path="/account-settings"
                         element={

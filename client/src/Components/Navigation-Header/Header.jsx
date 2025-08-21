@@ -31,9 +31,6 @@ function Header({
         '/configurations': 'Configuration',
         '/logs': 'Logs',
         '/account-settings': 'Account Settings',
-        '/admin': 'Admin Panel',
-        '/admin/create': 'Admin Panel > Create Account',
-        '/admin/manage': 'Admin Panel > Manage Accounts',
     };
 
     useEffect(() => {
@@ -92,10 +89,6 @@ function Header({
         navigate('/account-settings');
         setOpen(false);
     };
-    const handleAdminPanel = () => {
-        navigate('/admin');
-        setOpen(false);
-    }
     const handleLogs = () => {
         navigate('/logs');
         setOpen(false);
@@ -135,9 +128,6 @@ function Header({
                     <div className={`${styles.dropdownMenu} ${open ? styles.show : ''}`}>
                         <div className={`${styles.dropdownItemU} ${styles.manageProfile}`} onClick={handleAccountSettings}>
                             <Settings size={18} color='#0fd1eb' /> <p>Account</p> <ChevronRight size={15} />
-                        </div>
-                        <div className={`${styles.dropdownItemU} ${styles.admin}`} onClick={handleAdminPanel} >
-                            <ShieldUser size={18} color='#6d6d6dff' /> <p>Admin</p> <ChevronRight size={15} />
                         </div>
                         <div className={`${styles.dropdownItemU} ${styles.logs}`} onClick={handleLogs} >
                             <Logs size={17} color='#307e3c' /> <p>View Logs</p> <ChevronRight size={15} />

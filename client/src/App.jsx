@@ -777,20 +777,17 @@ function App() {
     // --- MODIFIED: This function now logs detailed changes ---
     const handleSaveStations = async (updatedStations) => {
         try {
-            // --- ADDED: Logic to compare and log changes ---
-            const previousStations = pumpingStations; // Get the state before the update
+            const previousStations = pumpingStations; 
 
             updatedStations.forEach(newStation => {
                 const oldStation = previousStations.find(s => s.id === newStation.id);
-                // Check if the operation status changed and if there's new maintenance info
-                if (oldStation && oldStation.operation !== newStation.operation && newStation.maintenanceInfo) {
+                
+                if (oldStation && oldStation.operation !== 'Maintenance' && newStation.operation === 'Maintenance' && newStation.maintenanceInfo) {
                     const { cause, date, startTime, endTime } = newStation.maintenanceInfo;
-                    // Format the time for readability in the log message
                     const formatTime = (time) => new Date(`1970-01-01T${time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
-                    const logMessage = `Set station '${newStation.label}' to ${newStation.operation}. Cause: ${cause}. Scheduled: ${date} from ${formatTime(startTime)} to ${formatTime(endTime)}.`;
+                    const logMessage = `Set station '${newStation.label}' to Maintenance. Cause: ${cause}. Scheduled: ${date} from ${formatTime(startTime)} to ${formatTime(endTime)}.`;
                     
-                    // Log the action with the 'Maintenance' type and attach the details object
                     logUserAction(logMessage, 'Maintenance', newStation.maintenanceInfo);
                 }
             });
@@ -903,22 +900,64 @@ function App() {
     };
 
     /**
-     * Logs changes made to the user's profile information.
+     * Logs changes made to the user's profile information AND UPDATES THE BACKEND.
      */
-    const handleProfileUpdate = (changes) => {
+    const handleProfileUpdate = async (changes) => { // Make it async
+        if (!loggedInUser) return { success: false, message: "No user is logged in." };
+
         if (changes.phone) {
-            logUserAction(`Changed phone number from ${changes.phone.old} to ${changes.phone.new}.`, 'Account');
+            try {
+                // --- API CALL ---
+                const response = await axios.put(`${API_BASE_URL}/users/${loggedInUser.username}/profile`, {
+                    contact: changes.phone.new
+                });
+
+                // --- LOGGING ---
+                logUserAction(`Changed phone number from ${changes.phone.old} to ${changes.phone.new}.`, 'Account');
+                
+                // --- RETURN SUCCESS ---
+                return { success: true, message: response.data.message || "Profile updated successfully!" };
+
+            } catch (error) {
+                console.error("API Error updating phone:", error.response?.data?.message || error.message);
+                // --- RETURN FAILURE ---
+                return { success: false, message: error.response?.data?.message || "An API error occurred." };
+            }
         }
+
         if (changes.profilePic) {
+            // You can add backend logic for profile picture upload here in the future
             logUserAction(`Updated profile picture.`, 'Account');
+            return { success: true, message: "Profile picture updated successfully!" };
         }
+
+        // Default return if no changes are handled
+        return { success: false, message: "No profile changes were specified." };
     };
 
     /**
-     * Logs when a user changes their password.
+     * Logs when a user changes their password AND UPDATES THE BACKEND.
      */
-    const handlePasswordChange = () => {
-        logUserAction(`Changed password.`, 'Account');
+    const handlePasswordChange = async (currentPassword, newPassword) => { // Make it async and accept passwords
+        if (!loggedInUser) return { success: false, message: "No user is logged in." };
+        
+        try {
+            // --- API CALL ---
+            const response = await axios.put(`${API_BASE_URL}/users/${loggedInUser.username}/password`, {
+                currentPassword,
+                newPassword
+            });
+
+            // --- LOGGING ---
+            logUserAction(`Changed password.`, 'Account');
+
+            // --- RETURN SUCCESS ---
+            return { success: true, message: response.data.message || "Password changed successfully!" };
+        } catch (error) {
+            console.error("API Error changing password:", error.response?.data?.message || error.message);
+            // --- RETURN FAILURE ---
+            return { success: false, message: error.response?.data?.message || "Failed to change password." };
+        }
     };
 
     const contextValue = {

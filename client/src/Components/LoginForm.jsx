@@ -1,3 +1,4 @@
+// LoginForm.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeClosed, User } from 'lucide-react';
@@ -23,28 +24,34 @@ function LoginForm({ onLogin }) {
 
         try {
             // Send a POST request to backend's login endpoint
-            const response = await axios.post('http://localhost:8080/api/login', {
+            // FIX: The endpoint has been updated to match your new backend route
+            const response = await axios.post('http://localhost:8080/api/auth/login', {
                 username,
                 password,
             });
 
-            // If login is successful (status 200 from server.js)
-            if (response.status === 200) {
-                onLogin(response.data.user); // Call the onLogin prop from App.jsx
-                navigate('/overview'); // Navigate to the dashboard
+            // FIX: Check if the response contains both the authentication token and user data
+            if (response.data.token && response.data.user) {
+                // FIX: Pass the token and user object to the onLogin function from App.jsx
+                onLogin(response.data.token, response.data.user);
+                navigate('/overview'); // Navigate to the overview page
                 setMessage('Login successful!'); // display success message briefly
+            } else {
+                // FIX: Handle cases where the backend returns a successful response but with an unexpected format
+                setMessage(response.data.message || 'Login failed. Please check your credentials.');
+                setIsError(true);
+                setShake(true);
             }
         } catch (error) {
             console.error('Login error:', error);
-            // Handle errors from the backend (e.g., 401 Unauthorized)
-            if (error.response && error.response.status === 401) {
-                setMessage('Invalid Username and Password!');
-            } else {
-                setMessage('An error occurred during login. Please try again.');
-            }
+            // FIX: Use the error message from the backend response if available, otherwise use a generic message
+            const errorMessage = error.response?.data?.message || 'An error occurred during login. Please try again.';
+            setMessage(errorMessage);
             setIsError(true);
             setShake(true);
-            setTimeout(() => setShake(false), 500); // Stop shaking after a short delay
+        } finally {
+            // Stop shaking after a short delay, regardless of success or failure
+            setTimeout(() => setShake(false), 500);
         }
     };
 

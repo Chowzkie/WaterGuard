@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useReducer, useRef, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios'; // Import Axios
+import { jwtDecode } from 'jwt-decode'
 import './App.css';
 
 import Login from './Components/Login';
@@ -352,27 +353,33 @@ function App() {
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('loggedInUser');
-        if (storedUser) {
-            try {
-                const user = JSON.parse(storedUser);
-                setLoggedInUser(user);
-                setIsAuthenticated(true);
-                console.log("App.jsx - useEffect: loggedInUser restored from localStorage:", user);
-            } catch (e) {
-                console.error("Failed to parse loggedInUser from localStorage", e);
-                localStorage.removeItem('loggedInUser');
-            }
-        }else{
-            console.log("App.jsx - useEffect: No loggedInUser found in localStorage.");
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+        try {
+        const decodedUser = jwtDecode(storedToken);
+        setLoggedInUser(decodedUser); // Set the state with the decoded user object
+        setIsAuthenticated(true);
+        console.log("App.jsx - useEffect: loggedInUser restored from token:", decodedUser);
+        } catch (e) {
+        console.error("Failed to parse or decode token from localStorage", e);
+        localStorage.removeItem('token'); // Clear invalid token
         }
+    } else {
+        console.log("App.jsx - useEffect: No token found in localStorage.");
+    }
     }, []);
 
-    const handleLogin = (user) => { // Expect full user object from Login component
+    const handleLogin = (token) => { // Expect the JWT token from the Login component
+    try {
+        const decodedUser = jwtDecode(token);
         setIsAuthenticated(true);
-        setLoggedInUser(user);
-        localStorage.setItem('loggedInUser', JSON.stringify(user)); // Store user data
-        console.log("App.jsx - handleLogin: User logged in, loggedInUser set to:", user);
+        setLoggedInUser(decodedUser); // Set the state with the decoded user object
+        localStorage.setItem('token', token); // Store the token, not the user object
+        console.log("App.jsx - handleLogin: User logged in, decoded user object:", decodedUser);
+    } catch (e) {
+        console.error("Failed to decode token", e);
+        // Handle invalid token case, e.g., show an error message.
+    }
     };
 
     const handleLogout = () => {

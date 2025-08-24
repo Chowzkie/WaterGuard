@@ -76,26 +76,49 @@ const AccountSettings = () => {
     /**
      * @effect - Fetches the current user's profile data on component mount or if loggedInUser changes.
      */
-    useEffect(() => {
-        const fetchUserProfile = async () => {
-            if (loggedInUser?.username) {
-                console.log("AccountSettings.jsx - fetchUserProfile: Attempting to fetch for username:", loggedInUser.username);
-                try {
-                    const response = await axios.get(`${API_BASE_URL}/users/${loggedInUser.username}`);
-                    setCurrentUser(response.data);
-                    setPhoneNumber(response.data.contact); // Set initial phone number for editing
-                    console.log("AccountSettings.jsx - fetchUserProfile: Successfully fetched currentUser:", response.data); // NEW LOG
-                } catch (error) {
-                    console.error("AccountSettings.jsx - fetchUserProfile: Failed to fetch user profile:", error);
-                    setErrorMessage("Failed to load user profile.");
-                    setCurrentUser(null); // Clear user if fetch fails
-                }
-            }else{
-                console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
+    const fetchUserProfile = async () => {
+        // Check if the user is logged in
+        if (loggedInUser?.username) {
+            console.log("AccountSettings.jsx - fetchUserProfile: Attempting to fetch for username:", loggedInUser.username);
+            
+            // Retrieve the token from local storage or context
+            const token = localStorage.getItem('token'); 
+            
+            if (!token) {
+                console.error("AccountSettings.jsx - fetchUserProfile: No token found, cannot fetch user profile.");
+                setErrorMessage("Authentication failed. Please log in again.");
+                return; // Exit the function if no token exists
             }
-        };
+
+            try {
+                // Add the Authorization header with the Bearer token
+                const response = await axios.get(`${API_BASE_URL}/auth/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}` 
+                    }
+                });
+
+                // Handle the successful response as you were before
+                setCurrentUser(response.data);
+                setPhoneNumber(response.data.contact);
+                console.log("AccountSettings.jsx - fetchUserProfile: Successfully fetched currentUser:", response.data);
+            } catch (error) {
+                console.error("AccountSettings.jsx - fetchUserProfile: Failed to fetch user profile:", error.response?.data?.message || error.message);
+                // Check for specific 401 Unauthorized error
+                if (error.response?.status === 401) {
+                    setErrorMessage("Your session has expired. Please log in again.");
+                } else {
+                    setErrorMessage("Failed to load user profile.");
+                }
+                setCurrentUser(null);
+            }
+        } else {
+            console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
+        }
+    };
+    useEffect(() => {
         fetchUserProfile();
-    }, [loggedInUser]); // Re-fetch if loggedInUser changes (e.g., after login/logout)
+    }, [loggedInUser]);
 
 
     /**
@@ -325,7 +348,7 @@ const AccountSettings = () => {
                                 <Camera size={24} />
                             </div>
                         </div>
-                        <h2 className={Styles['profileName']}>{currentUser.fullname}</h2> {/* Use currentUser.fullname */}
+                        <h2 className={Styles['profileName']}>{currentUser.name}</h2> 
                         <p className={Styles['profilePhone']}>@{currentUser.username}</p>
                         <p className={Styles['profilePhone']}>{currentUser.contact}</p> {/* Display current phone */}
                     </div>
@@ -360,7 +383,7 @@ const AccountSettings = () => {
                             <div className={Styles['cardBody']}>
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Full Name</p>
-                                    <div className={Styles['rowDetails']}><p className={Styles['rowValue']}>{currentUser.fullname}</p></div> {/* Use currentUser.fullname */}
+                                    <div className={Styles['rowDetails']}><p className={Styles['rowValue']}>{currentUser.name}</p></div> 
                                 </div>
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Username</p>

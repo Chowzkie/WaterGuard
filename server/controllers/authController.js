@@ -31,13 +31,14 @@ exports.loginUser = async (req, res) => {
         // Create a payload for the token that includes the user's ID
         const payload = { 
             userID: user.id,
-            username: user.username
+            username: user.username,
+            name: user.name
         };
         // Sign the token. It will expire in 24 hours.
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 
-        // FIX: Send a successful response with the token and a user object
-        // We select only the data the frontend needs, excluding the password.
+        // Send a successful response with the token and a user object
+        // select only the data the frontend needs, excluding the password.
         const userWithoutPassword = {
             id: user._id,
             username: user.username,

@@ -11,7 +11,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 const AccountSettings = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-    const { onProfileUpdate, onPasswordChange, loggedInUser, onUserUpdate } = useContext(AlertsContext);
+    const { loggedInUser, onUserUpdate } = useContext(AlertsContext);
 
     // --- STATE MANAGEMENT ---
     const [activeTab, setActiveTab] = useState('profile');
@@ -98,16 +98,12 @@ const AccountSettings = () => {
     const handleBack = () => navigate('/overview');
 
     const handleSaveProfilePic = async (newPicDataUrl) => {
-        const result = await onProfileUpdate({ profilePic: { new: newPicDataUrl } });
-        if (result.success) {
-            setCurrentUser(prev => ({ ...prev, profilePic: newPicDataUrl }));
-            setSuccessMessage("Profile picture updated successfully!");
-            setNewProfilePic(null);
-        } else {
-            setErrorMessage(result.message);
-        }
+        setCurrentUser(prev => ({ ...prev, profilePic: newPicDataUrl }));
+        setSuccessMessage("Profile picture updated successfully!");
+        setNewProfilePic(null);
     };
 
+    // This is now a local-only update until a backend endpoint is added.
     const handleProfilePicChange = (e) => {
         const file = e.target.files[0];
         if (file) {

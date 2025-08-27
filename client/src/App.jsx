@@ -912,67 +912,6 @@ function App() {
         }
     };
 
-    /**
-     * Logs changes made to the user's profile information AND UPDATES THE BACKEND.
-     */
-    const handleProfileUpdate = async (changes) => { // Make it async
-        if (!loggedInUser) return { success: false, message: "No user is logged in." };
-
-        if (changes.phone) {
-            try {
-                // --- API CALL ---
-                const response = await axios.put(`${API_BASE_URL}/users/${loggedInUser.username}/profile`, {
-                    contact: changes.phone.new
-                });
-
-                // --- LOGGING ---
-                logUserAction(`Changed phone number from ${changes.phone.old} to ${changes.phone.new}.`, 'Account');
-                
-                // --- RETURN SUCCESS ---
-                return { success: true, message: response.data.message || "Profile updated successfully!" };
-
-            } catch (error) {
-                console.error("API Error updating phone:", error.response?.data?.message || error.message);
-                // --- RETURN FAILURE ---
-                return { success: false, message: error.response?.data?.message || "An API error occurred." };
-            }
-        }
-
-        if (changes.profilePic) {
-            // You can add backend logic for profile picture upload here in the future
-            logUserAction(`Updated profile picture.`, 'Account');
-            return { success: true, message: "Profile picture updated successfully!" };
-        }
-
-        // Default return if no changes are handled
-        return { success: false, message: "No profile changes were specified." };
-    };
-
-    /**
-     * Logs when a user changes their password AND UPDATES THE BACKEND.
-     */
-    const handlePasswordChange = async (currentPassword, newPassword) => { // Make it async and accept passwords
-        if (!loggedInUser) return { success: false, message: "No user is logged in." };
-        
-        try {
-            // --- API CALL ---
-            const response = await axios.put(`${API_BASE_URL}/users/${loggedInUser.username}/password`, {
-                currentPassword,
-                newPassword
-            });
-
-            // --- LOGGING ---
-            logUserAction(`Changed password.`, 'Account');
-
-            // --- RETURN SUCCESS ---
-            return { success: true, message: response.data.message || "Password changed successfully!" };
-        } catch (error) {
-            console.error("API Error changing password:", error.response?.data?.message || error.message);
-            // --- RETURN FAILURE ---
-            return { success: false, message: error.response?.data?.message || "Failed to change password." };
-        }
-    };
-
     const contextValue = {
         activeAlerts,
         recentAlerts,
@@ -1002,8 +941,6 @@ function App() {
         onSaveConfiguration: handleSaveConfiguration,
         userLogs,
         onValveToggle: handleValveToggle,
-        onProfileUpdate: handleProfileUpdate,
-        onPasswordChange: handlePasswordChange,
         // --- Provide systemLogs to the context ---
         systemLogs,
         loggedInUser,

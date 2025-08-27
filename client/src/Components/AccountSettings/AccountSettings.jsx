@@ -11,7 +11,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 const AccountSettings = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-    const { onProfileUpdate, onPasswordChange, loggedInUser } = useContext(AlertsContext);
+    const { onProfileUpdate, onPasswordChange, loggedInUser, onUserUpdate } = useContext(AlertsContext);
 
     // --- STATE MANAGEMENT ---
     const [activeTab, setActiveTab] = useState('profile');
@@ -167,6 +167,8 @@ const AccountSettings = () => {
             setCurrentUser(result.data);
             setIsEditingUsername(false);
             setSuccessMessage("Username Updated Successfully");
+
+            onUserUpdate(result.data)
         }catch(err){
             console.error(err);
             setErrorMessage( err.response?.data?.message ||"Failed to update Username");

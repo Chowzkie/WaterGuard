@@ -389,6 +389,12 @@ function App() {
         console.log("App.jsx - handleLogout: User logged out.");
     };
 
+    //Update the username in Header if the user updated the user in AccountSettings
+    const handleUserUpdate = (updatedUserData) => {
+        setLoggedInUser(updatedUserData);
+        console.log("App.jsx user updated to", updatedUserData);
+    }
+
     // --- State Management ---
     const [alertsState, dispatch] = useReducer(alertsReducer, initialState);
     const { activeAlerts, recentAlerts, alertsHistory } = alertsState;
@@ -962,6 +968,7 @@ function App() {
         // --- Provide systemLogs to the context ---
         systemLogs,
         loggedInUser,
+        onUserUpdate: handleUserUpdate
     };
 
     return (

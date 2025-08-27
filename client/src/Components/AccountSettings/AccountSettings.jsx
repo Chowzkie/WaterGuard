@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Phone, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera, Check, X as CancelIcon } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Styles from '../../Styles/AccountSettStyle/AccountSettings.module.css';
 import AlertsContext from '../../utils/AlertsContext';
 import axios from 'axios';
@@ -21,7 +22,6 @@ const AccountSettings = () => {
     // State for Phone Number editing
     const [isEditingPhone, setIsEditingPhone] = useState(false);
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [isPhoneDirty, setIsPhoneDirty] = useState(false);
 
     // Corrected state variables for Full Name
     const [isEditingFullname, setIsEditingFullname] = useState(false);
@@ -35,6 +35,11 @@ const AccountSettings = () => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    // State for password visibility
+    const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
+    const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+    const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
     // --- useEffect Hooks ---
     const fetchUserProfile = async () => {
@@ -69,7 +74,7 @@ const AccountSettings = () => {
                 } else {
                     setErrorMessage("Failed to load user profile.");
                 }
-                setCurrentUser(null);
+                //setCurrentUser(null);
             }
         } else {
             console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
@@ -88,14 +93,6 @@ const AccountSettings = () => {
             return () => clearTimeout(timer);
         }
     }, [successMessage, errorMessage]);
-
-    useEffect(() => {
-        if (currentUser && isEditingPhone) {
-            setIsPhoneDirty(phoneNumber !== currentUser.contact);
-        } else {
-            setIsPhoneDirty(false);
-        }
-    }, [phoneNumber, currentUser, isEditingPhone]);
 
     // --- HANDLERS ---
     const handleBack = () => navigate('/overview');
@@ -129,35 +126,24 @@ const AccountSettings = () => {
         setFullname(currentUser.name);
     };
 
-    const handleSaveFullname = async () => {
-        setErrorMessage('');
-        const trimmedFullname = fullname.trim();
-
-        if (trimmedFullname.length < 3) {
-            setErrorMessage("Full name must be at least 3 characters long.");
-            return;
-        }
-
-        if (trimmedFullname === currentUser.name) {
-            setErrorMessage("Full name is the same as current. No changes to save.");
-            setIsEditingFullname(false);
-            return;
-        }
-
+    const handleSaveFullname = async (e) => {
+        e.preventDefault();
         try {
-            const result = await onProfileUpdate({ name: { old: currentUser.name, new: trimmedFullname } });
-            if (result.success) {
-                setCurrentUser(prev => ({ ...prev, name: trimmedFullname }));
-                setIsEditingFullname(false);
-                setSuccessMessage(result.message || "Full name updated successfully!");
-            } else {
-                setErrorMessage(result.message || "Failed to update full name.");
-            }
-        } catch (error) {
-            setErrorMessage("An unexpected error occurred while saving the full name.");
-            console.error("Error saving full name:", error);
+            const result = await axios.put(
+                `${API_BASE_URL}/auth/update-name`,
+                { name: fullname },
+                { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+            );
+
+            setCurrentUser(result.data); 
+            setIsEditingFullname(false);
+            setSuccessMessage("Full name updated successfully!");
+        } catch (err) {
+            console.error(err);
+            setErrorMessage(err.response?.data?.message ||"Failed to update full name.");
         }
     };
+
 
     const handleCancelFullname = () => {
         setIsEditingFullname(false);
@@ -170,35 +156,21 @@ const AccountSettings = () => {
         setUsername(currentUser.username);
     };
 
-    const handleSaveUsername = async () => {
-        setErrorMessage('');
-        const trimmedUsername = username.trim();
-
-        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-        if (!usernameRegex.test(trimmedUsername)) {
-            setErrorMessage("Username must be 3-20 characters and contain only letters, numbers, and underscores.");
-            return;
-        }
-
-        if (trimmedUsername === currentUser.username) {
-            setErrorMessage("Username is the same as current. No changes to save.");
+    const handleSaveUsername = async (e) => {
+        e.preventDefault();
+        try{
+            const result = await axios.put(
+                `${API_BASE_URL}/auth/update-username`, 
+                {username: username}, 
+                {headers : {Authorization: `Bearer ${localStorage.getItem("token")}`}}
+            );
+            setCurrentUser(result.data);
             setIsEditingUsername(false);
-            return;
-        }
-
-        try {
-            const result = await onProfileUpdate({ username: { old: currentUser.username, new: trimmedUsername } });
-            if (result.success) {
-                setCurrentUser(prev => ({ ...prev, username: trimmedUsername }));
-                setIsEditingUsername(false);
-                setSuccessMessage(result.message || "Username updated successfully!");
-            } else {
-                setErrorMessage(result.message || "Failed to update username. It might already be taken.");
-            }
-        } catch (error) {
-            setErrorMessage("An unexpected error occurred while saving the username.");
-            console.error("Error saving username:", error);
-        }
+            setSuccessMessage("Username Updated Successfully");
+        }catch(err){
+            console.error(err);
+            setErrorMessage( err.response?.data?.message ||"Failed to update Username");
+        };
     };
 
     const handleCancelUsername = () => {
@@ -207,37 +179,21 @@ const AccountSettings = () => {
         setErrorMessage('');
     };
 
-    const handleSavePhone = async () => {
-        setErrorMessage('');
-        const cleanedPhoneNumber = phoneNumber.trim();
-
-        const regex09 = /^09\d{9}$/;
-        const regexPlus63 = /^\+639\d{9}$/;
-
-        if (!regex09.test(cleanedPhoneNumber) && !regexPlus63.test(cleanedPhoneNumber)) {
-            setErrorMessage("Please enter a valid Philippine phone number. It must be 11 digits starting with '09' (e.g., 09xxxxxxxxx) or 13 digits starting with '+639' (e.g., +639xxxxxxxxx).");
-            return;
-        }
-
-        if (cleanedPhoneNumber === currentUser.contact) {
-            setErrorMessage("Phone number is the same as current. No changes to save.");
+    const handleSavePhone = async (e) => {
+        e.preventDefault();
+        try{
+            const result = await axios.put(
+                `${API_BASE_URL}/auth/update-contact`, 
+                {contact: phoneNumber}, 
+                {headers : {Authorization: `Bearer ${localStorage.getItem("token")}` }}
+            );
+            setCurrentUser(result.data);
             setIsEditingPhone(false);
-            return;
-        }
-
-        try {
-            const result = await onProfileUpdate({ contact: { old: currentUser.contact, new: cleanedPhoneNumber } });
-            if (result.success) {
-                setCurrentUser(prev => ({ ...prev, contact: cleanedPhoneNumber }));
-                setIsEditingPhone(false);
-                setSuccessMessage(result.message || "Phone number updated successfully!");
-            } else {
-                setErrorMessage(result.message || "Failed to update phone number.");
-            }
-        } catch (error) {
-            setErrorMessage("An unexpected error occurred while saving the phone number.");
-            console.error("Error saving phone number:", error);
-        }
+            setSuccessMessage("Phone number updated Successfully")
+        }catch(err){
+            console.error(err);
+            setErrorMessage(err.response?.data?.message ||"Failed to Update Contact Number");
+        };
     };
 
     const handleCancelPhone = () => {
@@ -248,42 +204,39 @@ const AccountSettings = () => {
 
     const handleChangePassword = async (e) => {
         e.preventDefault();
-        setErrorMessage('');
-        setSuccessMessage('');
+        try{
+            const result = await axios.put(
+                `${API_BASE_URL}/auth/update-password`,
+                {currentPassword: currentPassword, newPassword: newPassword, confirmPassword: confirmPassword},
+                {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
+            );
+            setCurrentUser(result.data);
+            setSuccessMessage(result.data.message);
+            //it will be back the state into default
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            //make the eye button to close
+            setIsCurrentPasswordVisible(false);
+            setIsNewPasswordVisible(false);
+            setIsConfirmPasswordVisible(false);
+        }catch(err){
+            console.error(err);
+            setErrorMessage(err.response?.data?.message || "Failed to Update Password")
+        }
+    };
 
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // Toggle functions for each password field
+    const toggleCurrentPasswordVisibility = () => {
+        setIsCurrentPasswordVisible(!isCurrentPasswordVisible);
+    };
 
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            setErrorMessage("All password fields are required.");
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            setErrorMessage("New passwords do not match.");
-            return;
-        }
-        if (newPassword === currentPassword) {
-            setErrorMessage("New password cannot be the same as the current password.");
-            return;
-        }
-        if (!passwordRegex.test(newPassword)) {
-            setErrorMessage("New password does not meet the strength requirements. It must be at least 8 characters long, include one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&).");
-            return;
-        }
+    const toggleNewPasswordVisibility = () => {
+        setIsNewPasswordVisible(!isNewPasswordVisible);
+    };
 
-        try {
-            const result = await onPasswordChange(currentPassword, newPassword);
-            if (result.success) {
-                setSuccessMessage(result.message);
-                setCurrentPassword('');
-                setNewPassword('');
-                setConfirmPassword('');
-            } else {
-                setErrorMessage(result.message);
-            }
-        } catch (error) {
-            setErrorMessage("An unexpected error occurred while changing the password.");
-            console.error("Error changing password:", error);
-        }
+    const toggleConfirmPasswordVisibility = () => {
+        setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
     };
 
     // --- RENDER ---
@@ -358,20 +311,20 @@ const AccountSettings = () => {
                                     <p className={Styles['rowLabel']}>Full Name</p>
                                     <div className={Styles['rowDetails']}>
                                         {isEditingFullname ? (
-                                            <div className={Styles['inlineEdit']}>
+                                            <form onSubmit={handleSaveFullname} className={Styles['inlineEdit']}>
                                                 <input
                                                     type="text"
                                                     value={fullname}
                                                     onChange={(e) => setFullname(e.target.value)}
                                                     className={Styles['input']}
                                                 />
-                                                <button onClick={handleSaveFullname} className={`${Styles['button']} ${Styles['iconButton']}`} disabled={fullname.trim() === currentUser.name}>
+                                                <button className={`${Styles['button']} ${Styles['iconButton']}`} disabled={fullname.trim() === currentUser.name}>
                                                     <Check size={16} />
                                                 </button>
                                                 <button onClick={handleCancelFullname} className={`${Styles['button']} ${Styles['iconButton']}`}>
                                                     <CancelIcon size={16} />
                                                 </button>
-                                            </div>
+                                            </form>
                                         ) : (
                                             <p className={Styles['rowValue']}>{currentUser.name}</p>
                                         )}
@@ -388,7 +341,7 @@ const AccountSettings = () => {
                                     <p className={Styles['rowLabel']}>Username</p>
                                     <div className={Styles['rowDetails']}>
                                         {isEditingUsername ? (
-                                            <div className={Styles['inlineEdit']}>
+                                            <form className={Styles['inlineEdit']}>
                                                 <input
                                                     type="text"
                                                     value={username}
@@ -401,7 +354,7 @@ const AccountSettings = () => {
                                                 <button onClick={handleCancelUsername} className={`${Styles['button']} ${Styles['iconButton']}`}>
                                                     <CancelIcon size={16} />
                                                 </button>
-                                            </div>
+                                            </form>
                                         ) : (
                                             <p className={Styles['rowValue']}>@{currentUser.username}</p>
                                         )}
@@ -418,10 +371,16 @@ const AccountSettings = () => {
                                     <p className={Styles['rowLabel']}>Phone Number</p>
                                     <div className={Styles['rowDetails']}>
                                         {isEditingPhone ? (
-                                            <div className={Styles['inlineEdit']}>
+                                            <form className={Styles['inlineEdit']}>
                                                 <input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className={Styles['input']} />
                                                 <p className={Styles['helperText']}>Must be 11 digits (e.g., 09xxxxxxxxx) or 13 digits (e.g., +639xxxxxxxxx) for SMS alerts.</p>
-                                            </div>
+                                                <button onClick={handleSavePhone} className={`${Styles['button']} ${Styles['iconButton']}`}>
+                                                    <Check size={16} />
+                                                </button>
+                                                <button onClick={handleCancelPhone} className={`${Styles['button']} ${Styles['iconButton']}`}>
+                                                    <CancelIcon size={16} />
+                                                </button>
+                                            </form>
                                         ) : (
                                             <p className={Styles['rowValue']}>{currentUser.contact}</p>
                                         )}
@@ -435,19 +394,29 @@ const AccountSettings = () => {
                             </div>
                         </div>
                     )}
-
+                        {/** Password */}
                     {activeTab === 'password' && (
                         <form onSubmit={handleChangePassword}>
                             <div className={Styles['card']}>
                                 <div className={Styles['cardBody']}>
                                     <div className={Styles['cardRow']}>
                                         <label htmlFor="current-password" className={Styles['rowLabel']}>Current Password</label>
-                                        <input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={Styles['input']} required />
+                                        <div className={Styles['inputContainer']}>
+                                            <input id="current-password" type={isCurrentPasswordVisible? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={Styles['input']} required />
+                                            <button type='button' onClick={toggleCurrentPasswordVisibility} className={Styles['toggleButton']} aria-label={isCurrentPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}> 
+                                                {isCurrentPasswordVisible? <Eye /> : <EyeOff />}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className={Styles['cardRow']}>
                                         <label htmlFor="new-password" className={Styles['rowLabel']}>New Password</label>
                                         <div>
-                                            <input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={Styles['input']} required />
+                                            <div className={Styles['inputContainer']}>
+                                                <input id="new-password" type={isNewPasswordVisible? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={Styles['input']} required />
+                                                <button type='button' onClick={toggleNewPasswordVisibility} className={Styles['toggleButton']} aria-label={isNewPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}> 
+                                                    {isNewPasswordVisible? <Eye /> : <EyeOff />}
+                                                </button>
+                                            </div>
                                             <ul className={Styles['passwordRequirements']}>
                                                 <li>At least 8 characters</li>
                                                 <li>One uppercase & one lowercase letter</li>
@@ -457,7 +426,12 @@ const AccountSettings = () => {
                                     </div>
                                     <div className={Styles['cardRow']}>
                                         <label htmlFor="confirm-password" className={Styles['rowLabel']}>Confirm New Password</label>
-                                        <input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={Styles['input']} required />
+                                        <div className={Styles['inputContainer']}>
+                                            <input id="confirm-password" type={isConfirmPasswordVisible? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={Styles['input']} required />
+                                            <button type='button' onClick={toggleConfirmPasswordVisibility} className={Styles['toggleButton']} aria-label={isConfirmPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}> 
+                                                {isConfirmPasswordVisible? <Eye /> : <EyeOff />}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className={Styles['cardFooter']}>

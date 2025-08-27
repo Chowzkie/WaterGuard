@@ -24,21 +24,20 @@ function LoginForm({ onLogin }) {
 
         try {
             // Send a POST request to backend's login endpoint
-            // FIX: The endpoint has been updated to match your new backend route
             const response = await axios.post('http://localhost:8080/api/auth/login', {
                 username,
                 password,
             });
 
-            // FIX: Check if the response contains both the authentication token and user data
+            // Check if the response contains both the authentication token and user data
             if (response.data.token && response.data.user) {
-                // FIX: Pass the token and user object to the onLogin function from App.jsx
+                // Pass the token and user object to the onLogin function from App.jsx
                 onLogin(response.data.token, response.data.user);
                 navigate('/overview'); // Navigate to the overview page
                 setMessage('Login successful!'); // display success message briefly
             } else {
-                // FIX: Handle cases where the backend returns a successful response but with an unexpected format
-                setMessage(response.data.message || 'Login failed. Please check your credentials.');
+                //Handle cases where the backend returns a successful response but with an unexpected format
+                setMessage('Login failed. Please check your username and password.');
                 setIsError(true);
                 setShake(true);
             }

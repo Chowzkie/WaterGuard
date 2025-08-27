@@ -1,37 +1,21 @@
-/* src/Components/AccountSettings/AccountSettings.module.css */
-
-/*
-  THE FIX:
-  The .pageWrapper is now positioned absolutely to fill the viewport BELOW the 80px header.
-  This makes it a fixed-size container, and adding `overflow-y: auto` makes it the primary
-  scrolling element for the entire component.
-*/
+/* --- Base Layout and Page Structure --- */
 .pageWrapper {
     background-color: #f4f5f7;
     box-sizing: border-box;
     animation: fadeIn 0.5s ease-in-out;
-
-    /* --- Start of Fix --- */
     position: absolute;
-    top: 80px; /* Position below the implied 80px fixed header */
+    top: 80px;
     left: 0;
     right: 0;
     bottom: 0;
-    overflow-y: auto; /* Make this container scrollable */
-    /* --- End of Fix --- */
+    overflow-y: auto;
 }
-
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/*
-  THE FIX:
-  The .layoutGrid no longer needs any special flex or overflow properties.
-  It can now grow naturally, and its parent (.pageWrapper) will handle the scrolling.
-*/
 .layoutGrid {
     display: grid;
     grid-template-columns: 1fr;
@@ -39,9 +23,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 24px;
-    /* The 80px top-padding is removed as the parent is now positioned below the header */
 }
-
 
 @media (min-width: 1024px) {
     .layoutGrid {
@@ -49,7 +31,7 @@
     }
 }
 
-/* --- Left Sidebar --- */
+/* --- Sidebar Styles --- */
 .sidebar {
     background-color: #ffffff;
     border-radius: 12px;
@@ -61,7 +43,7 @@
 @media (min-width: 1024px) {
     .sidebar {
         position: sticky;
-        top: 24px; /* Adjusted sticky position to account for new padding */
+        top: 24px;
     }
 }
 
@@ -78,6 +60,7 @@
     margin-bottom: 16px;
     padding: 4px;
 }
+
 .backButton:hover {
     color: #4f46e5;
 }
@@ -92,12 +75,12 @@
     margin-bottom: 20px;
 }
 
-/* NEW: Styles for the interactive avatar */
+/* Profile Image and Interactive Overlay */
 .profileAvatarWrapper {
     position: relative;
     cursor: pointer;
     border-radius: 9999px;
-    overflow: hidden; /* Ensures the overlay is clipped */
+    overflow: hidden;
 }
 
 .profileAvatar {
@@ -105,13 +88,13 @@
     height: 80px;
     border-radius: 9999px;
     object-fit: cover;
-    display: block; /* Removes any extra space below the image */
+    display: block;
 }
 
 .avatarOverlay {
     position: absolute;
-    inset: 0; /* Covers the parent div completely */
-    background-color: rgba(17, 24, 39, 0.5); /* semi-transparent dark background */
+    inset: 0;
+    background-color: rgba(17, 24, 39, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -123,7 +106,6 @@
 .profileAvatarWrapper:hover .avatarOverlay {
     opacity: 1;
 }
-
 
 .profileName {
     font-size: 18px;
@@ -138,6 +120,7 @@
     margin: 0;
 }
 
+/* Sidebar Navigation */
 .sidebarNav {
     display: flex;
     flex-direction: column;
@@ -172,7 +155,7 @@
     font-weight: 600;
 }
 
-/* --- Main Content --- */
+/* --- Main Content Area --- */
 .mainContent {
     display: flex;
     flex-direction: column;
@@ -202,6 +185,7 @@
     gap: 12px;
 }
 
+/* --- Card and Form Elements --- */
 .card {
     background-color: #ffffff;
     border-radius: 12px;
@@ -213,6 +197,15 @@
     padding: 24px;
 }
 
+.cardFooter {
+    padding: 16px 24px;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
 .cardRow {
     display: grid;
     grid-template-columns: 1fr;
@@ -221,6 +214,7 @@
     margin-bottom: 24px;
     border-bottom: 1px solid #f3f4f6;
 }
+
 .cardRow:last-child {
     border-bottom: none;
     margin-bottom: 0;
@@ -242,10 +236,6 @@
     min-width: 0;
 }
 
-.rowDetails p {
-    margin: 0;
-}
-
 .rowLabel {
     font-weight: 500;
     color: #111827;
@@ -253,9 +243,105 @@
     line-height: 1.5;
 }
 
+.inputContainer{
+    display: flex;
+}
+
+.toggleButton{
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #374151;
+}
+
 .rowValue {
     font-size: 14px;
     color: #6b7280;
+    margin: 0;
+}
+
+/* Input Fields and Buttons */
+.input {
+    display: block;
+    width: 100%;
+    max-width: 380px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.input:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5);
+}
+
+.inlineEdit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.inlineEdit .input {
+    flex-grow: 1;
+}
+
+.helperText {
+    font-size: 12px;
+    color: #6b7280;
+    padding-top: 4px;
+}
+
+.passwordRequirements {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 8px;
+    padding-left: 16px;
+    list-style-type: disc;
+}
+
+/* Shared Button Styles */
+.button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.buttonPrimary {
+    background-color: #4f46e5;
+    color: white;
+}
+
+.buttonPrimary:hover {
+    background-color: #4338ca;
+}
+
+.buttonPrimary:disabled {
+    background-color: #a5b4fc;
+    cursor: not-allowed;
+}
+
+.buttonSecondary {
+    background-color: white;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.buttonSecondary:hover {
+    background-color: #f9fafb;
 }
 
 .editButton {
@@ -279,90 +365,33 @@
     color: #4f46e5;
 }
 
-.input {
-    display: block;
-    width: 100%;
-    max-width: 380px;
-    box-sizing: border-box;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    padding: 8px 12px;
-    font-size: 14px;
-}
-.input:focus {
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5);
-}
-
-.helperText {
-    font-size: 12px;
-    color: #6b7280;
-    padding-top: 4px;
-}
-
-.passwordRequirements {
-    font-size: 12px;
-    color: #6b7280;
-    margin-top: 8px;
-    padding-left: 16px;
-    list-style-type: disc;
-}
-
-.button {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid transparent;
+.iconButton {
+    background-color: transparent;
+    border: none;
     cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
+    padding: 4px;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s ease;
 }
 
-.buttonPrimary {
-    background-color: #4f46e5;
-    color: white;
+.iconButton:hover {
+    background-color: rgba(0, 0, 0, 0.1);
 }
-.buttonPrimary:hover {
-    background-color: #4338ca;
-}
-.buttonPrimary:disabled {
-    background-color: #a5b4fc;
+
+.iconButton:disabled {
     cursor: not-allowed;
+    opacity: 0.5;
 }
 
-.buttonSecondary {
-    background-color: white;
-    color: #374151;
-    border-color: #d1d5db;
-}
-.buttonSecondary:hover {
-    background-color: #f9fafb;
-}
-
+/* --- Utility and Hidden Elements --- */
 .hiddenInput {
     display: none;
 }
 
-.cardFooter {
-    padding: 16px 24px;
-    background-color: #f9fafb;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-}
-
-/* --- Alert Message Styles --- */
+/* --- Alert Messages --- */
 .alert {
     position: fixed;
-    top: 90px; /* Adjusted to account for new layout */
+    top: 90px;
     left: 16px;
     right: 16px;
     display: flex;
@@ -400,16 +429,19 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@media (min-width: 768px) {
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+}
+
 @keyframes slideOut {
     from { opacity: 1; transform: translateY(0); }
     to { opacity: 0; transform: translateY(-20px); }
 }
 
 @media (min-width: 768px) {
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(100%); }
-        to { opacity: 1; transform: translateX(0); }
-    }
     @keyframes slideOut {
         from { opacity: 1; transform: translateX(0); }
         to { opacity: 0; transform: translateX(100%); }

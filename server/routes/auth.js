@@ -1,19 +1,16 @@
+// server/routes/auth.js
 const express = require("express");
 const router = express.Router();
+const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/authMiddleware'); // New: Import the middleware
 
-const MOCK_USERS = require("../mockData/mockUsers");
+router.post("/login", authController.loginUser);
 
-// Login
-router.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  const user = MOCK_USERS.find(u => u.username === username && u.password === password);
-
-  if (user) {
-    const { password, ...userToSend } = user;
-    res.json({ message: "Login successful", user: userToSend });
-  } else {
-    res.status(401).json({ message: "Invalid Username or Password!" });
-  }
-});
+//Use the middleware to protect the route
+router.get("/user", authMiddleware, authController.getUser);
+router.put("/update-name", authMiddleware, authController.updateName);
+router.put("/update-username", authMiddleware, authController.updateUsername);
+router.put("/update-contact", authMiddleware, authController.updateContact);
+router.put("/update-password", authMiddleware, authController.updatePassword);
 
 module.exports = router;

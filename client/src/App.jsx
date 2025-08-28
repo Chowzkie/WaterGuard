@@ -347,34 +347,27 @@ function App() {
 
     const showHeader = !noHeaderPaths.includes(location.pathname);
     const showNavigation = !noNavPaths.includes(location.pathname);
-
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loggedInUser, setLoggedInUser] = useState(null);
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
 
-    useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-        try {
-        const decodedUser = jwtDecode(storedToken);
-        setLoggedInUser(decodedUser); // Set the state with the decoded user object
-        setIsAuthenticated(true);
-        console.log("App.jsx - useEffect: loggedInUser restored from token:", decodedUser);
-        } catch (e) {
-        console.error("Failed to parse or decode token from localStorage", e);
-        localStorage.removeItem('token'); // Clear invalid token
+
+    const [loggedInUser, setLoggedInUser] = useState(() => {
+        const token = localStorage.getItem("token");
+        try{
+            return token? jwtDecode(token) : null
+        }catch (e) {
+            console.error("invalid token in localstorage", e)
+            localStorage.removeItem("token")
+            return null
         }
-    } else {
-        console.log("App.jsx - useEffect: No token found in localStorage.");
-    }
-    }, []);
+    });
+
+    const isAuthenticated = loggedInUser ? true : false;
 
     const handleLogin = (token) => { // Expect the JWT token from the Login component
     try {
         const decodedUser = jwtDecode(token);
-        setIsAuthenticated(true);
+        localStorage.setItem("token", token); // Store the token, not the user object
         setLoggedInUser(decodedUser); // Set the state with the decoded user object
-        localStorage.setItem('token', token); // Store the token, not the user object
         console.log("App.jsx - handleLogin: User logged in, decoded user object:", decodedUser);
     } catch (e) {
         console.error("Failed to decode token", e);
@@ -383,9 +376,9 @@ function App() {
     };
 
     const handleLogout = () => {
-        setIsAuthenticated(false);
         setLoggedInUser(null);
-        localStorage.removeItem('loggedInUser'); // Clear user data
+        localStorage.removeItem('token'); // Clear user data
+        Navigate("/login")
         console.log("App.jsx - handleLogout: User logged out.");
     };
 
@@ -968,7 +961,7 @@ function App() {
                     <Route
                         path="/account-settings"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute>
                                 <AccountSettings />
                             </ProtectedRoute>
                         }
@@ -976,7 +969,7 @@ function App() {
                     <Route
                         path="/overview"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute>
                                 <Overview />
                             </ProtectedRoute>
                         }
@@ -984,7 +977,7 @@ function App() {
                     <Route
                         path="/dashboard"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute>
                                 <Dashboard />
                             </ProtectedRoute>
                         }
@@ -992,7 +985,7 @@ function App() {
                     <Route
                         path="/alerts"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute >
                                 <Alerts />
                             </ProtectedRoute>
                         }
@@ -1000,14 +993,14 @@ function App() {
                     <Route
                         path="/devices"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute >
                                 <Devices />
                             </ProtectedRoute>
                         }
                     />
                     <Route path="/configurations/*"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute >
                                 <Configuration onSetHeaderDeviceLabel={setHeaderDeviceLabel} />
                             </ProtectedRoute>
                         }
@@ -1015,7 +1008,7 @@ function App() {
                     <Route
                         path="/devices/:deviceId"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute >
                                 <SpecificDevice onSetHeaderDeviceLabel={setHeaderDeviceLabel} />
                             </ProtectedRoute>
                         }
@@ -1023,11 +1016,14 @@ function App() {
                     <Route
                         path="/logs"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute >
                                 <Logs />
                             </ProtectedRoute>
                         }
                     />
+                    {/**Catch all unknown URL if the user is not yet authenticated */}
+                    <Route path="*" element={<Navigate to={isAuthenticated ? "/overview" : "/login"} />} />
+                    {/**Redirect to the login page */}
                     <Route path="/" element={<Navigate to="/login" />} />
                 </Routes>
             </main>

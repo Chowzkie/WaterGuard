@@ -208,7 +208,6 @@ const AccountSettings = () => {
                 {currentPassword: currentPassword, newPassword: newPassword, confirmPassword: confirmPassword},
                 {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
             );
-            setCurrentUser(result.data);
             setSuccessMessage(result.data.message);
             //it will be back the state into default
             setCurrentPassword('');
@@ -219,8 +218,6 @@ const AccountSettings = () => {
             setIsNewPasswordVisible(false);
             setIsConfirmPasswordVisible(false);
 
-            //reload the page after changing the password
-            window.location.reload();
         }catch(err){
             console.error(err);
             setErrorMessage(err.response?.data?.message || "Failed to Update Password")

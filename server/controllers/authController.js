@@ -193,11 +193,6 @@ exports.updatePassword = async(req,res) => {
     const {currentPassword, newPassword, confirmPassword} = req.body
     const userID = req.userID
 
-    // Use to check if all the fields has value
-    //if(!currentPassword || !newPassword || !confirmPassword){
-    //    return res.status(400).json({message: "All password Field are required"})
-    //}
-
     if(newPassword !== confirmPassword){
         return res.status(400).json({message: "New password does not match in Confirmation"})
     }

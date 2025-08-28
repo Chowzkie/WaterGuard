@@ -218,6 +218,9 @@ const AccountSettings = () => {
             setIsCurrentPasswordVisible(false);
             setIsNewPasswordVisible(false);
             setIsConfirmPasswordVisible(false);
+
+            //reload the page after changing the password
+            window.location.reload();
         }catch(err){
             console.error(err);
             setErrorMessage(err.response?.data?.message || "Failed to Update Password")

@@ -31,7 +31,6 @@ const AccountSettings = () => {
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [username, setUsername] = useState('');
 
-    const [newProfilePic, setNewProfilePic] = useState(null);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -97,23 +96,35 @@ const AccountSettings = () => {
     // --- HANDLERS ---
     const handleBack = () => navigate('/overview');
 
-    const handleSaveProfilePic = async (newPicDataUrl) => {
-        setCurrentUser(prev => ({ ...prev, profilePic: newPicDataUrl }));
-        setSuccessMessage("Profile picture updated successfully!");
-        setNewProfilePic(null);
-    };
 
-    // This is now a local-only update until a backend endpoint is added.
-    const handleProfilePicChange = (e) => {
+
+    const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const newPicDataUrl = reader.result;
-                setNewProfilePic(newPicDataUrl);
-                handleSaveProfilePic(newPicDataUrl);
-            };
-            reader.readAsDataURL(file);
+        if(!file){
+            return
+        }
+        const formData = new FormData()
+        formData.append('profileImage', file)
+
+        const token = localStorage.getItem("token");
+        const userId = currentUser._id
+        
+        try {
+        setSuccessMessage("Uploading new profile picture...");
+        setErrorMessage("");
+
+
+        const response = await axios.put(`${API_BASE_URL}/auth/upload-image/${userId}`, formData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        fetchUserProfile();
+
+        } catch (error) {
+            console.error("Failed to upload profile picture:", error.response?.data?.message || error.message);
+            setErrorMessage(error.response?.data?.message || "Failed to update profile picture.");
         }
     };
 
@@ -262,7 +273,7 @@ const AccountSettings = () => {
         );
     }
 
-    const profilePicToShow = newProfilePic || currentUser.profilePic || `https://placehold.co/128x128/4f46e5/ffffff?text=${currentUser.username ? currentUser.username.charAt(0).toUpperCase() : '?'}`;
+    const profilePicToShow = currentUser.profileImage || `https://placehold.co/128x128/4f46e5/ffffff?text=${currentUser.username ? currentUser.username.charAt(0).toUpperCase() : '?'}`;
 
     return (
         <div className={Styles['pageWrapper']}>

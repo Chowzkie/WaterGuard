@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User");
 const jwt = require("jsonwebtoken"); 
 const { validateUsername, validateContact, validateName, validatePassword } = require( "../validator/userValidator");
+const cloudinary = require("../config/cloudinaryConfig")
+const fs = require("fs")
 
 
 // Generate a secret key for signing your JWTs. It's a best practice to
@@ -225,3 +227,54 @@ exports.updatePassword = async(req,res) => {
         res.status(500).json({message :"server error during password update"})
     }
 }
+
+exports.uploadProfileImage = async (req, res) => {
+    try {
+        console.log("Starting image upload process...");
+
+        // Check if the file was successfully received by Multer
+        if (!req.file) {
+            console.log("Error: No file provided in the request.");
+            return res.status(400).json({ message: 'No image file was provided.' });
+        }
+        
+        const userId = req.params.userId;
+        const imagePath = req.file.path;
+
+        console.log(`Received file path from Multer: ${imagePath}`);
+
+        // Upload the temporary file to Cloudinary
+        console.log("Attempting to upload file to Cloudinary...");
+        const result = await cloudinary.uploader.upload(imagePath);
+        console.log("Successfully uploaded to Cloudinary. URL:", result.secure_url);
+
+        // Once uploaded, delete the temporary file from your server
+        try {
+            fs.unlinkSync(imagePath);
+            console.log("Successfully deleted temporary file.");
+        } catch (unlinkError) {
+            console.error("Failed to delete temporary file:", unlinkError);
+        }
+
+        // Find the user and update the profileImage field
+        const user = await UserModel.findByIdAndUpdate(
+            userId,
+            { profileImage: result.secure_url },
+            { new: true }
+        );
+
+        if (!user) {
+            console.log(`User not found with ID: ${userId}`);
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log("User document updated successfully.");
+        res.status(200).json({
+            message: 'Profile image uploaded and URL saved successfully!',
+            user,
+        });
+    } catch (error) {
+        console.error("An internal server error occurred:", error);
+        res.status(500).json({ message: 'Failed to upload image', error: error.message });
+    }
+};

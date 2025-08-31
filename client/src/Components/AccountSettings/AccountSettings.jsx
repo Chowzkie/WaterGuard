@@ -99,6 +99,7 @@ const AccountSettings = () => {
 
 
     const handleProfilePicChange = async (e) => {
+        e.preventDefault();
         const file = e.target.files[0];
         if(!file){
             return
@@ -119,8 +120,9 @@ const AccountSettings = () => {
                 'Authorization': `Bearer ${token}`
             }
         });
-
+    
         fetchUserProfile();
+        setSuccessMessage("Profile picture updated successfully!");
 
         } catch (error) {
             console.error("Failed to upload profile picture:", error.response?.data?.message || error.message);

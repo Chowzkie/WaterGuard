@@ -8,11 +8,9 @@ import Logo from '../../assets/Logo.png'; // Assuming this is the correct path
 import Notifications from './Notifications'; // The separate notifications component
 
 function Header({
-    // Original props
     onLogout,
     deviceLabelForHeader,
     username,
-    // --- NEW: Props for centralized notification system from App.jsx ---
     notifications,
     unreadCount,
     onMarkNotificationAsRead,
@@ -22,7 +20,7 @@ function Header({
     const location = useLocation();
     const [subTitle, setSubTitle] = useState('WaterGuard');
 
-    // --- RESTORED: This logic dynamically sets the subtitle based on the current page ---
+    // -This logic dynamically sets the subtitle based on the current page ---
     const routeTitleMap = {
         '/overview': 'Overview',
         '/dashboard': 'Readings',
@@ -49,7 +47,7 @@ function Header({
     }, [location.pathname, deviceLabelForHeader]);
 
 
-    // --- RESTORED: State for managing the user and notification dropdowns separately ---
+    // State for managing the user and notification dropdowns separately ---
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const userMenuRef = useRef(null);
@@ -94,6 +92,7 @@ function Header({
         setOpen(false);
     }
 
+
     return (
         <header className={styles.appHeader}>
             <div className={styles.headerLeft}>
@@ -104,7 +103,7 @@ function Header({
                 </div>
             </div>
             <div className={styles.headerRight}>
-                {/* --- UPDATED: Notification dropdown now uses props from App.jsx --- */}
+                {/* --- Notification dropdown now uses props from App.jsx --- */}
                 <div className={styles.notificationWrapper} ref={notifMenuRef}>
                     <div className={styles.notificationIconWrapper} onClick={toggleNotif}>
                         <Bell className={styles.notificationIcon} />
@@ -119,7 +118,7 @@ function Header({
                         onMarkAllAsRead={onMarkAllNotificationsAsRead}
                     />
                 </div>
-                {/* --- RESTORED: User dropdown menu with full functionality --- */}
+                {/* --- User dropdown menu with full functionality --- */}
                 <div className={styles.headerDropdown} ref={userMenuRef}>
                     <button className={styles.userBtn} onClick={toggleMenu}>
                         <img className={styles.profileImg} src={ProfilePic} alt="Profile" />

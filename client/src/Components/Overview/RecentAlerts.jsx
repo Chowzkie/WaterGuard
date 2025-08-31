@@ -67,7 +67,7 @@ const RecentAlerts = ({
         <div className={styles['alerts-body']}>
           {filteredAlerts.length > 0 ? (
             filteredAlerts.map(alert => (
-              <div key={alert.id} className={styles['alerts-row']}>
+              <div key={alert._id} className={styles['alerts-row']}>
                 <div>{formatDateTime(alert.dateTime)}</div>
                 <div>{alert.originator}</div>
                 <div>

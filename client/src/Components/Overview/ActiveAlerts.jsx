@@ -94,10 +94,10 @@ const ActiveAlerts = ({
             <div className={styles['alerts-body']}>
                 {filteredAlerts.length > 0 ? (
                     filteredAlerts.map(alert => (
-                        <div key={alert.id}>
+                        <div key={alert._id}>
                             <div 
-                                className={`${styles['alerts-row']} ${alert.id === newlyAddedId ? styles['new-alert'] : ''} ${alert.acknowledged ? styles['alert-acknowledged'] : ''}`} 
-                                onClick={() => toggleDropdown(alert.id)}
+                                className={`${styles['alerts-row']} ${alert._id === newlyAddedId ? styles['new-alert'] : ''} ${alert.acknowledged ? styles['alert-acknowledged'] : ''}`} 
+                                onClick={() => toggleDropdown(alert._id)}
                             >
                                 <div>{formatDateTime(alert.dateTime)}</div>
                                 <div>{alert.originator}</div>
@@ -119,10 +119,10 @@ const ActiveAlerts = ({
                                     </span>
                                 </div>
                             </div>
-                            <div className={`${styles['acknowledge-dropdown']} ${expandedAlertId === alert.id ? styles['dropdown-visible'] : ''}`}>
+                            <div className={`${styles['acknowledge-dropdown']} ${expandedAlertId === alert._id ? styles['dropdown-visible'] : ''}`}>
                                 <button 
                                     className={styles['acknowledge-btn']} 
-                                    onClick={() => handleAcknowledgeClick(alert.id)} 
+                                    onClick={() => handleAcknowledgeClick(alert._id)} 
                                     disabled={alert.acknowledged}
                                 >
                                     {alert.acknowledged ? 'Acknowledged' : 'Acknowledge'}

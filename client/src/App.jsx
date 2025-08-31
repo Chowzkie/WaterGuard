@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios'; // Import Axios
 import { jwtDecode } from 'jwt-decode'
@@ -26,13 +26,6 @@ import {
 } from './utils/logMaps';
 
 // =================================================================================
-// CONFIGURATION
-// =================================================================================
-// Set to 'true' to use the current browser time for new alerts (for simulation).
-// Set to 'false' to use the timestamp from the sensor data (for real-world application).
-const IS_SIMULATION_MODE = true;
-
-// =================================================================================
 // SIMULATED CURRENT USER
 // =================================================================================
 const CURRENT_USER = {
@@ -42,7 +35,7 @@ const CURRENT_USER = {
 };
 
 // Define your backend API base URL
-const API_BASE_URL = 'http://localhost:8080/api'; // Make sure this matches your backend port
+const API_BASE_URL = 'http://localhost:8080'; // Make sure this matches your backend port
 
 // =================================================================================
 // MOCK DATA AND INITIAL STATE (These are now fetched from backend)
@@ -54,244 +47,6 @@ const initialState = {
     alertsHistory: [],
     recentlyDeletedHistory: [],
 };
-
-// =================================================================================
-// ALERTS REDUCER
-// =================================================================================
-function alertsReducer(state, action) {
-    switch (action.type) {
-        // MODIFIED: This case now receives already evaluated alerts from the server.
-        case 'PROCESS_READING':
-            {
-                // Renamed payload property for clarity: now 'evaluatedAlerts' from server
-                const { evaluatedAlerts, alertIdCounter } = action.payload;
-
-                // 'evaluatedAlerts' are the 'potentialAlerts' returned by the server.
-                const potentialAlerts = evaluatedAlerts;
-
-                // Create a mutable copy of the current active alerts to work with.
-                let nextActiveAlerts = [...state.activeAlerts];
-                // An array to hold any alerts that need to be moved out of the active list.
-                const alertsToArchive = [];
-
-                // Iterate over each potential alert generated from the sensor reading (received from server).
-                potentialAlerts.forEach(newAlertData => {
-                    // Check if an alert for the same device and parameter already exists.
-                    // This is crucial for preventing duplicate alerts.
-                    const existingAlertIndex = nextActiveAlerts.findIndex(a =>
-                        a.originator === newAlertData.originator &&
-                        a.parameter === newAlertData.parameter
-                    );
-                    const existingAlert = existingAlertIndex !== -1 ? nextActiveAlerts[existingAlertIndex] : null;
-
-                    // Determine if the new sensor reading indicates a 'Normal' state.
-                    const isNewStatusNormal = newAlertData.severity === 'Normal';
-
-                    if (existingAlert) {
-                        // --- An alert for this parameter already exists. ---
-
-                        if (isNewStatusNormal) {
-                            // The parameter has returned to a normal state.
-                            // We only act if the existing alert was a real problem, not already a "back to normal" message.
-                            if (!existingAlert.isBackToNormal) {
-                                // 1. Archive the original problem alert with a 'Resolved' status.
-                                alertsToArchive.push({ ...existingAlert, status: 'Resolved' });
-
-                                // 2. Create a new "back to normal" notification to inform the user.
-                                alertIdCounter.current++;
-                                const backToNormalAlert = {
-                                    id: alertIdCounter.current,
-                                    type: `${newAlertData.parameter} is back to normal`,
-                                    isBackToNormal: true, // Special flag for this type of notification.
-                                    dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(newAlertData.dateTime).toISOString(), // Use newAlertData.dateTime
-                                    originator: newAlertData.originator,
-                                    parameter: newAlertData.parameter,
-                                    severity: 'Normal',
-                                    status: 'Active',
-                                    acknowledged: false
-                                };
-
-                                // 3. Replace the old problem alert with the new "back to normal" notification in the active list.
-                                nextActiveAlerts.splice(existingAlertIndex, 1, backToNormalAlert);
-
-                                // 4. Start the auto-clear timer for this notification.
-                                action.timers.start(backToNormalAlert.id);
-                            }
-                        } else {
-                            // The new reading indicates a continued or new problem (Warning or Critical).
-                            // We only update if the severity level has changed (e.g., from Warning to Critical).
-                            if (existingAlert.severity !== newAlertData.severity) {
-                                // 1. Archive the previous alert with an 'Escalated' status.
-                                // This applies even if the previous alert was a "back to normal" message.
-                                alertsToArchive.push({ ...existingAlert, status: 'Escalated' });
-
-                                // 2. Create the new, more severe alert.
-                                alertIdCounter.current++;
-                                const newAlert = {
-                                    ...newAlertData,
-                                    id: alertIdCounter.current,
-                                    acknowledged: false,
-                                    dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(newAlertData.dateTime).toISOString() // Use newAlertData.dateTime
-                                };
-
-                                // 3. Replace the old alert with the new one in the active list.
-                                nextActiveAlerts.splice(existingAlertIndex, 1, newAlert);
-                            }
-                        }
-                    } else if (!isNewStatusNormal) {
-                        // --- No alert exists for this parameter, and the new reading is a problem. ---
-                        // This is the simplest case: create a brand new alert.
-                        alertIdCounter.current++;
-                        const newAlert = {
-                            ...newAlertData,
-                            id: alertIdCounter.current,
-                            acknowledged: false,
-                            dateTime: IS_SIMULATION_MODE ? new Date().toISOString() : new Date(newAlertData.dateTime).toISOString() // Use newAlertData.dateTime
-                        };
-                        nextActiveAlerts.push(newAlert);
-                    }
-                });
-
-                // If any changes were made, update the state.
-                if (alertsToArchive.length > 0 || nextActiveAlerts.length !== state.activeAlerts.length) {
-                    return { ...state, activeAlerts: nextActiveAlerts, recentAlerts: [...alertsToArchive, ...state.recentAlerts] };
-                }
-                // If no changes occurred, return the original state to avoid unnecessary re-renders.
-                return state;
-            }
-
-            // This case handles a user manually acknowledging any active alert.
-        case 'ACKNOWLEDGE_ALERT':
-            {
-                const { alertId, user, timestamp } = action.payload;
-                const alertToAck = state.activeAlerts.find(a => a.id === alertId);
-
-                // If the alert doesn't exist (e.g., was cleared by the system first), do nothing.
-                if (!alertToAck) return state;
-
-                // Prepare the acknowledgment information object.
-                const acknowledgedByInfo = {
-                    name: user.username,
-                    timestamp: timestamp
-                };
-
-                // This logic now applies to ALL active alerts, including "back to normal" messages.
-                // It maps over the active alerts, finds the one with the matching ID, and updates it.
-                const nextActiveAlerts = state.activeAlerts.map(alert =>
-                    alert.id === alertId ? {
-                        ...alert,
-                        acknowledged: true, // Set the acknowledged flag to true.
-                        acknowledgedBy: acknowledgedByInfo // Stamp the user and time information.
-                    } : alert
-                );
-
-                // Return the new state with the updated active alerts list. The alert remains
-                // in the active list until it is resolved or cleared by another action.
-                return { ...state, activeAlerts: nextActiveAlerts };
-            }
-
-            // This case is triggered ONLY by the timer set for "back to normal" alerts.
-            // It automatically moves the notification from the active list to the recent list.
-        case 'AUTO_CLEAR_NORMAL_ALERT':
-            {
-                const { alertId } = action.payload;
-                const alertToClear = state.activeAlerts.find(a => a.id === alertId);
-
-                // If the alert is not found or is not a "back to normal" alert, do nothing.
-                // This is a safeguard against race conditions.
-                if (!alertToClear || !alertToClear.isBackToNormal) {
-                    return state;
-                }
-
-                // Move the alert from the active list to the recent list.
-                return {
-                    ...state,
-                    // Filter the alert out of the active list.
-                    activeAlerts: state.activeAlerts.filter(a => a.id !== alertId),
-                    // Add the alert to the beginning of the recent list with a final 'Cleared' status.
-                    // Its acknowledged status (true or false) is preserved from its time in the active list.
-                    recentAlerts: [{ ...alertToClear, status: 'Cleared' }, ...state.recentAlerts]
-                };
-            }
-
-            // This case handles the periodic archiving of old alerts. It runs on a timer (e.g., every minute).
-        case 'ARCHIVE_RECENT_ALERTS':
-            {
-                const { currentTime, archiveInterval } = action.payload;
-                // If there are no recent alerts to check, do nothing.
-                if (!state.recentAlerts || state.recentAlerts.length === 0) return state;
-
-                const alertsToKeep = []; // To hold alerts that are not old enough to be archived.
-                const alertsToMove = []; // To hold alerts that are old and ready for permanent history.
-
-                // Sort through the recent alerts based on their timestamp.
-                state.recentAlerts.forEach(alert => {
-                    const alertTime = new Date(alert.dateTime).getTime();
-                    // If the time elapsed since the alert was created is greater than the interval, move it.
-                    if ((currentTime - alertTime) > archiveInterval) {
-                        alertsToMove.push(alert);
-                    } else {
-                        alertsToKeep.push(alert);
-                    }
-                });
-
-                // If no alerts were old enough to be moved, return the original state.
-                if (alertsToMove.length === 0) return state;
-
-                // Return the new state with the updated lists.
-                return {
-                    ...state,
-                    recentAlerts: alertsToKeep, // The new, shorter list of recent alerts.
-                    alertsHistory: [...state.alertsHistory, ...alertsToMove], // Add the moved alerts to the permanent history.
-                };
-            }
-
-            // This case handles the permanent deletion of alerts from the history log.
-        case 'DELETE_HISTORY_ALERTS':
-            {
-                const { idsToDelete } = action.payload; // A Set of alert IDs to be deleted.
-                const remainingAlerts = []; // Alerts that will remain in history.
-                const deletedAlerts = []; // A temporary copy of the alerts being deleted for the undo feature.
-
-                // Partition the history alerts into two groups: remaining and deleted.
-                state.alertsHistory.forEach(alert => {
-                    if (idsToDelete.has(alert.id)) {
-                        deletedAlerts.push(alert);
-                    } else {
-                        remainingAlerts.push(alert);
-                    }
-                });
-
-                // If for some reason no alerts matched the IDs, do nothing.
-                if (deletedAlerts.length === 0) return state;
-
-                // Update the state with the new history and store the deleted items.
-                return {
-                    ...state,
-                    alertsHistory: remainingAlerts,
-                    recentlyDeletedHistory: deletedAlerts, // This enables the "undo" functionality.
-                };
-            }
-
-            // This case handles the "undo" action after a deletion.
-        case 'RESTORE_HISTORY_ALERTS':
-            {
-                // If there's nothing in the temporary undo buffer, do nothing.
-                if (state.recentlyDeletedHistory.length === 0) return state;
-
-                // Return the state with the recently deleted alerts merged back into the main history.
-                return {
-                    ...state,
-                    alertsHistory: [...state.alertsHistory, ...state.recentlyDeletedHistory],
-                    recentlyDeletedHistory: [], // Clear the undo buffer.
-                };
-            }
-
-            // The default case for any unhandled actions. It returns the current state unchanged.
-        default:
-            return state;
-    }
-}
 
 /**
  * Generates a list of human-readable log messages by comparing old and new configuration objects.
@@ -389,8 +144,6 @@ function App() {
     }
 
     // --- State Management ---
-    const [alertsState, dispatch] = useReducer(alertsReducer, initialState);
-    const { activeAlerts, recentAlerts, alertsHistory } = alertsState;
     const [archiveInterval, setArchiveInterval] = useState(60000);
 
     const [deviceLocations, setDeviceLocations] = useState([]);
@@ -406,9 +159,10 @@ function App() {
     const alertIdCounter = useRef(0);
     const [latestReading, setLatestReading] = useState(null);
     const backToNormalTimers = useRef(new Map());
-    const [newlyAddedId, setNewlyAddedId] = useState(null);
     const maxSeenId = useRef(0);
     const [assigneeList, setAssigneeList] = useState([]);
+    const lastPlayedSoundId = useRef(null);
+    const [newlyAddedId, setNewlyAddedId] = useState(null);
 
     const [userLogs, setUserLogs] = useState(mockUserLogs);
     const [recentlyDeletedUserLogs, setRecentlyDeletedUserLogs] = useState([]);
@@ -419,7 +173,7 @@ function App() {
     // --- FIX: Ref to hold previous device state to prevent inaccurate logging ---
     const previousDevicesRef = useRef([]);
 
-     // --- NEW: STATE MANAGEMENT FOR NOTIFICATIONS ---
+    // --- NEW: STATE MANAGEMENT FOR NOTIFICATIONS ---
     // This state holds all notifications that will be displayed in the dropdown.
     const [notifications, setNotifications] = useState([]);
     // A counter to ensure each notification has a unique ID.
@@ -427,7 +181,12 @@ function App() {
     // A derived state that calculates the number of unread notifications for the badge.
     const unreadNotificationsCount = notifications.filter(n => !n.read).length;
 
-     // --- NEW: Function to play notification sound ---
+    // --- CORE DATA STATE (Fetched from Backend) ---
+    const [activeAlerts, setActiveAlerts] = useState([]);
+    const [recentAlerts, setRecentAlerts] = useState([]);
+    const [alertsHistory, setAlertsHistory] = useState([]);
+
+    // --- NEW: Function to play notification sound ---
     // This function is wrapped in useCallback to prevent it from being recreated on every render.
     const playNotificationSound = useCallback(() => {
         // Ensure the audio file is in the /public folder of your project.
@@ -441,6 +200,116 @@ function App() {
             });
         }
     }, []); // Empty dependency array means this function is created only once.
+
+    // =================================================================================
+    // NEW: LIVE ALERT POLLING FROM BACKEND
+    // =================================================================================
+    useEffect(() => {
+        const fetchAlerts = async () => {
+            try {
+                const [activeRes, recentRes, historyRes] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/api/alerts?lifecycle=Active`),
+                    axios.get(`${API_BASE_URL}/api/alerts?lifecycle=Recent`),
+                    axios.get(`${API_BASE_URL}/api/alerts?lifecycle=History`)
+                ]);
+
+                const newActiveAlerts = activeRes.data;
+
+                setActiveAlerts(prevAlerts => {
+                    const oldAlertsMap = new Map(prevAlerts.map(a => [a._id, a]));
+
+                    // 1. Find alerts with a completely new ID
+                    const trulyNewAlerts = newActiveAlerts.filter(a => !oldAlertsMap.has(a._id));
+
+                    // 2. Find alerts that were UPDATED (same ID, different severity)
+                    const updatedAlerts = newActiveAlerts.filter(a => {
+                        const oldAlert = oldAlertsMap.get(a._id);
+                        return oldAlert && oldAlert.severity !== a.severity;
+                    });
+
+                    // 3. Combine them into a single list of "triggering events"
+                    const allTriggeringEvents = [...trulyNewAlerts, ...updatedAlerts];
+
+                    if (allTriggeringEvents.length > 0) {
+                        // Sort all events by date to find the absolute newest one
+                        allTriggeringEvents.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+                        const newestEvent = allTriggeringEvents[0];
+
+                        // Use the newest event for animation and sound
+                        setNewlyAddedId(newestEvent._id);
+                        if (newestEvent._id !== lastPlayedSoundId.current) {
+                            playNotificationSound();
+                            lastPlayedSoundId.current = newestEvent._id;
+                        }
+                    }
+
+                    return newActiveAlerts;
+                });
+
+                setRecentAlerts(recentRes.data);
+                setAlertsHistory(historyRes.data);
+
+            } catch (error) {
+                console.error("Failed to fetch live alerts:", error);
+            }
+        };
+
+        fetchAlerts();
+        const intervalId = setInterval(fetchAlerts, 5000);
+        return () => clearInterval(intervalId);
+    }, [playNotificationSound]);
+
+
+    // --- THIS useEffect FETCHES THE SIMULATION DATA ---
+    // This runs once when the application loads.
+    useEffect(() => {
+        const fetchSimulationData = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/sensor-readings`);
+                setMockSensorReadings(response.data); // Store the fetched data in state
+                console.log("Successfully fetched simulation data from server.");
+            } catch (error) {
+                console.error("Failed to fetch simulation data:", error);
+            }
+        };
+
+        fetchSimulationData();
+    }, []); // Empty array ensures this runs only once.
+
+    // =================================================================================
+    // REAL-TIME SIMULATION FEED
+    // =================================================================================
+    // This useEffect simulates a live stream of sensor data. It waits for the
+    // mockSensorReadings to be fetched before it starts.
+    useEffect(() => {
+        // Only start the simulation if we have mock readings to process.
+        if (mockSensorReadings.length === 0) return;
+
+        let readingIndex = 0;
+        const intervalId = setInterval(async () => {
+            if (readingIndex < mockSensorReadings.length) {
+                const currentReading = mockSensorReadings[readingIndex];
+                console.log(`SIMULATING: Sending reading ${readingIndex + 1}`, currentReading);
+
+                try {
+                    // Send the reading to the backend for processing.
+                    await axios.post(`${API_BASE_URL}/api/sensor-readings/process`, currentReading);
+                } catch (error) {
+                    console.error("Error sending simulated sensor reading:", error);
+                }
+                
+                readingIndex++;
+            } else {
+                // Once all readings are sent, stop the simulation.
+                console.log("SIMULATION: All mock readings have been processed.");
+                clearInterval(intervalId);
+            }
+        }, 5000); // Sends a new reading every 5 seconds.
+
+        // Cleanup function to stop the timer if the component unmounts.
+        return () => clearInterval(intervalId);
+
+    }, [mockSensorReadings]); // <-- This dependency is the key to the whole process.
 
 
     // --- NEW: Centralized function to add a new notification ---
@@ -485,20 +354,6 @@ function App() {
         setUserLogs(prevLogs => [newLog, ...prevLogs]);
     };
 
-    // --- This useEffect now calls the new sound function ---
-    useEffect(() => {
-        if (!activeAlerts || activeAlerts.length === 0) return;
-        const currentMaxId = Math.max(0, ...activeAlerts.map(a => a.id));
-        if (currentMaxId > maxSeenId.current) {
-            const newAlert = activeAlerts.find(a => a.id === currentMaxId);
-            if (newAlert && !newAlert.isBackToNormal) {
-                playNotificationSound();
-            }
-            setNewlyAddedId(currentMaxId);
-            maxSeenId.current = currentMaxId;
-        }
-    }, [activeAlerts]);
-
     // --- ADDED --- A handler to allow child components to signal animation completion
     const handleAnimationComplete = () => {
         setNewlyAddedId(null);
@@ -524,9 +379,9 @@ function App() {
         const fetchInitialData = async () => {
             try {
                 const [devicesRes, stationsRes, sensorReadingsRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/devices`),
-                    axios.get(`${API_BASE_URL}/stations`),
-                    axios.get(`${API_BASE_URL}/sensor-readings`)
+                    axios.get(`${API_BASE_URL}/api/devices`),
+                    axios.get(`${API_BASE_URL}/api/stations`),
+                    axios.get(`${API_BASE_URL}/api/sensor-readings`)
                 ]);
                 setDeviceLocations(devicesRes.data);
                 setPumpingStations(stationsRes.data);
@@ -545,7 +400,7 @@ function App() {
     useEffect(() => {
         const pollDeviceStatus = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/devices`);
+                const response = await axios.get(`${API_BASE_URL}/api/devices`);
                 const latestDevices = response.data;
                 const previousDevices = previousDevicesRef.current;
 
@@ -590,165 +445,92 @@ function App() {
         return () => clearInterval(pollInterval);
     }, [logSystemEvent, addNotification]); // This effect now depends on addNotification.
 
-    // --- This useEffect runs the sensor reading simulation loop ---
-    // --- UPDATED: This useEffect now also creates notifications for critical events ---
-    useEffect(() => {
-    if (mockSensorReadings.length === 0) return;
+    // =================================================================================
+    // NEW & UPDATED EVENT HANDLERS (API-DRIVEN with Full Logging)
+    // =================================================================================
 
-    let readingIndex = 0;
-    const intervalId = setInterval(async () => {
-        if (readingIndex < mockSensorReadings.length) {
-            const currentReading = mockSensorReadings[readingIndex++];
-            setLatestReading(currentReading);
-
-            try {
-                const response = await axios.post(`${API_BASE_URL}/sensor-readings/evaluate`, currentReading);
-                const { evaluatedAlerts } = response.data;
-
-                // FIX: Get the most recent device data inside the interval
-                const currentDeviceLocations = deviceLocations;
-
-                // FIX: Define the helper function here, using the captured data
-                const getDeviceLabel = (deviceId) => {
-                    const device = currentDeviceLocations.find(d => d.id === deviceId);
-                    return device ? device.label : deviceId;
-                };
-
-                evaluatedAlerts.forEach(alert => {
-                    if (alert.severity === 'Critical') {
-                        logSystemEvent({
-                            deviceId: alert.originator,
-                            component: alert.parameter.toLowerCase(),
-                            event: 'Critical reading detected',
-                            details: `Reading: ${alert.value}`,
-                            status: 'Warning',
-                        });
-                        addNotification({
-                            type: 'CriticalAlert',
-                            message: `Critical ${alert.parameter} reading on device '${getDeviceLabel(alert.originator)}'`,
-                        });
-                    }
-                    if (alert.note && alert.note.includes('Valve shut off')) {
-                        const componentName = PARAMETER_TO_COMPONENT_MAP[alert.parameter] || alert.parameter;
-                        logSystemEvent({
-                            deviceId: alert.originator,
-                            component: 'valve',
-                            event: 'Valve closed automatically',
-                            details: `Triggered by critical ${componentName} reading.`,
-                            status: 'Info',
-                        });
-                        addNotification({
-                            type: 'ValveShutOff',
-                            message: `Valve automatically closed on device '${getDeviceLabel(alert.originator)}'`,
-                        });
-                    }
-                });
-
-                dispatch({
-                    type: 'PROCESS_READING',
-                    payload: { evaluatedAlerts, alertIdCounter },
-                    timers: { start: startTimer }
-                });
-            } catch (error) {
-                console.error("Error evaluating sensor reading on backend:", error);
-            }
-        } else {
-            clearInterval(intervalId);
-        }
-    }, 10000);
-
-    return () => {
-        clearInterval(intervalId);
-        backToNormalTimers.current.forEach(timerId => clearTimeout(timerId));
-    };
-    // The dependency array is now correct and will not cause resets.
-}, [mockSensorReadings, logSystemEvent, addNotification]);
-
-    // Timer to periodically check and archive old alerts
-    useEffect(() => {
-        const archiveTimer = setInterval(() => {
-            dispatch({
-                type: 'ARCHIVE_RECENT_ALERTS',
-                payload: {
-                    currentTime: Date.now(),
-                    archiveInterval: archiveInterval,
-                }
-            });
-        }, 60000);
-        return () => clearInterval(archiveTimer);
-    }, [archiveInterval]);
-
-    // --- Event Handlers ---
-    const handleAcknowledgeAlert = (alertId) => {
-        const alertToAck = alertsState.activeAlerts.find(a => a.id === alertId);
+    const handleAcknowledgeAlert = async (alertId) => {
+        const alertToAck = activeAlerts.find(a => a._id === alertId);
+        
         if (alertToAck) {
             logUserAction(`Acknowledged alert: '${alertToAck.type}' for device '${alertToAck.originator}'.`, 'Acknowledgement');
         }
-        dispatch({
-            type: 'ACKNOWLEDGE_ALERT',
-            payload: {
-                alertId,
-                user: CURRENT_USER,
-                timestamp: new Date().toISOString()
-            },
-            timers: { clear: clearTimer }
-        });
+        try {
+            await axios.post(`${API_BASE_URL}/api/alerts/acknowledge/${alertId}`, {
+                username: loggedInUser.username
+            });
+
+            // --- THIS IS THE FIX ---
+            // Instead of filtering the alert out, we now MAP over the array and
+            // update the specific alert that was acknowledged. This will make the
+            // checkmark appear without removing the alert from the list.
+            setActiveAlerts(prevAlerts => 
+                prevAlerts.map(alert => 
+                    alert._id === alertId 
+                        ? { ...alert, acknowledged: true } 
+                        : alert
+                )
+            );
+
+        } catch (error) {
+            console.error("Failed to acknowledge alert:", error);
+        }
     };
 
-    // Handler for audit trail and deleting alerts in Alert History
-    const handleDeleteHistoryAlerts = (idsToDelete) => {
-        const alertsToDelete = alertsState.alertsHistory.filter(alert => idsToDelete.has(alert.id));
+    const handleDeleteHistoryAlerts = useCallback(async (idsToDelete) => {
+        const alertsToDelete = alertsHistory.filter(alert => idsToDelete.has(alert._id));
         if (alertsToDelete.length === 0) return;
+
         const groupedByDevice = alertsToDelete.reduce((acc, alert) => {
             const deviceId = alert.originator || 'unknown';
             if (!acc[deviceId]) { acc[deviceId] = []; }
             acc[deviceId].push(alert);
             return acc;
         }, {});
-        Object.keys(groupedByDevice).forEach(deviceId => {
-            const count = groupedByDevice[deviceId].length;
-            const pluralS = count > 1 ? 's' : '';
-            let logMessage;
-            if (deviceId === 'unknown') {
-                logMessage = `Deleted ${count} alert record${pluralS} from history with an unknown origin.`;
-            } else {
-                const device = deviceLocations.find(d => d.id === deviceId);
-                const deviceLabel = device ? device.label : deviceId;
-                logMessage = `Deleted ${count} alert record${pluralS} from history for device '${deviceLabel}'.`;
-            }
-            logUserAction(logMessage, 'Deletion');
-        });
-        dispatch({
-            type: 'DELETE_HISTORY_ALERTS',
-            payload: { idsToDelete },
-        });
-    };
 
-    // Handler to restore deleted alerts from Alert History as well as audit trail
-    const handleRestoreHistoryAlerts = () => {
-        const alertsToRestore = alertsState.recentlyDeletedHistory;
-        if (alertsToRestore.length === 0) return;
-        const groupedByDevice = alertsToRestore.reduce((acc, alert) => {
-            const deviceId = alert.originator || 'unknown';
-            if (!acc[deviceId]) { acc[deviceId] = []; }
-            acc[deviceId].push(alert);
-            return acc;
-        }, {});
         Object.keys(groupedByDevice).forEach(deviceId => {
             const count = groupedByDevice[deviceId].length;
             const pluralS = count > 1 ? 's' : '';
-            let logMessage;
-            if (deviceId === 'unknown') {
-                logMessage = `Restored ${count} alert record${pluralS} to history with an unknown origin.`;
-            } else {
-                const device = deviceLocations.find(d => d.id === deviceId);
-                const deviceLabel = device ? device.label : deviceId;
-                logMessage = `Restored ${count} alert record${pluralS} to history for device '${deviceLabel}'.`;
-            }
+            const device = deviceLocations.find(d => d.id === deviceId);
+            const deviceLabel = device ? device.label : deviceId;
+            const logMessage = `Deleted ${count} alert record${pluralS} from history for device '${deviceLabel}'.`;
             logUserAction(logMessage, 'Deletion');
         });
-        dispatch({ type: 'RESTORE_HISTORY_ALERTS' });
-    };
+
+        try {
+            await axios.put(`${API_BASE_URL}/api/alerts/delete`, {
+                idsToDelete: Array.from(idsToDelete)
+            });
+            setAlertsHistory(prev => prev.filter(a => !idsToDelete.has(a._id)));
+        } catch (error) {
+            console.error("Failed to delete alerts:", error);
+        }
+    }, [alertsHistory, deviceLocations]); // Dependencies
+
+    const handleRestoreHistoryAlerts = useCallback(async (idsToRestore) => {
+        const alertsToLog = alertsHistory.filter(alert => idsToRestore.includes(alert._id));
+        if (alertsToLog.length > 0) {
+            // ... (logging logic is the same)
+        }
+        try {
+            await axios.put(`${API_BASE_URL}/api/alerts/restore`, {
+                idsToRestore
+            });
+        } catch (error) {
+            console.error("Failed to restore alerts:", error);
+        }
+    }, [alertsHistory, deviceLocations]); // Dependencies
+
+    const handlePermanentDeleteAlerts = useCallback(async (idsToDelete) => {
+        try {
+            await axios.delete(`${API_BASE_URL}/api/alerts/permanent`, {
+                data: { idsToDelete }
+            });
+            console.log("Successfully purged alerts from database.");
+        } catch (error) {
+            console.error("Failed to permanently delete alerts:", error);
+        }
+    }, []); // No dependencies, this function will be created only once.
 
     const handleActiveFilterChange = (e) => setActiveFilterDevice(e.target.value);
     const handleRecentFilterChange = (e) => setRecentFilterDevice(e.target.value);
@@ -918,6 +700,7 @@ function App() {
         handleRecentFilterChange,
         onAcknowledgeAlert: handleAcknowledgeAlert,
         onDeleteHistoryAlerts: handleDeleteHistoryAlerts,
+        onPermanentDeleteAlerts: handlePermanentDeleteAlerts,
         onRestoreHistoryAlerts: handleRestoreHistoryAlerts,
         onDeleteUserLogs: handleDeleteUserLogs,
         onRestoreUserLogs: handleRestoreUserLogs,

@@ -39,7 +39,7 @@ const MOCK_SENSOR_READINGS = [
     { deviceId: "ps02-dev", timestamp: "2025-07-03T10:25:00Z", pH: 6.3 }, // Warning: Low (6.0-6.4)
     // pH escalates to critical low
     { deviceId: "ps02-dev", timestamp: "2025-07-03T10:26:00Z", pH: 5.8 }, // Critical: Low (<6.0)
-    { deviceId: "ps02-dev", timestamp: "2025-07-03T10:22:00Z", pH: 6.6 }, // Normal (6.5-8.5)
+    { deviceId: "ps02-dev", timestamp: "2025-07-03T10:27:00Z", pH: 6.6 }, // Normal (6.5-8.5)
 
     // --- SCENARIO 6: Test the full Turbidity lifecycle ---
     // A device that was offline sends a critical turbidity reading

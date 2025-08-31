@@ -3,6 +3,8 @@ const express = require("express");
 require("dotenv").config();
 const connectDB = require("./config/db"); // Assuming this is the path to your file
 const createDefaultUser = require("./utils/createDefaultUser");
+const cron = require('node-cron');
+const Alert = require('./models/Alert');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -28,5 +30,38 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
+// --- AUTOMATED ALERT MANAGEMENT ---
+console.log('⏰ Scheduling automated alert management jobs...');
+
+// Job 1: Auto-clear "Back to Normal" alerts after 1 minutes
+// Runs every 30 seconds to check for alerts to clear.
+cron.schedule('*/30 * * * * *', async () => {
+    const cutoff = new Date(Date.now() - 1 * 60 * 1000); // 1 minutes ago
+    try {
+        await Alert.updateMany(
+            // Find active, "back to normal" alerts older than 2 minutes
+            { lifecycle: 'Active', isBackToNormal: true, dateTime: { $lte: cutoff } },
+            // Move them to Recent and mark as Cleared
+            { $set: { lifecycle: 'Recent', status: 'Cleared' } }
+        );
+    } catch (error) {
+        console.error('Cron Job Error (Clear Normals):', error);
+    }
+});
+
+// Job 2: Archive "Recent" alerts to "History" after 5 minutes
+// Runs every minute to check for alerts to archive.
+cron.schedule('* * * * *', async () => {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes ago
+    try {
+        await Alert.updateMany(
+            { lifecycle: 'Recent', dateTime: { $lte: cutoff } },
+            { $set: { lifecycle: 'History' } }
+        );
+    } catch (error) {
+        console.error('Cron Job Error (Archive Recents):', error);
+    }
+});
 
 startServer();

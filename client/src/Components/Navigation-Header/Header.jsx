@@ -1,11 +1,11 @@
 // Components/Navigation-Header/Header.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bell, Settings, LogOut, ChevronRight, Logs, ShieldUser } from 'lucide-react';
-import styles from '../../Styles/Nav-Head-Style/Header.module.css'; // Assuming this is the correct path
-import ProfilePic from '../../assets/ProfilePic.png'; // Assuming this is the correct path
-import Logo from '../../assets/Logo.png'; // Assuming this is the correct path
+import styles from '../../Styles/Nav-Head-Style/Header.module.css'; 
+import Logo from '../../assets/Logo.png'; 
 import Notifications from './Notifications'; // The separate notifications component
+import AlertsContext from '../../utils/AlertsContext';
 
 function Header({
     onLogout,
@@ -18,6 +18,7 @@ function Header({
 }) {
     const navigate = useNavigate();
     const location = useLocation();
+    const { loggedInUser } = useContext(AlertsContext);
     const [subTitle, setSubTitle] = useState('WaterGuard');
 
     // -This logic dynamically sets the subtitle based on the current page ---
@@ -92,6 +93,7 @@ function Header({
         setOpen(false);
     }
 
+    const profilePicToShow = loggedInUser?.profileImage || `https://placehold.co/128x128/4f46e5/ffffff?text=${loggedInUser?.username ? loggedInUser.username.charAt(0).toUpperCase() : '?'}`;
 
     return (
         <header className={styles.appHeader}>
@@ -121,7 +123,7 @@ function Header({
                 {/* --- User dropdown menu with full functionality --- */}
                 <div className={styles.headerDropdown} ref={userMenuRef}>
                     <button className={styles.userBtn} onClick={toggleMenu}>
-                        <img className={styles.profileImg} src={ProfilePic} alt="Profile" />
+                        <img className={styles.profileImg} src={profilePicToShow} alt="Profile" />
                         <p>{username} {open ? '⏶' : '⏷'}</p>
                     </button>
                     <div className={`${styles.dropdownMenu} ${open ? styles.show : ''}`}>

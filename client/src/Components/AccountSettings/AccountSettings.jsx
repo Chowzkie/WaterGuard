@@ -121,7 +121,8 @@ const AccountSettings = () => {
             }
         });
     
-        fetchUserProfile();
+        onUserUpdate(response.data.user)
+        setCurrentUser(response.data.user)
         setSuccessMessage("Profile picture updated successfully!");
 
         } catch (error) {

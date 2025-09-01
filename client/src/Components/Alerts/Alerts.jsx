@@ -42,9 +42,17 @@ const Alerts = () => {
 
     // --- MODIFIED ---
     // Filter the alert lists based on the selected device before rendering.
-    const filteredActiveAlerts = viewedDeviceId ? activeAlerts.filter(a => a.originator === viewedDeviceId) : activeAlerts;
-    const filteredRecentAlerts = viewedDeviceId ? recentAlerts.filter(r => r.originator === viewedDeviceId) : recentAlerts;
-    const filteredHistoryAlerts = viewedDeviceId ? alertsHistory.filter(h => h.originator === viewedDeviceId) : alertsHistory;
+    const filteredActiveAlerts = viewedDeviceId 
+    ? activeAlerts.filter(a => a.originator.toLowerCase() === viewedDeviceId.toLowerCase()) 
+    : activeAlerts;
+
+    const filteredRecentAlerts = viewedDeviceId 
+    ? recentAlerts.filter(r => r.originator.toLowerCase() === viewedDeviceId.toLowerCase()) 
+    : recentAlerts;
+
+    const filteredHistoryAlerts = viewedDeviceId 
+    ? alertsHistory.filter(h => h.originator.toLowerCase() === viewedDeviceId.toLowerCase()) 
+    : alertsHistory;
 
 
     const renderActiveComponent = () => {

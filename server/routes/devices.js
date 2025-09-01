@@ -6,7 +6,7 @@ const FAKE_API_DATA = require("../mockData/devices");
 // Simulate devices going offline/online
 const devicesForcedOffline = new Set();
 setInterval(() => {
-  if (Math.random() < 0.2) {
+  if (Math.random() < 0.1) {
     const deviceIndex = Math.floor(Math.random() * FAKE_API_DATA.length);
     const device = FAKE_API_DATA[deviceIndex];
     if (device.status === "Online" && !devicesForcedOffline.has(device.id)) {
@@ -21,7 +21,7 @@ setInterval(() => {
       }, 30000 + Math.random() * 30000);
     }
   }
-}, 15000);
+}, 30000);
 
 // --- Routes ---
 router.get("/", (req, res) => {

@@ -35,7 +35,8 @@ exports.loginUser = async (req, res) => {
         const payload = { 
             userID: user.id,
             username: user.username,
-            name: user.name
+            name: user.name,
+            profileImage: user.profileImage
         };
         // Sign the token. It will expire in 24 hours.
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });

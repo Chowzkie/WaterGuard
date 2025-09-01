@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import Axios
 import { jwtDecode } from 'jwt-decode'
 import './App.css';
@@ -24,6 +24,7 @@ import {
     FIELD_UNIT_MAP, 
     USER_FIELD_MAP 
 } from './utils/logMaps';
+import { Beaker } from 'lucide-react';
 
 // =================================================================================
 // SIMULATED CURRENT USER
@@ -105,41 +106,77 @@ function App() {
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
 
 
+    //// State for the currently logged-in user
+    // Initialize from localStorage if available
     const [loggedInUser, setLoggedInUser] = useState(() => {
-        const token = localStorage.getItem("token");
-        try{
-            return token? jwtDecode(token) : null
-        }catch (e) {
-            console.error("invalid token in localstorage", e)
-            localStorage.removeItem("token")
-            return null
-        }
+        const savedUser = localStorage.getItem("user");
+        return savedUser? JSON.parse(savedUser) : null;
     });
 
-    const isAuthenticated = loggedInUser ? true : false;
+    useEffect(() => {
+        //fetch the user details into the backend
+        const fetchUserProfile = async() => {
+            const token = localStorage.getItem("token");
+            if(!token) return;
 
+            try{
+                // Fetch user profile using token
+                const response = await axios.get(`${API_BASE_URL}/auth/user`, {
+                    headers: {Authorization: `Bearer ${token}`}
+                });
+                // Update state and localStorage with new fetched data
+                setLoggedInUser(response.data)
+                localStorage.setItem("user", JSON.stringify(response.data))
+            }catch (error) {
+                console.log("failed to fetch user profile", error);
+                // If unauthorized, clear session
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    setLoggedInUser(null);
+                } else {
+                    // Fallback to stored user if available
+                    const storedUser = localStorage.getItem("user");
+                    if(storedUser){
+                        setLoggedInUser(JSON.parse(storedUser))
+                    }
+                }
+            }
+        }
+        // call the function
+        fetchUserProfile();
+    }, [])
+    // Check if a user is authenticated
+    const isAuthenticated = loggedInUser ? true : false;
+    // Called after successful login with JWT token
     const handleLogin = (token) => { // Expect the JWT token from the Login component
     try {
         const decodedUser = jwtDecode(token);
         localStorage.setItem("token", token); // Store the token, not the user object
+        localStorage.setItem("user", JSON.stringify(decodedUser)) // store the decoded user in localstorage
         setLoggedInUser(decodedUser); // Set the state with the decoded user object
         console.log("App.jsx - handleLogin: User logged in, decoded user object:", decodedUser);
     } catch (e) {
         console.error("Failed to decode token", e);
-        // Handle invalid token case, e.g., show an error message.
+        // Handle invalid token case
     }
     };
 
+    const navigate = useNavigate();
+
     const handleLogout = () => {
+        // Clear state and localStorage
         setLoggedInUser(null);
         localStorage.removeItem('token'); // Clear user data
-        Navigate("/login")
+        localStorage.removeItem("user")
+        navigate("/login")
         console.log("App.jsx - handleLogout: User logged out.");
     };
 
-    //Update the username in Header if the user updated the user in AccountSettings
+    // Update user data after profile changes
     const handleUserUpdate = (updatedUserData) => {
         setLoggedInUser(updatedUserData);
+        localStorage.setItem("user", JSON.stringify(updatedUserData))
         console.log("App.jsx user updated to", updatedUserData);
     }
 

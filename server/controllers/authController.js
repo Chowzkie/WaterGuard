@@ -1,15 +1,25 @@
 // server/controllers/authController.js
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User");
+const UserLogModel = require("../models/UserLogs");
 const jwt = require("jsonwebtoken"); 
 const { validateUsername, validateContact, validateName, validatePassword } = require( "../validator/userValidator");
 const cloudinary = require("../config/cloudinaryConfig")
 const fs = require("fs")
 
 
-// Generate a secret key for signing your JWTs. It's a best practice to
-// store this in your .env file.
+// store this in .env file. Temporary key only
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
+
+//Helper for creating a UserLog
+const createLog = async (userID, action, type = "Account") => {
+    await UserLogModel.create({
+        userID,
+        action,
+        type
+    });
+};
+
 
 // Login User
 exports.loginUser = async (req, res) => {
@@ -50,6 +60,9 @@ exports.loginUser = async (req, res) => {
             contact: user.contact
         };
 
+        // call the helper to store the log after successful login
+        await createLog(user._id, `User ${user.username} logged in`, "Login")
+
         res.json({
             message: "Login successful",
             token, // Send the token
@@ -61,6 +74,25 @@ exports.loginUser = async (req, res) => {
         res.status(500).json({ message: "Server error during login" });
     }
 };
+
+exports.logoutUser = async (req, res) => {
+  try {
+    const userId = req.userID; // or from token if you decode it
+
+    if (!userId) return res.status(400).json({ msg: "User ID required" });
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    await createLog(user._id, `User ${user.username} logged out`, "Account");
+
+    res.json({ msg: "Logout successful" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+}
 
 // Get the user into database
 // This function needs a middleware to work.
@@ -99,9 +131,14 @@ exports.updateName = async (req, res) => {
         if (name === user.name) {
             return res.status(200).json({ message: "Name is already up to date." });
         }
-
+        
+        const oldname = user.name
         user.name = name;
+
+        //Saving data to the DB
         await user.save();
+        //Call the helper for changing 
+        await createLog(userID, `Changed name fron ${oldname} to ${name}`)
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
@@ -140,8 +177,12 @@ exports.updateUsername = async (req, res) => {
             return res.status(409).json({ message: "Username is already taken." });
         }
 
+        const oldUsername = user.username
         user.username = username;
+         // Saving the data to the DB
         await user.save();
+        // call the helper for changing
+        await createLog(userID, `Changed username from ${oldUsername} to ${username}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
@@ -180,8 +221,11 @@ exports.updateContact = async (req, res) => {
             return res.status(409).json({ message: "Contact number is already taken." });
         }
 
+        const oldContact = user.contact;
         user.contact = contact;
+        //call the helper for changing
         await user.save();
+        await createLog(userID, `Changed contact from ${oldContact} to ${contact}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
@@ -220,6 +264,9 @@ exports.updatePassword = async(req,res) => {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt)
         await user.save()
+        
+        //Calls helper for password change
+        await createLog(userID, `Changed password`);
 
         return res.status(200).json({ message: "Password updated successfully." });
 
@@ -268,6 +315,8 @@ exports.uploadProfileImage = async (req, res) => {
             console.log(`User not found with ID: ${userId}`);
             return res.status(404).json({ message: 'User not found' });
         }
+
+        await createLog(userId, `Updated profile image`);
 
         console.log("User document updated successfully.");
         res.status(200).json({

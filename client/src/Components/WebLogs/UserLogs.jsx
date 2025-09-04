@@ -3,9 +3,83 @@ import Style from '../../Styles/LogsStyle/UserLogs.module.css';
 import { ListFilter, Download, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
 import axios from 'axios';
 
+//Base URL of the Backend
 const API_BASE_URL = 'http://localhost:8080/api';
 
-function UserLogs({ onDelete, onRestore }) {
+//Main container component for userlogs page and handle all the data fetching
+function UserLogs() {
+    //States 
+    const [logs, setLogs] = useState([]); // Hold the log fetched
+    const [loading, setLoading] = useState(true); // Loading status whhen fetchiing data
+    const [lastDeletedLogs, setLastDeletedLogs] = useState([]); //use to temporarily store the deleted userlogs
+
+    //function to fetched user logs from the database
+    useEffect(() => {
+        const fetchUserLogs = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/logs/userlogs`); //make get request to get the data into the database
+                setLogs(response.data.map(log => ({ ...log, id: log._id }))); // Update the logs state with the fetched data, adding a local 'id' field for keying.
+            } catch (error) {
+                console.error("Error fetching user logs:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUserLogs();
+    }, []);
+
+    //Function for deleting the logs
+    const handleDeleteLogs = async (idsToDelete) => {
+        const idsArray = Array.from(idsToDelete);
+
+        try {
+            // Store the full log objects of the items that will be deleted.
+            const logsToRestore = logs.filter(log => idsArray.includes(log.id));
+            setLastDeletedLogs(logsToRestore);
+
+            const logsToKeep = logs.filter(log => !idsArray.includes(log.id));
+            setLogs(logsToKeep);
+
+            // Make a POST request to the backend with the array of IDs.
+            await axios.post(`${API_BASE_URL}/logs/delete`, { ids: idsArray });
+            
+        } catch (error) {
+            console.error("Error deleting logs:", error);
+            // Revert the UI state if the API call fails.
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]);
+            // Clear the undo state since the delete failed.
+            setLastDeletedLogs([]);
+        }
+    };
+
+    // Function to restore logs
+    const handleRestoreLogs = async () => {
+        // Do nothing if there are no logs to restore.
+        if (lastDeletedLogs.length === 0) return;
+
+        try {
+            // Make a POST request to the backend to restore the logs.
+            await axios.post(`${API_BASE_URL}/logs/restore`, { logs: lastDeletedLogs });
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]); // Add the restored logs back to the main logs state.
+            setLastDeletedLogs([]); // Clear the temporary restore state.
+        } catch (error) {
+            console.error("Error restoring logs:", error);
+            const response = await axios.get(`${API_BASE_URL}/logs/userlogs`); // Re-fetch all logs from the backend to ensure data consistency in case of failure.
+            setLogs(response.data.map(log => ({ ...log, id: log._id })));
+        }
+    };
+    // Render the presentational component, passing down data and functions as props.
+    return (
+        <UserLogsContent 
+            logs={logs}
+            loading={loading}
+            onDelete={handleDeleteLogs}
+            onRestore={handleRestoreLogs}
+        />
+    );
+}
+
+function UserLogsContent({ logs, loading, onDelete, onRestore }) {
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
@@ -23,27 +97,13 @@ function UserLogs({ onDelete, onRestore }) {
 
     const [expandedLogId, setExpandedLogId] = useState(null);
 
-    const[logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchUserLogs = async () => {
-            try{
-                const response = await axios.get(`${API_BASE_URL}/logs/userlogs`)
-                setLogs(response.data.map(log => ({...log, id: log._id}))) // set the id returned by the backend into "id"
-            }catch(error){
-                console.error(error);
-            }finally{
-                setLoading(false);
-            }
-        };
-        fetchUserLogs();
-    }, []);
-
-
     const filterPanelRef = useRef(null);
     const undoTimerRef = useRef(null);
 
+    /**
+     * useMemo hook to efficiently filter and sort the logs based on the current filters.
+     * This prevents re-calculation unless 'logs' or 'filters' change.
+     */
     const filteredDisplayLogs = useMemo(() => {
         let logsToFilter = [...logs];
 
@@ -70,12 +130,14 @@ function UserLogs({ onDelete, onRestore }) {
         return logsToFilter.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }, [logs, filters]);
 
+    // Funtion to reset the draft filters
     useEffect(() => {
         if (isFilterOpen) {
             setDraftFilters(filters);
         }
     }, [isFilterOpen, filters]);
 
+    //function to show the undo toast hides in 10sec
     useEffect(() => {
         if (showUndoToast) {
             undoTimerRef.current = setTimeout(() => {
@@ -239,7 +301,7 @@ function UserLogs({ onDelete, onRestore }) {
                                     <label className={Style['filter-label']}>Category</label>
                                     <div className={Style['filter-control']}>
                                         <div className={Style['pill-group']}>
-                                            {['Configuration', 'Admin', 'Account', 'Deletion', 'Acknowledgement', 'Valve', 'Maintenance'].map(category => (
+                                            {['Configuration', 'Login', 'Logout', 'Account', 'Deletion', 'Acknowledgement', 'Valve', 'Maintenance'].map(category => (
                                                 <button
                                                     key={category}
                                                     onClick={() => handlePillSelect('category', category)}

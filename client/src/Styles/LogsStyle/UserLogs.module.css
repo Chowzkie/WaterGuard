@@ -528,7 +528,7 @@
 
 /* Add an 'auto' column at the end for the checkbox */
 .select-delete-grid {
-    grid-template-columns: 1.6fr 1.2fr 1.2fr 1.2fr 2.8fr auto;
+    grid-template-columns: 1.6fr 1.2fr 2.8fr auto;
 }
 
 .checkbox-cell-header,

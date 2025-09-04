@@ -367,7 +367,7 @@
 /* --- Table Structure --- */
 .tableHeader {
     display: grid;
-    grid-template-columns: 1.6fr 1.2fr 1.2fr 1.2fr 2.8fr;
+    grid-template-columns: 1.6fr 1.2fr 2.8fr;
     background-color: #f8f9fa;
     padding: 0 20px;
     font-weight: 600;
@@ -391,7 +391,7 @@
 
 .tableRow {
     display: grid;
-    grid-template-columns: 1.6fr 1.2fr 1.2fr 1.2fr 2.8fr;
+    grid-template-columns: 1.6fr 1.2fr 2.8fr;
     padding: 8px 20px;
     border-bottom: 1px solid #eee;
     align-items: center;
@@ -745,12 +745,13 @@
     border: 1px solid transparent;
 }
 
-.type-configuration { background-color: #d1e7dd; color: #0f5132; border-color: #a3cfbb; }
-.type-admin { background-color: #f8d7da; color: #842029; border-color: #f5c2c7; }
-.type-account { background-color: #cff4fc; color: #055160; border-color: #b6effb; }
-.type-deletion { background-color: #e2e3e5; color: #41464b; border-color: #d3d6d8; }
-.type-acknowledgement { background-color: #fff3cd; color: #664d03; border-color: #ffecb5; }
-.type-valve { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+.type-configuration { background-color: #e9f7f0; color: #146c43; border-color: #b6e0c6; }
+.type-login { background-color: #e6f9f1; color: #237a57; border-color: #b8e8d2; }
+.type-logout { background-color: #fdecea; color: #c62828; border-color: #f5c2c0; }
+.type-account { background-color: #e6f7fb; color: #055160; border-color: #b6e0ed; }
+.type-deletion { background-color: #f4f5f6; color: #495057; border-color: #d3d6d8; }
+.type-acknowledgement { background-color: #fff9e6; color: #8a6d1a; border-color: #ffeaa7; }
+.type-valve { background-color: #eef4ff; color: #1d4ed8; border-color: #bfdbfe; }
 
 /* --- Responsive adjustments --- */
 @media (max-width: 768px) {

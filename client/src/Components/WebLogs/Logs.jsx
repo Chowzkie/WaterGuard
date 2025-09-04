@@ -59,7 +59,6 @@ function Logs() {
                 }
                 {activeTab === 'user' &&
                     <UserLogs
-                        logs={userLogs || []}
                         onDelete={onDeleteUserLogs}
                         onRestore={onRestoreUserLogs}
                     />

@@ -85,7 +85,7 @@ exports.logoutUser = async (req, res) => {
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    await createLog(user._id, `User ${user.username} logged out`, "Account");
+    await createLog(user._id, `User ${user.username} logged out`, "Logout");
 
     res.json({ msg: "Logout successful" });
   } catch (err) {

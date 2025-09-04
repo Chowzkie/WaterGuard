@@ -752,6 +752,7 @@
 .type-deletion { background-color: #f4f5f6; color: #495057; border-color: #d3d6d8; }
 .type-acknowledgement { background-color: #fff9e6; color: #8a6d1a; border-color: #ffeaa7; }
 .type-valve { background-color: #eef4ff; color: #1d4ed8; border-color: #bfdbfe; }
+.type-maintenance { background-color: #fef3f2; color: #b91c1c; border-color: #fca5a5; }
 
 /* --- Responsive adjustments --- */
 @media (max-width: 768px) {
@@ -880,8 +881,6 @@
   }
 }
 
-/* --- NEW: Style for Maintenance log type --- */
-.type-maintenance { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
 
 /* --- NEW: Styles for clickable rows and details panel (adapted from AlertsHistory) --- */
 .clickable-row {

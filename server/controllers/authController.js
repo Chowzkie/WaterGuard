@@ -1,24 +1,16 @@
 // server/controllers/authController.js
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User");
-const UserLogModel = require("../models/UserLogs");
 const jwt = require("jsonwebtoken"); 
 const { validateUsername, validateContact, validateName, validatePassword } = require( "../validator/userValidator");
 const cloudinary = require("../config/cloudinaryConfig")
 const fs = require("fs")
+const {createUserlog} = require('../helpers/createUserlog')
 
 
 // store this in .env file. Temporary key only
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
-//Helper for creating a UserLog
-const createLog = async (userID, action, type = "Account") => {
-    await UserLogModel.create({
-        userID,
-        action,
-        type
-    });
-};
 
 
 // Login User
@@ -61,7 +53,7 @@ exports.loginUser = async (req, res) => {
         };
 
         // call the helper to store the log after successful login
-        await createLog(user._id, `User ${user.username} logged in`, "Login")
+        await createUserlog(user._id, `User ${user.username} logged in`, "Login")
 
         res.json({
             message: "Login successful",
@@ -85,7 +77,7 @@ exports.logoutUser = async (req, res) => {
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    await createLog(user._id, `User ${user.username} logged out`, "Logout");
+    await createUserlog(user._id, `User ${user.username} logged out`, "Logout");
 
     res.json({ msg: "Logout successful" });
   } catch (err) {
@@ -138,7 +130,7 @@ exports.updateName = async (req, res) => {
         //Saving data to the DB
         await user.save();
         //Call the helper for changing 
-        await createLog(userID, `Changed name fron ${oldname} to ${name}`)
+        await createUserlog(userID, `Changed name fron ${oldname} to ${name}`)
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
@@ -182,7 +174,7 @@ exports.updateUsername = async (req, res) => {
          // Saving the data to the DB
         await user.save();
         // call the helper for changing
-        await createLog(userID, `Changed username from ${oldUsername} to ${username}`);
+        await createUserlog(userID, `Changed username from ${oldUsername} to ${username}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
@@ -225,7 +217,7 @@ exports.updateContact = async (req, res) => {
         user.contact = contact;
         //call the helper for changing
         await user.save();
-        await createLog(userID, `Changed contact from ${oldContact} to ${contact}`);
+        await createUserlog(userID, `Changed contact from ${oldContact} to ${contact}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
@@ -266,7 +258,7 @@ exports.updatePassword = async(req,res) => {
         await user.save()
         
         //Calls helper for password change
-        await createLog(userID, `Changed password`);
+        await createUserlog(userID, `Changed password`);
 
         return res.status(200).json({ message: "Password updated successfully." });
 
@@ -316,7 +308,7 @@ exports.uploadProfileImage = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        await createLog(userId, `Updated profile image`);
+        await createUserlog(userId, `Updated profile image`);
 
         console.log("User document updated successfully.");
         res.status(200).json({

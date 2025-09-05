@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
 import { ListFilter, Download, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
+import {formatDateTime} from '../../utils/formatDateTime'
 import axios from 'axios';
 
 //Base URL of the Backend
@@ -220,13 +221,6 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
     const applyFilters = () => { setFilters(draftFilters); setIsFilterOpen(false); };
     const clearFilters = () => { setDraftFilters({ startDate: '', endDate: '', category: [] }); };
 
-    const formatDateTime = (dateTimeStr) => {
-        if (!dateTimeStr) return '–';
-        const date = new Date(dateTimeStr);
-        if (isNaN(date.getTime())) return 'Invalid Date';
-        const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-        return date.toLocaleString('en-US', options);
-    };
 
     const getTypeStyle = (logType) => {
         switch (logType) {

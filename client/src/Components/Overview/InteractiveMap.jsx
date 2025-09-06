@@ -20,7 +20,7 @@ const MapFocusController = ({ devices, selectedDeviceId, refocusTrigger }) => {
   useEffect(() => {
     if (!devices) return;
     if (selectedDeviceId && selectedDeviceId !== 'all') {
-      const device = devices.find(d => d.id === selectedDeviceId);
+      const device = devices.find(d => d._id === selectedDeviceId);
       if (device) map.flyTo(device.position, 16, { animate: true, duration: 1.0 });
     } else if (devices.length > 0) {
       const bounds = L.latLngBounds(devices.map(d => d.position));
@@ -62,11 +62,11 @@ const DeviceInfoModal = ({ device, onClose }) => (
                 <button onClick={onClose} className="modal-close-button"><X size={20} /></button>
             </div>
             <div className="info-modal-body">
-                <div className="info-row"><strong>Device ID:</strong><span>{device.id}</span></div>
+                <div className="info-row"><strong>Device ID:</strong><span>{device._id}</span></div>
                 <div className="info-row"><strong>Label:</strong><span>{device.label}</span></div>
                 <div className="info-row"><strong>Position:</strong><span>{`${device.position[0]}, ${device.position[1]}`}</span></div>
                 <div className="info-row"><strong>Address:</strong><span>{device.location}</span></div>
-                <div className="info-row"><strong>Status:</strong><span className={`status-text ${device.status.toLowerCase()}`}>{device.status}</span></div>
+                <div className="info-row"><strong>Status:</strong><span className={`status-text ${device.currentState.status.toLowerCase()}`}>{device.currentState.status}</span></div>
             </div>
         </div>
     </div>
@@ -102,7 +102,7 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
         }
     }, [existingDevices]); // This runs only when the component is first rendered
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const num = parseInt(number, 10);
         const newLabel = `PS0${num}-DEV`;
@@ -122,15 +122,27 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
         if (isNaN(latNum) || isNaN(lngNum) || latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
             setValidationError("Latitude must be -90 to 90, and Longitude -180 to 180."); return;
         }
-        
-        onAddDevice({
-            id: (newLabel.toLowerCase()),
-            label: newLabel,
-            position: [latNum, lngNum],
-            location: address,
-            status: 'Online'
-        });
-        onCancel();
+
+            try {
+            // This now calls the API-connected function in App.jsx
+            await onAddDevice({
+                // The object we send to the backend
+                _id: `PS${String(num).padStart(2, '0')}-DEV`.toLowerCase(),
+                label: `PS${String(num).padStart(2, '0')}-DEV`,
+                position: [parseFloat(lat), parseFloat(lng)],
+                location: address
+            });
+            onCancel(); // Close modal on success
+        } catch (error) {
+            // If onAddDevice throws an error, we catch it here
+            if (error.response && error.response.status === 409) {
+                // 409 is the "Conflict" status we set for duplicate devices
+                setValidationError(error.response.data.message);
+            } else {
+                // For any other errors
+                setValidationError("An unexpected error occurred. Please try again.");
+            }
+        }
     };
 
     return (
@@ -197,7 +209,7 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
     };
     
     const confirmDelete = () => {
-        onDeleteDevice(deviceToDelete.id);
+        onDeleteDevice(deviceToDelete._id);
         setDeviceToDelete(null);
     };
     
@@ -223,13 +235,13 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
                     <div className="sidebar-content">
                         <div className="sidebar-device-list">
                             {devices && devices.map(device => (
-                                <div key={device.id} className="sidebar-device-item">
-                                    <button className="device-name-button" onClick={() => handleSelectAndCloseSidebar(device.id)}>{device.label}</button>
-                                    <div className="kebab-menu-container" ref={activeKebabMenu === device.id ? kebabMenuRef : null}>
-                                        <button className="kebab-menu-button" onClick={() => setActiveKebabMenu(activeKebabMenu === device.id ? null : device.id)}>
+                                <div key={device._id} className="sidebar-device-item">
+                                    <button className="device-name-button" onClick={() => handleSelectAndCloseSidebar(device._id)}>{device.label}</button>
+                                    <div className="kebab-menu-container" ref={activeKebabMenu === device._id ? kebabMenuRef : null}>
+                                        <button className="kebab-menu-button" onClick={() => setActiveKebabMenu(activeKebabMenu === device._id ? null : device._id)}>
                                             <MoreVertical size={18} />
                                         </button>
-                                        {activeKebabMenu === device.id && (
+                                        {activeKebabMenu === device._id && (
                                             <div className="kebab-menu-options">
                                                 <button onClick={() => { setDeviceToShowInfo(device); setActiveKebabMenu(null); }}><Info size={14}/> Info</button>
                                                 <button className="delete-option" onClick={() => { setDeviceToDelete(device); setActiveKebabMenu(null); }}><Trash2 size={14}/> Delete</button>
@@ -240,14 +252,14 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
                             ))}
                         </div>
                         <div className="sidebar-footer">
-                            <button className="add-device-button" onClick={() => setIsAddModalOpen(true)}><Plus size={16} /> Add New Pin</button>
+                            <button className="add-device-button" onClick={() => setIsAddModalOpen(true)}><Plus size={16} /> Add New Device </button>
                         </div>
                     </div>
                 </div>
                 <MapContainer center={[15.61, 120.6]} zoom={13} scrollWheelZoom={true} zoomControl={false}>
                     <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <ZoomControl position="topright" />
-                    {devices && devices.map(device => <Marker key={device.id} position={device.position} icon={createCustomIcon(device.label, device.status)} eventHandlers={{ click: () => handleRedirect(device.id) }} />)}
+                    {devices && devices.map(device => <Marker key={device._id} position={device.position} icon={createCustomIcon(device.label, device.currentState.status)} eventHandlers={{ click: () => handleRedirect(device._id) }} />)}
                     <MapFocusController devices={devices} selectedDeviceId={selectedDeviceId} refocusTrigger={refocusTrigger} />
                 </MapContainer>
             </div>

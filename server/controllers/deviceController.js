@@ -1,0 +1,103 @@
+const Device = require('../models/Device');
+
+/**
+ * @desc    Create a new device
+ * @route   POST /api/devices
+ * @access  Private
+ */
+const createDevice = async (req, res) => {
+  try {
+    // Destructure the required fields from the request body
+    const { _id, label, location, position } = req.body;
+
+    // --- Validation: Check if a device with this ID already exists ---
+    const existingDevice = await Device.findById(_id);
+    if (existingDevice) {
+      // 409 Conflict is the appropriate status code for a duplicate resource
+      return res.status(409).json({ message: `Device with ID ${_id} already exists.` });
+    }
+
+    // Create a new device instance. The default values from the schema will be applied automatically.
+    const newDevice = new Device({
+      _id,
+      label,
+      location,
+      position,
+    });
+
+    // Save the new device to the database
+    const savedDevice = await newDevice.save();
+
+    // Respond with the newly created device data and a 201 Created status
+    res.status(201).json(savedDevice);
+
+  } catch (error) {
+    console.error('Error creating device:', error);
+    res.status(500).json({ message: 'Server error while creating device.' });
+  }
+};
+
+/**
+ * @desc    Delete a device
+ * @route   DELETE /api/devices/:id
+ * @access  Private
+ */
+const deleteDevice = async (req, res) => {
+  try {
+    const deviceId = req.params.id;
+
+    // --- Validation: Check if the device exists before trying to delete ---
+    const device = await Device.findById(deviceId);
+    if (!device) {
+      return res.status(404).json({ message: 'Device not found.' });
+    }
+
+    // Remove the device from the database
+    await device.deleteOne(); // Use deleteOne() on the document instance
+
+    res.status(200).json({ message: `Device ${deviceId} successfully deleted.` });
+
+  } catch (error) {
+    console.error('Error deleting device:', error);
+    res.status(500).json({ message: 'Server error while deleting device.' });
+  }
+};
+
+/**
+ * @desc    Update a device's configurations
+ * @route   PUT /api/devices/:deviceId/configurations
+ * @access  Private
+ */
+const updateDeviceConfiguration = async (req, res) => {
+    try {
+        const { deviceId } = req.params;
+        const newConfigs = req.body; // This is the full configurations object from the frontend
+
+        // Find the device by its ID and update its 'configurations' field.
+        // { new: true } ensures the updated document is returned to the frontend.
+        const updatedDevice = await Device.findByIdAndUpdate(
+            deviceId,
+            { $set: { configurations: newConfigs } }, // Use $set to replace the entire field
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedDevice) {
+            return res.status(404).json({ message: "Device not found." });
+        }
+
+        res.status(200).json({
+            message: "Configuration updated successfully",
+            updatedDevice: updatedDevice, // Send the updated device back
+        });
+
+    } catch (error) {
+        console.error('Error updating configuration:', error);
+        res.status(500).json({ message: 'Server error while updating configuration', error: error.message });
+    }
+};
+
+module.exports = {
+  createDevice,
+  deleteDevice,
+  updateDeviceConfiguration,
+};

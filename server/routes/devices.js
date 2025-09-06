@@ -1,48 +1,46 @@
 const express = require("express");
 const router = express.Router();
 
-const FAKE_API_DATA = require("../mockData/devices");
+// Import the database model and controller functions
+const Device = require('../models/Device');
+const { createDevice, deleteDevice, updateDeviceConfiguration } = require('../controllers/deviceController');
 
-// Simulate devices going offline/online
-const devicesForcedOffline = new Set();
-setInterval(() => {
-  if (Math.random() < 0.1) {
-    const deviceIndex = Math.floor(Math.random() * FAKE_API_DATA.length);
-    const device = FAKE_API_DATA[deviceIndex];
-    if (device.status === "Online" && !devicesForcedOffline.has(device.id)) {
-      device.status = "Offline";
-      devicesForcedOffline.add(device.id);
-      console.log(`Simulated Event: Device '${device.id}' taken OFFLINE.`);
+// =================================================================================
+// --- DATABASE-DRIVEN ROUTES ---
+// =================================================================================
 
-      setTimeout(() => {
-        device.status = "Online";
-        devicesForcedOffline.delete(device.id);
-        console.log(`Simulated Event: Device '${device.id}' brought back ONLINE.`);
-      }, 30000 + Math.random() * 30000);
-    }
-  }
-}, 30000);
-
-// --- Routes ---
-router.get("/", (req, res) => {
-  res.json(FAKE_API_DATA);
-});
-
-router.put("/:deviceId/configurations", (req, res) => {
-  const deviceId = req.params.deviceId;
-  const newConfigs = req.body;
-
-  const deviceIndex = FAKE_API_DATA.findIndex(d => d.id === deviceId);
-  if (deviceIndex !== -1) {
-    FAKE_API_DATA[deviceIndex].configurations = newConfigs;
-    console.log(`Configurations updated for ${deviceId}:`, newConfigs);
-    res.status(200).json({
-      message: "Configuration updated successfully",
-      updatedDevice: FAKE_API_DATA[deviceIndex],
-    });
-  } else {
-    res.status(404).json({ message: "Device not found" });
+/**
+ * @desc    Fetch all devices from the database
+ * @route   GET /api/devices
+ */
+router.get("/", async (req, res) => {
+  try {
+    const devices = await Device.find({});
+    res.json(devices);
+  } catch (error) {
+    console.error('Error fetching devices:', error);
+    res.status(500).json({ message: 'Server error while fetching devices.' });
   }
 });
+
+/**
+ * @desc    Create a new device
+ * @route   POST /api/devices
+ */
+router.post('/', createDevice);
+
+/**
+ * @desc    Delete a device by its ID
+ * @route   DELETE /api/devices/:id
+ */
+router.delete('/:id', deleteDevice);
+
+
+/**
+ * @desc    Update a device's configurations
+ * @route   PUT /api/devices/:deviceId/configurations
+ */
+// AFTER
+router.put("/:deviceId/configurations", updateDeviceConfiguration);
 
 module.exports = router;

@@ -3,16 +3,14 @@ import React from 'react';
 import ReadingsStyle from '../../Styles/Readings.module.css';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import {WifiOff} from 'lucide-react'
+import { WifiOff } from 'lucide-react';
 import NoDevicesFound from '../NoDevFound/noDevicesFound';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const ReadingCard = ({ title, value, min, max, unit, color, status ,selectedDevice }) => {
+const ReadingCard = ({ title, value, min, max, unit, color, status, selectedDeviceId }) => {
+    const displayDeviceID = selectedDeviceId ? selectedDeviceId.toUpperCase() : '';
 
-  const displayDeviceID=selectedDevice.toUpperCase(); // convert the id into uppercase
-
-    // Conditional rendering for offline status
     if (status === 'Offline') {
         return (
             <div className={ReadingsStyle['offline-readings']}>
@@ -20,7 +18,6 @@ const ReadingCard = ({ title, value, min, max, unit, color, status ,selectedDevi
                     <div className={ReadingsStyle['icon-wrapper']}>
                         <WifiOff size={50} />
                     </div>
-                    {/* selectedDevice here is the ID (e.g., 'ps03-dev'), not the label */}
                     <h4>{displayDeviceID} is offline</h4>
                     <p>No available readings for {title} <br />at this moment</p>
                 </div>
@@ -74,10 +71,8 @@ const ReadingCard = ({ title, value, min, max, unit, color, status ,selectedDevi
     );
 };
 
-const Readings = ({ selectedDevice, device, deviceStatus}) => { // 'device' here is actually the selectedDevice object from Dashboard
-    // This check is for the 'device' prop, which is the 'selectedDevice' object from Dashboard.
-    // So, if selectedDevice is null or its 'readings' array is empty, this will trigger.
-    if (!selectedDevice || selectedDevice.readings.length === 0) { // Check if selectedDevice is valid and has readings
+const Readings = ({ selectedDevice, deviceStatus }) => {
+    if (!selectedDevice || !selectedDevice.readings || selectedDevice.readings.length === 0) {
         return (
             <div className={ReadingsStyle["no-device"]}>
                 <NoDevicesFound/>
@@ -96,8 +91,8 @@ const Readings = ({ selectedDevice, device, deviceStatus}) => { // 'device' here
                     max={reading.max}
                     unit={reading.unit}
                     color={reading.color}
-                    status={deviceStatus} // This prop comes from Dashboard, it's the status of the selected device
-                    selectedDevice={selectedDevice.id} // This is the device ID (e.g., 'ps01-dev')
+                    status={deviceStatus}
+                    selectedDeviceId={selectedDevice.id}
                 />
             ))}
         </div>
@@ -105,3 +100,4 @@ const Readings = ({ selectedDevice, device, deviceStatus}) => { // 'device' here
 };
 
 export default Readings;
+

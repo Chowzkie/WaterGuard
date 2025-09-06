@@ -17,7 +17,7 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
-import { userLogs as mockUserLogs, mockSystemLogs } from './utils/LogsMockUp';
+import { mockSystemLogs } from './utils/LogsMockUp';
 import { 
     PARAMETER_TO_COMPONENT_MAP, 
     FIELD_NAME_MAP, 
@@ -201,7 +201,6 @@ function App() {
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
 
-    const [userLogs, setUserLogs] = useState(mockUserLogs);
     const [recentlyDeletedUserLogs, setRecentlyDeletedUserLogs] = useState([]);
 
     const [systemLogs, setSystemLogs] = useState(mockSystemLogs); 
@@ -376,20 +375,7 @@ function App() {
     }, []);
 
 
-    // --- Backend-ready function to add a new user log entry ---
-    // --- MODIFIED: The function now accepts an optional 'details' object ---
-    const logUserAction = (actionText, type, details = null) => {
-        const newLog = {
-            id: Date.now() + Math.random(), // Use a more unique ID
-            dateTime: new Date().toISOString(),
-            username: CURRENT_USER.username,
-            fullname: CURRENT_USER.fullname,
-            action: actionText,
-            type: type,
-            details: details, // Attach the details object to the log
-        };
-        setUserLogs(prevLogs => [newLog, ...prevLogs]);
-    };
+
 
     // --- ADDED --- A handler to allow child components to signal animation completion
     const handleAnimationComplete = () => {
@@ -761,7 +747,6 @@ function App() {
         newlyAddedId,
         onAnimationComplete: handleAnimationComplete,
         onSaveConfiguration: handleSaveConfiguration,
-        userLogs,
         onValveToggle: handleValveToggle,
         // --- Provide systemLogs to the context ---
         systemLogs,

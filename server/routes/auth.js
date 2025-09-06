@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware'); // New: Import t
 const upload = require("../middleware/imageUpload")
 
 router.post("/login", authController.loginUser);
+router.post("/logout", authMiddleware, authController.logoutUser);
 
 //Use the middleware to protect the route
 router.get("/user", authMiddleware, authController.getUser);

@@ -2,11 +2,14 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bell, Settings, LogOut, ChevronRight, Logs, ShieldUser } from 'lucide-react';
+import axios from 'axios';
 import styles from '../../Styles/Nav-Head-Style/Header.module.css'; 
 import Logo from '../../assets/Logo.png'; 
 import Notifications from './Notifications'; // The separate notifications component
 import AlertsContext from '../../utils/AlertsContext';
 
+
+const API_BBASE_URL = "http://localhost:8080/api"
 function Header({
     onLogout,
     deviceLabelForHeader,
@@ -80,10 +83,22 @@ function Header({
 
 
     // --- RESTORED: Navigation handlers for the user dropdown menu ---
-    const handleLogout = () => {
-        onLogout();
-        navigate('/login');
+    const handleLogout = async() => {
+        try{
+
+            await axios.post(`${API_BBASE_URL}/auth/logout`,
+                {},
+                {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}`}
+            })
+
+            onLogout();
+            navigate('/login');
+        }catch(error){
+            console.log("Logout error", error);
+        }
     };
+    
     const handleAccountSettings = () => {
         navigate('/account-settings');
         setOpen(false);

@@ -1,68 +1,113 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
-import { ListFilter, Download, X, ChevronDown, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { ListFilter, Download, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
+import {formatDateTime} from '../../utils/formatDateTime'
+import axios from 'axios';
 
-/**
- * UserLogs Component: Displays user activity logs with filtering and deletion capabilities.
- * @param {object[]} logs - An array of log objects to display.
- * @param {function} onDelete - A function passed from the parent to handle the deletion of logs.
- * @param {function} onRestore - A function passed from the parent to handle restoring deleted logs.
- */
-function UserLogs({ logs, onDelete, onRestore }) {
-    // --- STATE MANAGEMENT ---
-    // State for the currently applied filters
+//Base URL of the Backend
+const API_BASE_URL = 'http://localhost:8080/api';
+
+//Main container component for userlogs page and handle all the data fetching
+function UserLogs() {
+    //States 
+    const [logs, setLogs] = useState([]); // Hold the log fetched
+    const [loading, setLoading] = useState(true); // Loading status whhen fetchiing data
+    const [lastDeletedLogs, setLastDeletedLogs] = useState([]); //use to temporarily store the deleted userlogs
+
+    //function to fetched user logs from the database
+    useEffect(() => {
+        const fetchUserLogs = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/logs/userlogs`); //make get request to get the data into the database
+                setLogs(response.data.map(log => ({ ...log, id: log._id }))); // Update the logs state with the fetched data, adding a local 'id' field for keying.
+            } catch (error) {
+                console.error("Error fetching user logs:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUserLogs();
+    }, []);
+
+    //Function for deleting the logs
+    const handleDeleteLogs = async (idsToDelete) => {
+        const idsArray = Array.from(idsToDelete);
+
+        try {
+            // Store the full log objects of the items that will be deleted.
+            const logsToRestore = logs.filter(log => idsArray.includes(log.id));
+            setLastDeletedLogs(logsToRestore);
+
+            const logsToKeep = logs.filter(log => !idsArray.includes(log.id));
+            setLogs(logsToKeep);
+
+            // Make a POST request to the backend with the array of IDs.
+            await axios.post(`${API_BASE_URL}/logs/delete`, { ids: idsArray });
+            
+        } catch (error) {
+            console.error("Error deleting logs:", error);
+            // Revert the UI state if the API call fails.
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]);
+            // Clear the undo state since the delete failed.
+            setLastDeletedLogs([]);
+        }
+    };
+
+    // Function to restore logs
+    const handleRestoreLogs = async () => {
+        // Do nothing if there are no logs to restore.
+        if (lastDeletedLogs.length === 0) return;
+
+        try {
+            // Make a POST request to the backend to restore the logs.
+            await axios.post(`${API_BASE_URL}/logs/restore`, { logs: lastDeletedLogs });
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]); // Add the restored logs back to the main logs state.
+            setLastDeletedLogs([]); // Clear the temporary restore state.
+        } catch (error) {
+            console.error("Error restoring logs:", error);
+            const response = await axios.get(`${API_BASE_URL}/logs/userlogs`); // Re-fetch all logs from the backend to ensure data consistency in case of failure.
+            setLogs(response.data.map(log => ({ ...log, id: log._id })));
+        }
+    };
+    // Render the presentational component, passing down data and functions as props.
+    return (
+        <UserLogsContent 
+            logs={logs}
+            loading={loading}
+            onDelete={handleDeleteLogs}
+            onRestore={handleRestoreLogs}
+        />
+    );
+}
+
+function UserLogsContent({ logs, loading, onDelete, onRestore }) {
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
         category: [],
-        username: [],
     });
 
-    // State for filters being edited in the filter panel, but not yet applied
     const [draftFilters, setDraftFilters] = useState(filters);
-    // State to control the visibility of the filter panel
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    // State for the search term within the username dropdown
-    const [usernameSearchTerm, setUsernameSearchTerm] = useState('');
-    // State to control the visibility of the username dropdown
-    const [isUsernameDropdownOpen, setIsUsernameDropdownOpen] = useState(false);
-
-    // --- NEW: State for the entire delete workflow ---
-    // Controls the delete UI. Can be 'off', 'all' (for deleting all filtered items), or 'select'
     const [deleteMode, setDeleteMode] = useState('off');
-    // An array holding the IDs of the logs selected for deletion
     const [selectedToDelete, setSelectedToDelete] = useState([]);
-    // State to control the visibility of the "Are you sure?" confirmation modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    // State to control the visibility of the "Undo" toast notification
     const [showUndoToast, setShowUndoToast] = useState(false);
-    // --- FIX: State to store the count of the last deletion, ensuring the toast shows the correct number ---
     const [lastDeletedCount, setLastDeletedCount] = useState(0);
 
-    const [expandedLogId, setExpandedLogId] = useState(null); // NEW: For details panel
+    const [expandedLogId, setExpandedLogId] = useState(null);
 
-    // --- REFS ---
-    // Refs to detect clicks outside of the filter panel and dropdowns to close them
     const filterPanelRef = useRef(null);
-    const usernameDropdownRef = useRef(null);
-    // Ref to manage the 10-second timer for the undo toast
     const undoTimerRef = useRef(null);
 
-    // --- MEMOIZED VALUES (for performance) ---
-    // Creates a sorted list of unique usernames for the filter dropdown.
-    // This only recalculates when the main 'logs' prop changes.
-    const uniqueUsernames = useMemo(() => {
-        const usernames = new Set(logs.map(log => log.username));
-        return Array.from(usernames).sort();
-    }, [logs]);
-
-    // --- BUG FIX: The filtering logic is rewritten to be more robust and explicit ---
+    /**
+     * useMemo hook to efficiently filter and sort the logs based on the current filters.
+     * This prevents re-calculation unless 'logs' or 'filters' change.
+     */
     const filteredDisplayLogs = useMemo(() => {
-        // Start with the full list of logs
         let logsToFilter = [...logs];
 
-        // Apply date range filter
         const { startDate, endDate } = filters;
         if (startDate || endDate) {
             const start = startDate ? new Date(startDate) : null;
@@ -72,65 +117,34 @@ function UserLogs({ logs, onDelete, onRestore }) {
 
             logsToFilter = logsToFilter.filter(log => {
                 const logDate = new Date(log.dateTime);
-                // Exclude log if it's before the start date
                 if (start && logDate < start) return false;
-                // Exclude log if it's after the end date
                 if (end && logDate > end) return false;
-                // Otherwise, include it
                 return true;
             });
         }
 
-        // Apply username filter
-        const { username } = filters;
-        if (username.length > 0) {
-            logsToFilter = logsToFilter.filter(log => username.includes(log.username));
-        }
-
-        // Apply category filter
         const { category } = filters;
         if (category.length > 0) {
-            // This ensures that only logs whose 'type' is in the selected category array are kept.
             logsToFilter = logsToFilter.filter(log => log.type && category.includes(log.type));
         }
 
-        // Finally, sort the remaining logs by date
         return logsToFilter.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }, [logs, filters]);
 
-
-    // --- LIFECYCLE EFFECTS ---
-    // Effect to sync draft filters with active filters when the panel is opened
+    // Funtion to reset the draft filters
     useEffect(() => {
         if (isFilterOpen) {
             setDraftFilters(filters);
         }
     }, [isFilterOpen, filters]);
 
-    // Effect to handle clicks outside of pop-up elements to close them
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (filterPanelRef.current && !filterPanelRef.current.contains(event.target) && !event.target.closest(`.${Style['menu']}`)) {
-                setIsFilterOpen(false);
-            }
-            if (usernameDropdownRef.current && !usernameDropdownRef.current.contains(event.target)) {
-                setIsUsernameDropdownOpen(false);
-                setUsernameSearchTerm('');
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    // --- NEW: Effect to manage the 10-second timer for the Undo toast ---
+    //function to show the undo toast hides in 10sec
     useEffect(() => {
         if (showUndoToast) {
-            // Set a timer to hide the toast after 10 seconds
             undoTimerRef.current = setTimeout(() => {
                 setShowUndoToast(false);
             }, 10000);
         }
-        // Cleanup function to clear the timer if the component unmounts or toast is closed early
         return () => {
             if (undoTimerRef.current) {
                 clearTimeout(undoTimerRef.current);
@@ -138,18 +152,11 @@ function UserLogs({ logs, onDelete, onRestore }) {
         };
     }, [showUndoToast]);
 
-
-    // --- EVENT HANDLERS ---
-
-    // --- NEW: Handlers for the entire delete functionality ---
-
-    // Toggles the delete mode UI on and off
     const handleToggleDeleteMode = () => {
-        setDeleteMode(prev => (prev === 'off' ? 'all' : 'off')); // Default to 'all' mode when turning on
-        setSelectedToDelete([]); // Always reset selection when toggling
+        setDeleteMode(prev => (prev === 'off' ? 'all' : 'off'));
+        setSelectedToDelete([]);
     };
 
-    // Handles checking or unchecking a single log's checkbox
     const handleCheckboxChange = (logId) => {
         const newSelection = new Set(selectedToDelete);
         if (newSelection.has(logId)) {
@@ -160,7 +167,6 @@ function UserLogs({ logs, onDelete, onRestore }) {
         setSelectedToDelete(Array.from(newSelection));
     };
 
-    // Handles the "select all" checkbox in the table header
     const handleSelectAll = (e) => {
         if (e.target.checked) {
             setSelectedToDelete(filteredDisplayLogs.map(log => log.id));
@@ -169,7 +175,6 @@ function UserLogs({ logs, onDelete, onRestore }) {
         }
     };
 
-    // Shows the confirmation modal when the main "Delete" button is clicked
     const handleDeleteClick = () => {
         const hasSelection = (deleteMode === 'all' && filteredDisplayLogs.length > 0) || (deleteMode === 'select' && selectedToDelete.length > 0);
         if (hasSelection) {
@@ -177,36 +182,27 @@ function UserLogs({ logs, onDelete, onRestore }) {
         }
     };
 
-    // Called when the user confirms the deletion in the modal
     const handleConfirmDelete = () => {
-        // Determine which IDs to delete based on the current mode
         const idsToDelete = deleteMode === 'all'
             ? new Set(filteredDisplayLogs.map(log => log.id))
             : new Set(selectedToDelete);
 
-        // --- FIX: Store the count of deleted items *before* they are removed ---
         setLastDeletedCount(idsToDelete.size);
-        // Call the parent handler to perform the deletion
         onDelete(idsToDelete);
 
-        // Reset the UI and show the undo toast
         setShowConfirmModal(false);
         setDeleteMode('off');
         setSelectedToDelete([]);
         setShowUndoToast(true);
     };
 
-    // Called when the "Undo" button is clicked on the toast
     const handleUndo = () => {
-        onRestore(); // Call the parent handler to restore the logs
-        setShowUndoToast(false); // Hide the toast
-        // Clear the timer to prevent it from running again
+        onRestore();
+        setShowUndoToast(false);
         if (undoTimerRef.current) {
             clearTimeout(undoTimerRef.current);
         }
     };
-
-    // --- Existing handlers for the filter functionality ---
 
     const handleDateChange = (e) => { setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value })); };
     
@@ -222,55 +218,25 @@ function UserLogs({ logs, onDelete, onRestore }) {
         });
     };
 
-    const handleUsernameSelect = (username) => {
-        setDraftFilters(prev => {
-            const currentUsers = new Set(prev.username);
-            if (currentUsers.has(username)) {
-                currentUsers.delete(username);
-            } else {
-                currentUsers.add(username);
-            }
-            return { ...prev, username: Array.from(currentUsers) };
-        });
-        setUsernameSearchTerm('');
-    };
     const applyFilters = () => { setFilters(draftFilters); setIsFilterOpen(false); };
-    const clearFilters = () => { setDraftFilters({ startDate: '', endDate: '', category: [], username: [] }); setUsernameSearchTerm(''); };
+    const clearFilters = () => { setDraftFilters({ startDate: '', endDate: '', category: [] }); };
 
-    // --- HELPER FUNCTIONS ---
 
-    // --- FIX: A more robust function to format date/time strings ---
-    const formatDateTime = (dateTimeStr) => {
-        if (!dateTimeStr) return '–'; // Return a dash if the date string is missing
-        const date = new Date(dateTimeStr);
-        if (isNaN(date.getTime())) return 'Invalid Date'; // Handle invalid date values
-        const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-        return date.toLocaleString('en-US', options);
-    };
-
-    /**
-     * --- NEW: Helper function to get the CSS class for a log type ---
-     * This function returns a specific CSS class based on the log's type,
-     * allowing for unique color-coding for each category.
-     * @param {string} logType - The 'type' property of the log object.
-     * @returns {string} The corresponding CSS class name from the module.
-     */
     const getTypeStyle = (logType) => {
         switch (logType) {
             case 'Configuration': return Style['type-configuration'];
-            case 'Admin': return Style['type-admin'];
+            case 'Login': return Style['type-login'];
+            case 'Logout': return Style['type-logout']
             case 'Account': return Style['type-account'];
             case 'Deletion': return Style['type-deletion'];
             case 'Acknowledgement': return Style['type-acknowledgement'];
             case 'Valve': return Style['type-valve'];
-            case 'Maintenance': return Style['type-maintenance']; // NEW TYPE
-            default: return ''; // Return no specific class if type is unknown
+            case 'Maintenance': return Style['type-maintenance'];
+            default: return '';
         }
     };
     
-     // --- NEW: Handler to toggle the expanded/collapsed state of a log row ---
     const handleRowClick = (log) => {
-        // Only allow expanding if the log is a Maintenance type and has details
         if (log.type === 'Maintenance' && log.details) {
             setExpandedLogId(prevId => (prevId === log.id ? null : log.id));
         }
@@ -281,15 +247,12 @@ function UserLogs({ logs, onDelete, onRestore }) {
             <div className={Style['tableTitle']}>
                 <p>User Logs</p>
                 <div className={Style['icons']}>
-                    {/* Conditionally render either the normal icons or the delete mode UI */}
                     {deleteMode !== 'off' ? (
                         <div className={Style['delete-controls']}>
-                            {/* The slider to switch between deleting all filtered or selecting specific ones */}
                             <div className={Style['delete-slider']}>
                                 <button onClick={() => { setDeleteMode('all'); setSelectedToDelete([]); }} className={deleteMode === 'all' ? Style.active : ''}>Delete All Filtered</button>
                                 <button onClick={() => setDeleteMode('select')} className={deleteMode === 'select' ? Style.active : ''}>Select to Delete</button>
                             </div>
-                            {/* Text showing the number of selected logs */}
                             <span>
                                 {deleteMode === 'all' ? filteredDisplayLogs.length : selectedToDelete.length} selected
                             </span>
@@ -307,7 +270,7 @@ function UserLogs({ logs, onDelete, onRestore }) {
                             </div>
                         </>
                     )}
-                    {/* --- FIX: The full filter panel JSX is now included --- */}
+
                     {isFilterOpen && (
                         <div className={Style['filter-panel']} ref={filterPanelRef}>
                             <div className={Style['filter-header']}>
@@ -317,7 +280,6 @@ function UserLogs({ logs, onDelete, onRestore }) {
                                 </button>
                             </div>
                             <div className={Style['filter-body']}>
-                                {/* Date Range Filter */}
                                 <div className={Style['filter-row']}>
                                     <label className={Style['filter-label']}>Date Range</label>
                                     <div className={Style['filter-control']}>
@@ -329,12 +291,11 @@ function UserLogs({ logs, onDelete, onRestore }) {
                                     </div>
                                 </div>
 
-                                {/* Category Filter */}
                                 <div className={Style['filter-row']}>
                                     <label className={Style['filter-label']}>Category</label>
                                     <div className={Style['filter-control']}>
                                         <div className={Style['pill-group']}>
-                                            {['Configuration', 'Admin', 'Account', 'Deletion', 'Acknowledgement', 'Valve', 'Maintenance'].map(category => (
+                                            {['Configuration', 'Login', 'Logout', 'Account', 'Deletion', 'Acknowledgement', 'Valve', 'Maintenance'].map(category => (
                                                 <button
                                                     key={category}
                                                     onClick={() => handlePillSelect('category', category)}
@@ -347,70 +308,8 @@ function UserLogs({ logs, onDelete, onRestore }) {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Username Filter */}
-                                <div className={Style['filter-row']} ref={usernameDropdownRef}>
-                                    <label className={Style['filter-label']}>Username</label>
-                                    <div className={Style['filter-control']}>
-                                        <div className={`${Style['custom-dropdown']} ${isUsernameDropdownOpen ? Style['open'] : ''}`} onClick={() => setIsUsernameDropdownOpen(o => !o)}>
-                                            <div className={Style['dropdown-header']}>
-                                                {draftFilters.username.length > 0 ? (
-                                                    <div className={Style['selected-pills-summary']}>
-                                                        {draftFilters.username.map(username => (
-                                                            <span key={username} className={Style['summary-pill']}>{username}</span>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <span>Any Username</span>
-                                                )}
-                                                <ChevronDown size={16} className={Style['dropdown-chevron']} />
-                                            </div>
-                                            {isUsernameDropdownOpen && (
-                                                <div className={Style['type-dropdown-list']}>
-                                                    <div className={Style['search-input-wrapper']}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Search Usernames..."
-                                                            className={Style['dropdown-search-input']}
-                                                            value={usernameSearchTerm}
-                                                            onChange={(e) => { e.stopPropagation(); setUsernameSearchTerm(e.target.value); }}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            autoFocus
-                                                        />
-                                                    </div>
-                                                    <div className={Style['selected-pills-display']}>
-                                                        {draftFilters.username.length > 0 && <div className={Style['selected-header']}>Selected:</div>}
-                                                        {draftFilters.username.map(username => (
-                                                            <div key={`selected-${username}`} className={Style['type-pill-dropdown']}>
-                                                                <span>{username}</span>
-                                                                <button onClick={(e) => { e.stopPropagation(); handleUsernameSelect(username); }}><X size={12}/></button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    {draftFilters.username.length > 0 && <hr className={Style['dropdown-separator']} />}
-                                                    <div className={Style['available-items-scroll']}>
-                                                        {uniqueUsernames
-                                                            .filter(username =>
-                                                                username.toLowerCase().includes(usernameSearchTerm.toLowerCase()) &&
-                                                                !draftFilters.username.includes(username)
-                                                            )
-                                                            .map(username => (
-                                                                <div key={username} className={Style['type-dropdown-item']} onClick={(e) => { e.stopPropagation(); handleUsernameSelect(username); }}>
-                                                                    {username}
-                                                                </div>
-                                                            ))}
-                                                        {uniqueUsernames.filter(username => username.toLowerCase().includes(usernameSearchTerm.toLowerCase()) && !draftFilters.username.includes(username)).length === 0 && (
-                                                            <div className={Style['no-results']}>No matching Usernames</div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div className={Style['filter-footer']}>
-                                {/* This onClick handler fixes the "unused function" issue */}
                                 <button className={Style['clear-btn']} onClick={clearFilters}>Reset</button>
                                 <button className={Style['apply-btn']} onClick={applyFilters}>Apply</button>
                             </div>
@@ -419,14 +318,10 @@ function UserLogs({ logs, onDelete, onRestore }) {
                 </div>
             </div>
 
-            {/* The table header now conditionally adds a class to change its grid layout */}
             <div className={`${Style['tableHeader']} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''}`}>
                 <div className={Style['headerItem']}>Date & Time</div>
-                <div className={Style['headerItem']}>Username</div>
-                <div className={Style['headerItem']}>Fullname</div>
                 <div className={Style['headerItem']}>Type</div>
                 <div className={Style['headerItem']}>Action</div>
-                {/* The "select all" checkbox is only rendered in select mode */}
                 {deleteMode === 'select' && (
                     <div className={Style['checkbox-cell-header']}>
                         <label className={Style['custom-checkbox-container']}>
@@ -443,72 +338,72 @@ function UserLogs({ logs, onDelete, onRestore }) {
             </div>
             
             <div className={Style['tableBody']}>
-                {filteredDisplayLogs.length > 0 ? (
+                {loading ? (
+                    <div className={Style['loading']}>Loading user logs...</div>
+                ) : filteredDisplayLogs.length > 0 ? (
                     filteredDisplayLogs.map((log) => {
-                        // --- NEW: Constants for details panel ---
-                        const hasDetails = log.type === 'Maintenance' && log.details;
-                        const isExpanded = expandedLogId === log.id;
+                    const hasDetails = log.type === 'Maintenance' && log.details;
+                    const isExpanded = expandedLogId === log.id;
 
-                        return (
-                            <React.Fragment key={log.id}>
-                                <div 
-                                    className={`${Style['tableRow']} ${hasDetails ? Style['clickable-row'] : ''} ${isExpanded ? Style['expanded-row'] : ''} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
-                                    onClick={() => handleRowClick(log)}
-                                >
-                                    <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                                    <div className={Style['tableCell']} data-label="Username">{log.username}</div>
-                                    <div className={Style['tableCell']} data-label="Fullname">{log.fullname}</div>
-                                    <div className={Style['tableCell']} data-label="Type">
-                                        <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
-                                            {log.type}
-                                        </span>
-                                    </div>
-                                    <div className={Style['tableCell']} data-label="Action">{log.action}</div>
-                                    {deleteMode === 'select' && (
-                                        <div className={Style['checkbox-cell']}>
-                                            <label className={Style['custom-checkbox-container']}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedToDelete.includes(log.id)}
-                                                    onChange={() => handleCheckboxChange(log.id)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                                <span className={Style['checkmark']}></span>
-                                            </label>
-                                        </div>
-                                    )}
+                    return (
+                        <React.Fragment key={log.id}>
+                        <div 
+                            className={`${Style['tableRow']} ${hasDetails ? Style['clickable-row'] : ''} ${isExpanded ? Style['expanded-row'] : ''} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
+                            onClick={() => handleRowClick(log)}
+                        >
+                            <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                            <div className={Style['tableCell']} data-label="Type">
+                            <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
+                                {log.type}
+                            </span>
+                            </div>
+                            <div className={Style['tableCell']} data-label="Action">{log.action}</div>
+                            {deleteMode === 'select' && (
+                            <div className={Style['checkbox-cell']}>
+                                <label className={Style['custom-checkbox-container']}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedToDelete.includes(log.id)}
+                                    onChange={() => handleCheckboxChange(log.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className={Style['checkmark']}></span>
+                                </label>
+                            </div>
+                            )}
+                        </div>
+
+                        {hasDetails && (
+                            <div className={`${Style['details-panel']} ${isExpanded ? Style['expanded'] : ''}`}>
+                            <div className={Style['details-content']}>
+                                <div className={Style['detail-item']}>
+                                <MessageSquare size={16} />
+                                <span>Cause: <strong>{log.details.cause}</strong></span>
                                 </div>
-                                
-                                {/* --- NEW: The slide-out details panel --- */}
-                                {hasDetails && (
-                                    <div className={`${Style['details-panel']} ${isExpanded ? Style['expanded'] : ''}`}>
-                                        <div className={Style['details-content']}>
-                                            <div className={Style['detail-item']}>
-                                                <MessageSquare size={16} />
-                                                <span>Cause: <strong>{log.details.cause}</strong></span>
-                                            </div>
-                                            <div className={Style['detail-item']}>
-                                                <Calendar size={16} />
-                                                <span>Date: {log.details.date}</span>
-                                            </div>
-                                            <div className={Style['detail-item']}>
-                                                <Clock size={16} />
-                                                <span>Time: {new Date(`1970-01-01T${log.details.startTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - {new Date(`1970-01-01T${log.details.endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </React.Fragment>
-                        )
+                                <div className={Style['detail-item']}>
+                                <Calendar size={16} />
+                                <span>Date: {log.details.date}</span>
+                                </div>
+                                <div className={Style['detail-item']}>
+                                <Clock size={16} />
+                                <span>
+                                    {new Date(`1970-01-01T${log.details.startTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - 
+                                    {new Date(`1970-01-01T${log.details.endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                </span>
+                                </div>
+                            </div>
+                            </div>
+                        )}
+                        </React.Fragment>
+                    )
                     })
                 ) : (
                     <div className={Style['noData']}>
-                        {logs.length === 0 ? "No user logs available." : "No user logs match the current filters."}
+                    {logs.length === 0 ? "No user logs available." : "No user logs match the current filters."}
                     </div>
                 )}
             </div>
 
-            {/* The confirmation modal, shown when needed */}
             {showConfirmModal && (
                 <div className={Style['modal-backdrop']}>
                     <div className={Style['confirmation-modal']}>
@@ -521,9 +416,8 @@ function UserLogs({ logs, onDelete, onRestore }) {
                     </div>
                 </div>
             )}
-            {/* The undo toast, shown after a deletion */}
+            
             <div className={`${Style['undo-toast']} ${showUndoToast ? Style.show : ''}`}>
-                {/* --- FIX: This now uses the dedicated state for an accurate count --- */}
                 <span>{lastDeletedCount} log(s) deleted.</span>
                 <button onClick={handleUndo}><Undo size={16}/> Undo</button>
             </div>

@@ -576,25 +576,35 @@ function App() {
         setRefocusTrigger(p => p + 1);
     };
 
-    // --- MODIFIED: handleAddDevice now sends data to the backend ---
-    const handleAddDevice = async (newDevice) => {
+    const handleAddDevice = async (newDeviceData) => {
         try {
-            setDeviceLocations(p => [...p, newDevice]);
-            setSelectedMapDeviceId(newDevice.id);
-            console.log("Simulated adding new device:", newDevice);
+            // Send the new device data to the backend API
+            const response = await axios.post(`${API_BASE_URL}/api/devices`, newDeviceData);
+
+            // Add the device *returned by the server* to our state
+            // This is important because the server response includes the new _id from MongoDB
+            const deviceFromServer = response.data;
+            setDeviceLocations(prev => [...prev, deviceFromServer]);
+            setSelectedMapDeviceId(deviceFromServer._id);
+
         } catch (error) {
-            console.error("Error adding device:", error);
+            console.error("Error adding device:", error.response.data);
+            // Throw the error so the component that called this function can catch it and show a message
+            throw error;
         }
     };
 
-    // --- MODIFIED: handleDeleteDevice now sends a DELETE request to the backend ---
     const handleDeleteDevice = async (deviceId) => {
         try {
-            setDeviceLocations(p => p.filter(d => d.id !== deviceId));
+            // Send a delete request to the backend API
+            await axios.delete(`${API_BASE_URL}/api/devices/${deviceId}`);
+
+            // If the delete was successful, remove the device from our local state
+            setDeviceLocations(prev => prev.filter(d => d._id !== deviceId));
             setSelectedMapDeviceId(null);
-            console.log("Simulated deleting device:", deviceId);
+
         } catch (error) {
-            console.error("Error deleting device:", error);
+            console.error("Error deleting device:", error.response.data);
         }
     };
 
@@ -626,30 +636,29 @@ function App() {
 
     // --- MODIFIED: handleSaveConfiguration sends a PUT request and logs changes ---
     const handleSaveConfiguration = useCallback(async (deviceId, newConfigs) => {
-        const deviceToUpdate = deviceLocations.find(d => d.id === deviceId);
-        if (!deviceToUpdate) {
-            console.error("Device not found for logging configuration changes.");
-        } else {
+        // Find device using the correct _id property
+        const deviceToUpdate = deviceLocations.find(d => d._id === deviceId);
+        if (deviceToUpdate) {
             const changesToLog = generateChangeLogs(deviceToUpdate.configurations, newConfigs);
             changesToLog.forEach(change => {
                 logUserAction(`Device '${deviceToUpdate.label}': ${change}`, 'Configuration');
             });
         }
-        console.log(`Attempting to save for ${deviceId}:`, newConfigs);
+
         try {
-            const response = await axios.put(`${API_BASE_URL}/devices/${deviceId}/configurations`, newConfigs);
-            console.log(response.data.message, response.data.updatedDevice);
+            // Use the correct API endpoint
+            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/configurations`, newConfigs);
+            
+            // Update state with the exact data returned from the server
             setDeviceLocations(prevDevices =>
                 prevDevices.map(device =>
-                    device.id === deviceId ?
-                    { ...device, configurations: response.data.updatedDevice.configurations } :
-                    device
+                    device._id === deviceId ? response.data.updatedDevice : device
                 )
             );
-            return Promise.resolve();
+            return Promise.resolve(); // Signal success to the UI
         } catch (error) {
             console.error("Error saving configuration:", error);
-            return Promise.reject(error);
+            return Promise.reject(error); // Signal failure to the UI
         }
     }, [deviceLocations]);
 

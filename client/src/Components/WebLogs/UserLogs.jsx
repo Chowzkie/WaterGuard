@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
 import { ListFilter, Download, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
 import {formatDateTime} from '../../utils/formatDateTime'
@@ -318,6 +319,7 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
                 </div>
             </div>
 
+ {/* --- The static, non-scrolling header remains the same --- */}
             <div className={`${Style['tableHeader']} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''}`}>
                 <div className={Style['headerItem']}>Date & Time</div>
                 <div className={Style['headerItem']}>Type</div>
@@ -337,69 +339,77 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
                 )}
             </div>
             
+            {/* --- This container defines the area for the scrollable list --- */}
             <div className={Style['tableBody']}>
                 {loading ? (
                     <div className={Style['loading']}>Loading user logs...</div>
                 ) : filteredDisplayLogs.length > 0 ? (
-                    filteredDisplayLogs.map((log) => {
-                    const hasDetails = log.type === 'Maintenance' && log.details;
-                    const isExpanded = expandedLogId === log.id;
+                    // --- Virtuoso now handles the rendering of the log list ---
+                    <Virtuoso
+                        // Fills the available space provided by the flexbox container
+                        style={{ height: '100%' }}
+                        data={filteredDisplayLogs}
+                        itemContent={(index, log) => {
+                            const hasDetails = log.type === 'Maintenance' && log.details;
+                            const isExpanded = expandedLogId === log.id;
 
-                    return (
-                        <React.Fragment key={log.id}>
-                        <div 
-                            className={`${Style['tableRow']} ${hasDetails ? Style['clickable-row'] : ''} ${isExpanded ? Style['expanded-row'] : ''} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
-                            onClick={() => handleRowClick(log)}
-                        >
-                            <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                            <div className={Style['tableCell']} data-label="Type">
-                            <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
-                                {log.type}
-                            </span>
-                            </div>
-                            <div className={Style['tableCell']} data-label="Action">{log.action}</div>
-                            {deleteMode === 'select' && (
-                            <div className={Style['checkbox-cell']}>
-                                <label className={Style['custom-checkbox-container']}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedToDelete.includes(log.id)}
-                                    onChange={() => handleCheckboxChange(log.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                                <span className={Style['checkmark']}></span>
-                                </label>
-                            </div>
-                            )}
-                        </div>
+                            // Using a <div> wrapper instead of React.Fragment to ensure stable scrolling with Virtuoso
+                            return (
+                                <div key={log.id}>
+                                    <div 
+                                        className={`${Style['tableRow']} ${hasDetails ? Style['clickable-row'] : ''} ${isExpanded ? Style['expanded-row'] : ''} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} 
+                                        onClick={() => handleRowClick(log)}
+                                    >
+                                        <div className={Style['tableCell']} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                                        <div className={Style['tableCell']} data-label="Type">
+                                            <span className={`${Style['type-badge']} ${getTypeStyle(log.type)}`}>
+                                                {log.type}
+                                            </span>
+                                        </div>
+                                        <div className={Style['tableCell']} data-label="Action">{log.action}</div>
+                                        {deleteMode === 'select' && (
+                                            <div className={Style['checkbox-cell']}>
+                                                <label className={Style['custom-checkbox-container']}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedToDelete.includes(log.id)}
+                                                        onChange={() => handleCheckboxChange(log.id)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <span className={Style['checkmark']}></span>
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
 
-                        {hasDetails && (
-                            <div className={`${Style['details-panel']} ${isExpanded ? Style['expanded'] : ''}`}>
-                            <div className={Style['details-content']}>
-                                <div className={Style['detail-item']}>
-                                <MessageSquare size={16} />
-                                <span>Cause: <strong>{log.details.cause}</strong></span>
+                                    {hasDetails && (
+                                        <div className={`${Style['details-panel']} ${isExpanded ? Style['expanded'] : ''}`}>
+                                            <div className={Style['details-content']}>
+                                                <div className={Style['detail-item']}>
+                                                    <MessageSquare size={16} />
+                                                    <span>Cause: <strong>{log.details.cause}</strong></span>
+                                                </div>
+                                                <div className={Style['detail-item']}>
+                                                    <Calendar size={16} />
+                                                    <span>Date: {log.details.date}</span>
+                                                </div>
+                                                <div className={Style['detail-item']}>
+                                                    <Clock size={16} />
+                                                    <span>
+                                                        {new Date(`1970-01-01T${log.details.startTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - 
+                                                        {new Date(`1970-01-01T${log.details.endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className={Style['detail-item']}>
-                                <Calendar size={16} />
-                                <span>Date: {log.details.date}</span>
-                                </div>
-                                <div className={Style['detail-item']}>
-                                <Clock size={16} />
-                                <span>
-                                    {new Date(`1970-01-01T${log.details.startTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - 
-                                    {new Date(`1970-01-01T${log.details.endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                </span>
-                                </div>
-                            </div>
-                            </div>
-                        )}
-                        </React.Fragment>
-                    )
-                    })
+                            );
+                        }}
+                    />
                 ) : (
                     <div className={Style['noData']}>
-                    {logs.length === 0 ? "No user logs available." : "No user logs match the current filters."}
+                        {logs.length === 0 ? "No user logs available." : "No user logs match the current filters."}
                     </div>
                 )}
             </div>

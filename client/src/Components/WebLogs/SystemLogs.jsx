@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css';
 import { ListFilter, Download, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
 import { PARAMETER_TO_COMPONENT_MAP } from '../../utils/logMaps';
@@ -451,6 +452,7 @@ function SystemLogs({ logs, onDelete, onRestore }) {
                 </div>
             </div>
 
+{/* 1. The header is a separate element, so it remains fixed at the top. */}
             <div className={`${Style.tableHeader} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''}`}>
                 <div className={Style.headerItem}>Date & Time</div>
                 <div className={Style.headerItem}>Device ID</div>
@@ -473,31 +475,37 @@ function SystemLogs({ logs, onDelete, onRestore }) {
                 )}
             </div>
 
+            {/* 2. This container uses flexbox to define the scrollable area's height. */}
             <div className={Style.tableBody}>
                 {filteredDisplayLogs.length > 0 ? (
-                    filteredDisplayLogs.map((log) => (
-                        <div className={`${Style.tableRow} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} key={log.id}>
-                            <div className={Style.tableCell} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                            <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
-                            <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
-                            <div className={Style.tableCell} data-label="Event">{log.event}</div>
-                            <div className={Style.tableCell} data-label="Details">{log.details}</div>
-                            <div className={`${Style.tableCell} ${getStatusStyle(log.status)}`} data-label="Status">{log.status}</div>
-                            {deleteMode === 'select' && (
-                                <div className={Style['checkbox-cell']}>
-                                    <label className={Style['custom-checkbox-container']}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedToDelete.includes(log.id)}
-                                            onChange={() => handleCheckboxChange(log.id)}
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <span className={Style['checkmark']}></span>
-                                    </label>
-                                </div>
-                            )}
-                        </div>
-                    ))
+                    // 3. Virtuoso replaces the .map() loop and fills 100% of the container's height.
+                    <Virtuoso
+                        style={{ height: '100%' }}
+                        data={filteredDisplayLogs}
+                        itemContent={(index, log) => (
+                            <div className={`${Style.tableRow} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} key={log.id}>
+                                <div className={Style.tableCell} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                                <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
+                                <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
+                                <div className={Style.tableCell} data-label="Event">{log.event}</div>
+                                <div className={Style.tableCell} data-label="Details">{log.details}</div>
+                                <div className={`${Style.tableCell} ${getStatusStyle(log.status)}`} data-label="Status">{log.status}</div>
+                                {deleteMode === 'select' && (
+                                    <div className={Style['checkbox-cell']}>
+                                        <label className={Style['custom-checkbox-container']}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedToDelete.includes(log.id)}
+                                                onChange={() => handleCheckboxChange(log.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <span className={Style['checkmark']}></span>
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />
                 ) : (
                     <div className={Style.noData}>
                         {logs.length === 0 ? "No system logs available." : "No system logs match the current filters."}

@@ -22,21 +22,26 @@ const TestingDevices = ({ devices = [], selectedDeviceId, onDeviceSelect }) => {
 
         <div className={styles['devices-body']}>
           {devices.length > 0 ? (
-            devices.map(device => (
-              // --- MODIFIED --- Add onClick handler and conditional class for selection
+            devices.map(device => {
+
+              // Safely access the status from the new, nested schema
+              const status = device.currentState?.status || 'Offline';
+            
+              return(
               <div 
-                key={device.id} 
-                className={`${styles['devices-row']} ${device.id === selectedDeviceId ? styles['selected'] : ''}`}
-                onClick={() => onDeviceSelect(device.id)}
+                key={device._id} 
+                className={`${styles['devices-row']} ${device._id === selectedDeviceId ? styles['selected'] : ''}`}
+                onClick={() => onDeviceSelect(device._id)}
               >
                 <div>{device.label}</div>
                 <div>{device.location}</div>
-                  <div className={`${styles['status-indicator']} ${styles[device.status.toLowerCase()]}`}>
+                  <div className={`${styles['status-indicator']} ${styles[status.toLowerCase()]}`}>
                       <div className={styles['status-dot']}></div>
-                      <span>{device.status}</span>
+                      <span>{status}</span>
                   </div>
               </div>
-            ))
+              );
+            })
           ) : (
             <div className={styles['no-devices']}>No devices found.</div>
           )}

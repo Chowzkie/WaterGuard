@@ -90,18 +90,18 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         return JSON.stringify(originalConfigs) !== JSON.stringify(draftConfigs);
     };
 
-    /**
-     * @function handleChange - Generic handler for number input fields.
-     * Updates the correct nested property within the `draftConfigs` state.
-     * @param {string} category - The top-level key in the config object (e.g., 'ph').
-     * @param {string} field - The nested key to update (e.g., 'warnLow').
-     * @param {string} value - The new value from the input field.
-     */
-    const handleChange = (category, field, value) => {
-        setDraftConfigs(prev => ({
-            ...prev,
-            [category]: { ...prev[category], [field]: parseFloat(value) || 0 }
-        }));
+    const handleDeepChange = (path, value) => {
+        setDraftConfigs(prev => {
+            const newConfigs = JSON.parse(JSON.stringify(prev)); // Deep copy to avoid bugs
+            let current = newConfigs;
+            for (let i = 0; i < path.length - 1; i++) {
+                // Create nested objects if they don't exist
+                current[path[i]] = current[path[i]] || {};
+                current = current[path[i]];
+            }
+            current[path[path.length - 1]] = value;
+            return newConfigs;
+        });
     };
     
     /**
@@ -139,7 +139,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         setIsSaving(true);
         setSaveSuccess(false);
         try {
-            await onSave(device.id, draftConfigs);
+            await onSave(device._id, draftConfigs);
             setOriginalConfigs(JSON.parse(JSON.stringify(draftConfigs)));
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
@@ -205,7 +205,9 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     if (!draftConfigs) {
         return <div>Loading configurations...</div>;
     }
-    
+
+    const deviceStatus = device.currentState?.status || 'Offline';
+
     return (
         <>
             <div className={styles['settings-wrapper']}>
@@ -223,7 +225,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     </button>
                 </div>
 
-                {device.status === 'Online' ? (
+                {deviceStatus === 'Online' ? (
                     <div className={styles['settings-container']}>
                         {/* --- Alert Thresholds Panel --- */}
                         <CollapsiblePanel
@@ -232,35 +234,70 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             isOpen={openPanels.alerts}
                             onToggle={() => handleTogglePanel('alerts')}
                         >
+                            {/* pH Level */}
                             <ThresholdGroup label="pH Level">
-                                {draftConfigs?.ph ? (
+                                {draftConfigs?.thresholds?.ph ? (
                                     <>
-                                        <div className={styles['input-row-4-col']}><InputField label="Warning Low" value={draftConfigs.ph.warnLow} onChange={e => handleChange('ph', 'warnLow', e.target.value)} /><InputField label="Critical Low" value={draftConfigs.ph.critLow} onChange={e => handleChange('ph', 'critLow', e.target.value)} /><InputField label="Warning High" value={draftConfigs.ph.warnHigh} onChange={e => handleChange('ph', 'warnHigh', e.target.value)} /><InputField label="Critical High" value={draftConfigs.ph.critHigh} onChange={e => handleChange('ph', 'critHigh', e.target.value)} /></div>
-                                        <div className={styles['input-row-2-col']}><InputField label="Back to Normal (Low)" value={draftConfigs.ph.normalLow} onChange={e => handleChange('ph', 'normalLow', e.target.value)} /><InputField label="Back to Normal (High)" value={draftConfigs.ph.normalHigh} onChange={e => handleChange('ph', 'normalHigh', e.target.value)} /></div>
+                                        <div className={styles['input-row-4-col']}>
+                                            <InputField label="Warning Low" value={draftConfigs.thresholds.ph.warnLow} onChange={e => handleDeepChange(['thresholds', 'ph', 'warnLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical Low" value={draftConfigs.thresholds.ph.critLow} onChange={e => handleDeepChange(['thresholds', 'ph', 'critLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Warning High" value={draftConfigs.thresholds.ph.warnHigh} onChange={e => handleDeepChange(['thresholds', 'ph', 'warnHigh'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical High" value={draftConfigs.thresholds.ph.critHigh} onChange={e => handleDeepChange(['thresholds', 'ph', 'critHigh'], parseFloat(e.target.value) || 0)} />
+                                        </div>
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Back to Normal (Low)" value={draftConfigs.thresholds.ph.normalLow} onChange={e => handleDeepChange(['thresholds', 'ph', 'normalLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Back to Normal (High)" value={draftConfigs.thresholds.ph.normalHigh} onChange={e => handleDeepChange(['thresholds', 'ph', 'normalHigh'], parseFloat(e.target.value) || 0)} />
+                                        </div>
                                     </>
                                 ) : <NotConfiguredMessage />}
                             </ThresholdGroup>
+
+                            {/* Turbidity */}
                             <ThresholdGroup label="Turbidity (NTU)">
-                                {draftConfigs?.turbidity ? (
+                                {draftConfigs?.thresholds?.turbidity ? (
                                     <>
-                                        <div className={styles['input-row-2-col']}><InputField label="Warning Threshold" value={draftConfigs.turbidity.warn} onChange={e => handleChange('turbidity', 'warn', e.target.value)} /><InputField label="Critical Threshold" value={draftConfigs.turbidity.crit} onChange={e => handleChange('turbidity', 'crit', e.target.value)} /></div>
-                                        <div className={styles['input-row-2-col']}><InputField label="Back to Normal (Low)" value={draftConfigs.turbidity.normalLow} onChange={e => handleChange('turbidity', 'normalLow', e.target.value)} /><InputField label="Back to Normal (High)" value={draftConfigs.turbidity.normalHigh} onChange={e => handleChange('turbidity', 'normalHigh', e.target.value)} /></div>
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Warning Threshold" value={draftConfigs.thresholds.turbidity.warn} onChange={e => handleDeepChange(['thresholds', 'turbidity', 'warn'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical Threshold" value={draftConfigs.thresholds.turbidity.crit} onChange={e => handleDeepChange(['thresholds', 'turbidity', 'crit'], parseFloat(e.target.value) || 0)} />
+                                        </div>
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Back to Normal (Low)" value={draftConfigs.thresholds.turbidity.normalLow} onChange={e => handleDeepChange(['thresholds', 'turbidity', 'normalLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Back to Normal (High)" value={draftConfigs.thresholds.turbidity.normalHigh} onChange={e => handleDeepChange(['thresholds', 'turbidity', 'normalHigh'], parseFloat(e.target.value) || 0)} />
+                                        </div>
                                     </>
                                 ) : <NotConfiguredMessage />}
                             </ThresholdGroup>
+
+                            {/* TDS */}
                             <ThresholdGroup label="TDS (mg/L)">
-                                {draftConfigs?.tds ? (
+                                {draftConfigs?.thresholds?.tds ? (
                                     <>
-                                        <div className={styles['input-row-2-col']}><InputField label="Warning Threshold" value={draftConfigs.tds.warn} onChange={e => handleChange('tds', 'warn', e.target.value)} /><InputField label="Critical Threshold" value={draftConfigs.tds.crit} onChange={e => handleChange('tds', 'crit', e.target.value)} /></div>
-                                        <div className={styles['input-row-2-col']}><InputField label="Back to Normal (Low)" value={draftConfigs.tds.normalLow} onChange={e => handleChange('tds', 'normalLow', e.target.value)} /><InputField label="Back to Normal (High)" value={draftConfigs.tds.normalHigh} onChange={e => handleChange('tds', 'normalHigh', e.target.value)} /></div>
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Warning Threshold" value={draftConfigs.thresholds.tds.warn} onChange={e => handleDeepChange(['thresholds', 'tds', 'warn'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical Threshold" value={draftConfigs.thresholds.tds.crit} onChange={e => handleDeepChange(['thresholds', 'tds', 'crit'], parseFloat(e.target.value) || 0)} />
+                                        </div>
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Back to Normal (Low)" value={draftConfigs.thresholds.tds.normalLow} onChange={e => handleDeepChange(['thresholds', 'tds', 'normalLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Back to Normal (High)" value={draftConfigs.thresholds.tds.normalHigh} onChange={e => handleDeepChange(['thresholds', 'tds', 'normalHigh'], parseFloat(e.target.value) || 0)} />
+                                        </div>
                                     </>
                                 ) : <NotConfiguredMessage />}
                             </ThresholdGroup>
+
+                            {/* Temperature */}
                             <ThresholdGroup label="Temperature (°C)">
-                                {draftConfigs?.temp ? (
+                                {draftConfigs?.thresholds?.temp ? (
                                     <>
-                                        <div className={styles['input-row-4-col']}><InputField label="Warning Low" value={draftConfigs.temp.warnLow} onChange={e => handleChange('temp', 'warnLow', e.target.value)} /><InputField label="Critical Low" value={draftConfigs.temp.critLow} onChange={e => handleChange('temp', 'critLow', e.target.value)} /><InputField label="Warning High" value={draftConfigs.temp.warnHigh} onChange={e => handleChange('temp', 'warnHigh', e.target.value)} /><InputField label="Critical High" value={draftConfigs.temp.critHigh} onChange={e => handleChange('temp', 'critHigh', e.target.value)} /></div>
-                                        <div className={styles['input-row-2-col']}><InputField label="Back to Normal (Low)" value={draftConfigs.temp.normalLow} onChange={e => handleChange('temp', 'normalLow', e.target.value)} /><InputField label="Back to Normal (High)" value={draftConfigs.temp.normalHigh} onChange={e => handleChange('temp', 'normalHigh', e.target.value)} /></div>
+                                        <div className={styles['input-row-4-col']}>
+                                            <InputField label="Warning Low" value={draftConfigs.thresholds.temp.warnLow} onChange={e => handleDeepChange(['thresholds', 'temp', 'warnLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical Low" value={draftConfigs.thresholds.temp.critLow} onChange={e => handleDeepChange(['thresholds', 'temp', 'critLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Warning High" value={draftConfigs.thresholds.temp.warnHigh} onChange={e => handleDeepChange(['thresholds', 'temp', 'warnHigh'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical High" value={draftConfigs.thresholds.temp.critHigh} onChange={e => handleDeepChange(['thresholds', 'temp', 'critHigh'], parseFloat(e.target.value) || 0)} />
+                                        </div>
+                                        <div className={styles['input-row-2-col']}>
+                                            <InputField label="Back to Normal (Low)" value={draftConfigs.thresholds.temp.normalLow} onChange={e => handleDeepChange(['thresholds', 'temp', 'normalLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Back to Normal (High)" value={draftConfigs.thresholds.temp.normalHigh} onChange={e => handleDeepChange(['thresholds', 'temp', 'normalHigh'], parseFloat(e.target.value) || 0)} />
+                                        </div>
                                     </>
                                 ) : <NotConfiguredMessage />}
                             </ThresholdGroup>
@@ -273,60 +310,63 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             isOpen={openPanels.logging}
                             onToggle={() => handleTogglePanel('logging')}
                         >
-                            <ThresholdGroup label="Active Alert → Recent Alert"><SelectField value={draftConfigs.alertLoggingIntervals?.activeToRecent} onChange={e => handleIntervalChange('alertLoggingIntervals', 'activeToRecent', e.target.value)} options={[15, 30, 45, 60]} unit="seconds" /></ThresholdGroup>
-                            <ThresholdGroup label="Recent Alert → History"><SelectField value={draftConfigs.alertLoggingIntervals?.recentToHistory} onChange={e => handleIntervalChange('alertLoggingIntervals', 'recentToHistory', e.target.value)} options={[5, 10, 15, 30, 60]} unit="minutes" /></ThresholdGroup>
+                            <ThresholdGroup label="Active Alert → Recent Alert">
+                                <SelectField value={draftConfigs.logging?.alertIntervals?.activeToRecent} onChange={e => handleDeepChange(['logging', 'alertIntervals', 'activeToRecent'], parseInt(e.target.value))} options={[15, 30, 45, 60]} unit="seconds" />
+                            </ThresholdGroup>
+                            <ThresholdGroup label="Recent Alert → History">
+                                <SelectField value={draftConfigs.logging?.alertIntervals?.recentToHistory} onChange={e => handleDeepChange(['logging', 'alertIntervals', 'recentToHistory'], parseInt(e.target.value))} options={[5, 10, 15, 30, 60]} unit="minutes" />
+                            </ThresholdGroup>
                         </CollapsiblePanel>
 
-                        {/* --- Testing Container Water Change Intervals Panel --- */}
+                        {/* --- Pump Cycle Intervals Panel --- */}
                         <CollapsiblePanel
-                            title="Testing Container Water Change Intervals"
+                            title="Pump Cycle Intervals"
                             icon={<RefreshCw size={18} className={`${styles['header-icon']} ${styles['icon-testing']}`} />}
                             isOpen={openPanels.testing}
                             onToggle={() => handleTogglePanel('testing')}
                         >
-                            <ThresholdGroup label="Draining Time"><SelectField value={draftConfigs.testingIntervals?.drain} onChange={e => handleIntervalChange('testingIntervals', 'drain', e.target.value)} options={[1, 2, 3, 4, 5]} unit="minutes" /></ThresholdGroup>
-                            <ThresholdGroup label="Delay before Filling"><SelectField value={draftConfigs.testingIntervals?.delay} onChange={e => handleIntervalChange('testingIntervals', 'delay', e.target.value)} options={[1, 2, 3, 4, 5]} unit="minutes" /></ThresholdGroup>
-                            <ThresholdGroup label="Filling Duration"><SelectField value={draftConfigs.testingIntervals?.fill} onChange={e => handleIntervalChange('testingIntervals', 'fill', e.target.value)} options={[1, 2, 3, 4, 5]} unit="minutes" /></ThresholdGroup>
+                            <ThresholdGroup label="Draining Time">
+                                <SelectField value={draftConfigs.controls?.pumpCycleIntervals?.drain} onChange={e => handleDeepChange(['controls', 'pumpCycleIntervals', 'drain'], parseInt(e.target.value))} options={[1, 2, 3, 4, 5]} unit="minutes" />
+                            </ThresholdGroup>
+                            <ThresholdGroup label="Delay before Filling">
+                                <SelectField value={draftConfigs.controls?.pumpCycleIntervals?.delay} onChange={e => handleDeepChange(['controls', 'pumpCycleIntervals', 'delay'], parseInt(e.target.value))} options={[1, 2, 3, 4, 5]} unit="minutes" />
+                            </ThresholdGroup>
+                            <ThresholdGroup label="Filling Duration">
+                                <SelectField value={draftConfigs.controls?.pumpCycleIntervals?.fill} onChange={e => handleDeepChange(['controls', 'pumpCycleIntervals', 'fill'], parseInt(e.target.value))} options={[1, 2, 3, 4, 5]} unit="minutes" />
+                            </ThresholdGroup>
                         </CollapsiblePanel>
                         
-                        {/* --- CORRECTED: Valve Shut-off Thresholds Panel --- */}
+                        {/* --- Valve Shut-off Thresholds Panel --- */}
                         <CollapsiblePanel
                             title="Valve Shut-off Thresholds"
                             icon={<PowerOff size={18} className={`${styles['header-icon']} ${styles['icon-shutoff']}`} />}
                             isOpen={openPanels.shutoff}
                             onToggle={() => handleTogglePanel('shutoff')}
                         >
-                            {draftConfigs?.valveShutOff ? (
+                            {draftConfigs?.controls?.valveShutOff ? (
                                 <>
-                                    {/* pH Section */}
                                     <ThresholdGroup label="Shut-Off on pH">
                                         <div className={styles['input-row-2-col']}>
-                                            <InputField label="Critical Low" value={draftConfigs.valveShutOff.phLow} onChange={e => handleChange('valveShutOff', 'phLow', e.target.value)} />
-                                            <InputField label="Critical High" value={draftConfigs.valveShutOff.phHigh} onChange={e => handleChange('valveShutOff', 'phHigh', e.target.value)} />
+                                            <InputField label="Critical Low" value={draftConfigs.controls.valveShutOff.phLow} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Critical High" value={draftConfigs.controls.valveShutOff.phHigh} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phHigh'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
-
-                                    {/* Turbidity Section */}
                                     <ThresholdGroup label="Shut-Off on Turbidity">
                                         <div className={styles['input-row-1-col']}>
-                                            <InputField label="Critical Threshold" value={draftConfigs.valveShutOff.turbidityCrit} onChange={e => handleChange('valveShutOff', 'turbidityCrit', e.target.value)} />
+                                            <InputField label="Critical Threshold" value={draftConfigs.controls.valveShutOff.turbidityCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'turbidityCrit'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
-
-                                    {/* TDS Section */}
                                     <ThresholdGroup label="Shut-Off on TDS">
                                         <div className={styles['input-row-1-col']}>
-                                            <InputField label="Critical Threshold" value={draftConfigs.valveShutOff.tdsCrit} onChange={e => handleChange('valveShutOff', 'tdsCrit', e.target.value)} />
+                                            <InputField label="Critical Threshold" value={draftConfigs.controls.valveShutOff.tdsCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'tdsCrit'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
-
-                                    {/* NEW: Global Rule Section */}
                                     <div className={styles['global-rule-divider']}></div>
-                                    <ThresholdGroup label="Global Valve Rule">
+                                    <ThresholdGroup label="Valve Rule">
                                         <YesNoSelect
-                                            label="Auto Re-open Valve on Normal?"
-                                            value={draftConfigs.valveShutOff.autoReopenGlobal || 'no'}
-                                            onChange={e => handleSelectChange('valveShutOff', 'autoReopenGlobal', e.target.value)}
+                                            label="Auto Re-open Valve once the alert is cleared?"
+                                            value={draftConfigs.controls.valveOpenOnNormal?.enabled ? 'yes' : 'no'}
+                                            onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'enabled'], e.target.value === 'yes')}
                                         />
                                     </ThresholdGroup>
                                 </>

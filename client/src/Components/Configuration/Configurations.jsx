@@ -19,7 +19,7 @@ const Configurations = ({ onSetHeaderDeviceLabel }) => {
     // This effect runs when the URL changes. It syncs the URL to the component's state.
     useEffect(() => {
         if (deviceId) {
-            const deviceFromUrl = devices.find(d => d.id === deviceId);
+            const deviceFromUrl = devices.find(d => d._id === deviceId);
             setSelectedDevice(deviceFromUrl);
         } else {
             setSelectedDevice(null);
@@ -41,7 +41,7 @@ const Configurations = ({ onSetHeaderDeviceLabel }) => {
 
     // This handler now updates the URL, which will trigger the effect above
     const handleSelectDevice = (device) => {
-        navigate(`/configurations/${device.id}`);
+        navigate(`/configurations/${device._id}`);
     };
 
     // This handler now updates the URL to go back to the list view

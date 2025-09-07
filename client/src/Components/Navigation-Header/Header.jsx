@@ -81,23 +81,6 @@ function Header({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-
-    // --- RESTORED: Navigation handlers for the user dropdown menu ---
-    const handleLogout = async() => {
-        try{
-
-            await axios.post(`${API_BBASE_URL}/auth/logout`,
-                {},
-                {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}`}
-            })
-
-            onLogout();
-            navigate('/login');
-        }catch(error){
-            console.log("Logout error", error);
-        }
-    };
     
     const handleAccountSettings = () => {
         navigate('/account-settings');
@@ -148,7 +131,7 @@ function Header({
                         <div className={`${styles.dropdownItemU} ${styles.logs}`} onClick={handleLogs} >
                             <Logs size={17} color='#307e3c' /> <p>View Logs</p> <ChevronRight size={15} />
                         </div>
-                        <div className={`${styles.dropdownItemU} ${styles.logout}`} onClick={handleLogout}>
+                        <div className={`${styles.dropdownItemU} ${styles.logout}`} onClick={onLogout}>
                             <LogOut size={16} color='#ec515e' /> <p>Log Out</p> <ChevronRight size={15} />
                         </div>
                     </div>

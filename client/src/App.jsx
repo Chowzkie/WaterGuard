@@ -164,13 +164,19 @@ function App() {
 
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        // Clear state and localStorage
-        setLoggedInUser(null);
-        localStorage.removeItem('token'); // Clear user data
-        localStorage.removeItem("user")
-        navigate("/login")
-        console.log("App.jsx - handleLogout: User logged out.");
+    const handleLogout = async() => {
+        try{
+            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
+                headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}
+            })
+        }catch(error){
+            console.error("Logout Error", error)
+        }finally{
+            localStorage.removeItem("token");
+            setLoggedInUser(null);
+            setNotifications([]);
+            navigate('/login');
+        }
     };
 
     // Update user data after profile changes

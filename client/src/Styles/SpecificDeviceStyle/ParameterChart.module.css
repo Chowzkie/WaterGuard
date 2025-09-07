@@ -83,4 +83,46 @@
   font-size: 1.1rem;
 }
 
-/* All CSS for .details-grid, .details-card, etc., has been removed. */
+/* Add this to Styles/SpecificDeviceStyle/ParameterChart.module.css */
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  /* Add flex-wrap for smaller screens if needed */
+}
+
+.panel-title {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin: 0;
+  margin-right: auto; /* Pushes the time range selector to the right */
+}
+
+.time-range-selector {
+  display: flex;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.time-range-selector button {
+  border: none;
+  background-color: transparent;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  color: #4b5569;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.time-range-selector button:hover {
+  background-color: #d1d5db;
+}
+
+.time-range-selector button.active {
+  background-color: #ffffff;
+  color: #1f2937;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

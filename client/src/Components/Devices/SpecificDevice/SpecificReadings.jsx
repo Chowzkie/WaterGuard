@@ -2,18 +2,18 @@ import Style from '../../../Styles/SpecificDeviceStyle/SpecificReadings.module.c
 
 // Define the exact order and configuration for the 4 parameters you want to display
 const DISPLAY_PARAMETERS_ORDER = [
-    'ph',       // This key matches your deviceReadings object property
-    'turbidity',
-    'temp',     // This key matches your deviceReadings object property
-    'tds',
+   'PH',
+    'TURBIDITY',
+    'TEMP',
+    'TDS',
 ];
 
 // Mapping between internal data keys and display titles/units/colors
 const PARAMETER_CONFIG = {
-    ph: { title: 'Current pH', unit: '', color: '#FFA500' },
-    turbidity: { title: 'Turbidity', unit: 'NTU', color: '#4CAF50' },
-    temp: { title: 'Temperature', unit: '°C', color: '#2196F3' },
-    tds: { title: 'TDS', unit: 'ppm', color: '#E91E63' },
+    PH: { title: 'Current pH', unit: '', color: '#FFA500' },
+    TURBIDITY: { title: 'Turbidity', unit: 'NTU', color: '#4CAF50' },
+    TEMP: { title: 'Temperature', unit: '°C', color: '#2196F3' },
+    TDS: { title: 'TDS', unit: 'ppm', color: '#E91E63' },
 };
 
 // Define the thresholds directly or reference deviceDetails.configurations

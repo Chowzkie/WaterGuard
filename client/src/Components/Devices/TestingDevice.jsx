@@ -11,13 +11,18 @@ function TestingDevice({ deviceData }) {
     const navigate = useNavigate();
 
     const filterDevice = deviceData.filter(device => {
-        const matchSearch =
-            device.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            device.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchStatus =
-            statusFilter === '' || device.status.toLowerCase() === statusFilter.toLowerCase();
-        return matchSearch && matchStatus;
-    });
+    // Safely access properties, providing fallbacks
+    const id = device._id || '';
+    const location = device.location || '';
+    const status = device.currentState?.status || 'Offline';
+
+    const matchSearch =
+        id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus =
+        statusFilter === '' || status.toLowerCase() === statusFilter.toLowerCase();
+    return matchSearch && matchStatus;
+});
 
     const handleDeviceRowClick = (deviceId) => {
         navigate(`/devices/${deviceId}`);
@@ -49,25 +54,26 @@ function TestingDevice({ deviceData }) {
                     {filterDevice.length === 0 ? (
                         <div className={Style['no-devices']}>No devices found.</div>
                     ) : (
-                        filterDevice.map(device => (
-                            // Each device is now a self-contained card
-                            <div
-                                key={device.id}
-                                className={Style['device-card']}
-                                onClick={() => handleDeviceRowClick(device.id)}
-                            >
-                                <div className={Style['card-icon']}>
-                                    <Cpu size={24} />
+                        filterDevice.map(device => {
+                            const status = device.currentState?.status || 'Offline';
+                            return (
+                                <div
+                                    key={device._id} // Use _id
+                                    className={Style['device-card']}
+                                    onClick={() => handleDeviceRowClick(device._id)} // Use _id
+                                >
+                                    <div className={Style['card-icon']}><Cpu size={24} /></div>
+                                    <div className={Style['card-content']}>
+                                        <div className={Style['card-label']}>{device.label}</div>
+                                        <div className={Style['card-location']}>{device.location}</div>
+                                    </div>
+                                    {/* Use the safe status variable */}
+                                    <div className={`${Style['status-badge']} ${Style[status.toLowerCase()]}`}>
+                                        {status}
+                                    </div>
                                 </div>
-                                <div className={Style['card-content']}>
-                                    <div className={Style['card-label']}>{device.label}</div>
-                                    <div className={Style['card-location']}>{device.location}</div>
-                                </div>
-                                <div className={`${Style['status-badge']} ${Style[device.status.toLowerCase()]}`}>
-                                    {device.status}
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </div>

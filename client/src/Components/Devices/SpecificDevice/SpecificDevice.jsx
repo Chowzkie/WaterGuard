@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import ParamChart from './ParamChart';
 import SpecificReadings from './SpecificReadings';
 import ValveSwitch from './ValveSwitch';
@@ -85,12 +86,15 @@ function DetailsPanel({ device }) {
             <h3 className={Style['card-title']}>Device Details</h3>
             <div className={Style['device-info']}>
                 <p><strong>Label:</strong> {device.label}</p>
-                <p><strong>Status:</strong> {device.status}</p>
+                {/* Use the correct path for status */}
+                <p><strong>Status:</strong> {device.currentState?.status || 'N/A'}</p>
                 <p><strong>Location:</strong> {device.location}</p>
             </div>
         </div>
     );
 }
+
+const API_BASE_URL = 'http://localhost:8080';
 
 function SpecificDevice({ onSetHeaderDeviceLabel }) {
     const { deviceId } = useParams();
@@ -102,6 +106,11 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
     // ✅ Toast state & handlers
     const [toasts, setToasts] = useState([]);
     const toastTimeouts = useRef({});
+
+    const [historicalData, setHistoricalData] = useState([]);
+    const [isChartLoading, setIsChartLoading] = useState(true);
+
+    const [timeRange, setTimeRange] = useState('7d'); // Default to 7 days
 
     const removeToast = useCallback((id) => {
         setToasts((curr) => curr.filter(t => t.id !== id));
@@ -125,7 +134,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
     }, [startToastExit]);
 
     useEffect(() => {
-        const foundDevice = devices.find(device => device.id === deviceId);
+        const foundDevice = devices.find(device => device._id === deviceId);
         setCurrentDevice(foundDevice);
         if (onSetHeaderDeviceLabel) {
             onSetHeaderDeviceLabel(foundDevice ? foundDevice.label : null);
@@ -134,6 +143,26 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
             if (onSetHeaderDeviceLabel) onSetHeaderDeviceLabel(null);
         };
     }, [deviceId, devices, onSetHeaderDeviceLabel]);
+
+    // ✅ STEP 2: Update the useEffect to fetch data based on the timeRange.
+    useEffect(() => {
+        if (deviceId) {
+            const fetchHistoricalData = async () => {
+                setIsChartLoading(true);
+                try {
+                    // Append the range query parameter to the API call
+                    const response = await axios.get(`${API_BASE_URL}/api/readings/${deviceId}?range=${timeRange}`);
+                    setHistoricalData(response.data);
+                } catch (error) {
+                    console.error(`Failed to fetch historical data for ${deviceId} with range ${timeRange}:`, error);
+                    setHistoricalData([]);
+                } finally {
+                    setIsChartLoading(false);
+                }
+            };
+            fetchHistoricalData();
+        }
+    }, [deviceId, timeRange]); // 👈 Re-run this effect when deviceId OR timeRange changes
 
     // --- NEW: Filter alerts specifically for this device ---
     const deviceSpecificAlerts = recentAlerts
@@ -148,27 +177,27 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
 
     return (
         <>
-            <div className={Style['page-container']}>
+             <div className={Style['page-container']}>
+                {/* The components are now direct children again */}
                 <ParamChart
-                    mockTime={currentDevice.history?.time}
-                    mockReadings={currentDevice.history?.readings}
+                    historicalData={historicalData}
+                    isLoading={isChartLoading}
                     onGoBack={handleGoBack}
+                    timeRange={timeRange}
+                    setTimeRange={setTimeRange}
                 />
                 <SpecificReadings
-                    deviceReadings={currentDevice.readings}
+                    deviceReadings={currentDevice.latestReading}
                     deviceId={deviceId}
-                    deviceStatus={currentDevice.status}
+                    deviceStatus={currentDevice.currentState?.status}
                 />
-
                 <div className={Style['bottom-left-wrapper']}>
-                    {/* --- MODIFIED: Pass the filtered alerts to the panel --- */}
                     <AlertsPanel alerts={deviceSpecificAlerts} />
                     <DetailsPanel device={currentDevice} />
                 </div>
-
                 <ValveSwitch 
                     deviceId={deviceId} 
-                    deviceStatus={currentDevice.status}
+                    deviceStatus={currentDevice.currentState?.status}
                     onToggle={onValveToggle} 
                     addToast={addToast}
                 />

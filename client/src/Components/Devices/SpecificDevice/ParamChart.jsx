@@ -1,61 +1,127 @@
 import React, { useState, useEffect } from "react";
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler } from 'chart.js';
 import Style from '../../../Styles/SpecificDeviceStyle/ParameterChart.module.css';
 
-ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
+// Register the 'Filler' plugin to draw the shaded min/max range
+ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler);
 
 const PARAM_MAP = {
-    ph: { key: 'pH', label: 'pH', min: 0, max: 14, color: '#FFA500' },
-    turbidity: { key: 'turbidity', label: 'Turbidity', min: 0, max: 10, color: '#4CAF50' },
-    temperature: { key: 'temp', label: 'Temperature', min: 0, max: 50, color: '#2196F3' },
-    tds: { key: 'tds', label: 'TDS', min: 0, max: 1000, color: '#E91E63' },
+    ph: { key: 'PH', label: 'pH', color: '#FFA500' },
+    turbidity: { key: 'TURBIDITY', label: 'Turbidity', color: '#4CAF50' },
+    temperature: { key: 'TEMP', label: 'Temperature', color: '#2196F3' },
+    tds: { key: 'TDS', label: 'TDS', color: '#E91E63' },
 };
 
-// Props are simplified: deviceDetails and mockAlerts are removed
-function ParamChart({ mockTime, mockReadings, onGoBack }) {
+function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRange }) {
     const [selectedParam, setSelectedParam] = useState('ph');
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
-    const [chartOptions, setChartOptions] = useState({});
 
-    // This useEffect logic is unchanged
     useEffect(() => {
-        const currentParamDataKey = PARAM_MAP[selectedParam]?.key;
-        const dataForChart = mockReadings && currentParamDataKey ? mockReadings[currentParamDataKey] : [];
+        if (!historicalData || historicalData.length === 0) {
+            setChartData({ labels: [], datasets: [] });
+            return;
+        }
+
         const paramConfig = PARAM_MAP[selectedParam];
+        const dataKey = paramConfig?.key;
+
+        const labels = historicalData.map(r => 
+            new Date(r.timestamp).toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit' 
+            })
+        );
+        
+        const avgData = historicalData.map(r => r[dataKey]?.avg);
+        const minData = historicalData.map(r => r[dataKey]?.min);
+        const maxData = historicalData.map(r => r[dataKey]?.max);
 
         setChartData({
-            labels: mockTime || [],
-            datasets: [{
-                label: `${paramConfig?.label} Readings`,
-                data: dataForChart,
-                borderColor: paramConfig?.color,
-                backgroundColor: `${paramConfig?.color}33`,
-                tension: 0.4,
-                pointRadius: 4,
-                fill: true,
-            }],
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Range (Max)',
+                    data: maxData,
+                    borderColor: 'transparent',
+                    backgroundColor: `${paramConfig?.color}33`, // Light, transparent fill
+                    pointRadius: 0,
+                    fill: '+1', // Fill to the next dataset in the array (the min dataset)
+                },
+                 {
+                    label: 'Range (Min)',
+                    data: minData,
+                    borderColor: 'transparent',
+                    backgroundColor: 'transparent', // No fill for the bottom line
+                    pointRadius: 0,
+                    fill: false,
+                },
+                {
+                    label: `${paramConfig?.label} (Avg)`,
+                    data: avgData,
+                    borderColor: paramConfig?.color,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: false,
+                },
+            ],
         });
 
-        setChartOptions({
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { title: { display: true, text: paramConfig?.label || selectedParam.toUpperCase() }, min: paramConfig?.min, max: paramConfig?.max },
-                x: { title: { display: true, text: 'Time' } },
+    }, [selectedParam, historicalData]);
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    // Custom tooltip to show Avg, Min, and Max
+                    label: function(context) {
+                        const label = context.dataset.label || '';
+                        const avgValue = context.chart.data.datasets[2].data[context.dataIndex];
+                        const minValue = context.chart.data.datasets[1].data[context.dataIndex];
+                        const maxValue = context.chart.data.datasets[0].data[context.dataIndex];
+                        
+                        // Only show the full tooltip for the main average line
+                        if (context.datasetIndex === 2) {
+                             return [
+                                `Avg: ${avgValue?.toFixed(2)}`,
+                                `Max: ${maxValue?.toFixed(2)}`,
+                                `Min: ${minValue?.toFixed(2)}`,
+                            ];
+                        }
+                        return null;
+                    }
+                }
             },
-            plugins: {
-                legend: { display: true, position: 'top' },
-                tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+            },
+            x: {
+                ticks: {
+                    maxTicksLimit: 10 // Limit the number of visible timestamps to avoid clutter
+                }
             }
-        });
-    }, [selectedParam, mockTime, mockReadings]);
+        },
+    };
 
     return (
         <div className={Style['panel-container']}>
             <div className={Style['panel-header']}>
                 <button className={Style['back-button']} onClick={onGoBack}>Go Back</button>
                 <h2 className={Style['panel-title']}>Historical Data</h2>
+                <div className={Style['time-range-selector']}>
+                    <button onClick={() => setTimeRange('24h')} className={timeRange === '24h' ? Style.active : ''}>24H</button>
+                    <button onClick={() => setTimeRange('7d')} className={timeRange === '7d' ? Style.active : ''}>7D</button>
+                    <button onClick={() => setTimeRange('30d')} className={timeRange === '30d' ? Style.active : ''}>30D</button>
+                </div>
             </div>
 
             <div className={Style['param-tabs']}>
@@ -66,15 +132,15 @@ function ParamChart({ mockTime, mockReadings, onGoBack }) {
                 ))}
             </div>
 
-            <div className={Style['chart-wrapper']}>
-                {chartData.datasets[0]?.data.length > 0 ? (
+           <div className={Style['chart-wrapper']}>
+                {isLoading ? (
+                    <div className={Style['no-data-message']}>Loading Chart Data...</div>
+                ) : (historicalData && historicalData.length > 0) ? (
                     <Line data={chartData} options={chartOptions} />
                 ) : (
-                    <div className={Style['no-data-message']}>No historical data available.</div>
+                    <div className={Style['no-data-message']}>No historical data available for this range.</div>
                 )}
             </div>
-
-            {/* The "Bottom Details Section" has been completely removed from this file. */}
         </div>
     );
 }

@@ -666,19 +666,6 @@ function App() {
         }
     }, [alertsHistory]);
 
-    // --- NEW: Handlers for deleting and restoring user logs ---
-    const handleDeleteUserLogs = (idsToDelete) => {
-        const logsToMove = userLogs.filter(log => idsToDelete.has(log.id));
-        const logsToKeep = userLogs.filter(log => !idsToDelete.has(log.id));
-        setRecentlyDeletedUserLogs(logsToMove);
-        setUserLogs(logsToKeep);
-    };
-
-    const handleRestoreUserLogs = () => {
-        setUserLogs(prevLogs => [...recentlyDeletedUserLogs, ...prevLogs]);
-        setRecentlyDeletedUserLogs([]);
-    };
-
     /**
      * --- NEW: Handles the deletion of system logs ---
      */
@@ -740,8 +727,6 @@ function App() {
         onDeleteHistoryAlerts: handleDeleteHistoryAlerts,
         onPermanentDeleteAlerts: handlePermanentDeleteAlerts,
         onRestoreHistoryAlerts: handleRestoreHistoryAlerts,
-        onDeleteUserLogs: handleDeleteUserLogs,
-        onRestoreUserLogs: handleRestoreUserLogs,
         onDeleteSystemLogs: handleDeleteSystemLogs,
         onRestoreSystemLogs: handleRestoreSystemLogs,
         onSelectMapDevice: handleSelectDevice,

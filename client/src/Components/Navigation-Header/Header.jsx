@@ -9,7 +9,6 @@ import Notifications from './Notifications'; // The separate notifications compo
 import AlertsContext from '../../utils/AlertsContext';
 
 
-const API_BBASE_URL = "http://localhost:8080/api"
 function Header({
     onLogout,
     deviceLabelForHeader,

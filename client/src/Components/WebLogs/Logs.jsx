@@ -12,9 +12,7 @@ function Logs() {
     const [activeTab, setActiveTab] = useState('system');
 
     // --- MODIFIED: Get both userLogs and systemLogs from the global context ---
-    const { userLogs, systemLogs, 
-            onDeleteUserLogs, 
-            onRestoreUserLogs, 
+    const { systemLogs,
             onDeleteSystemLogs,
             onRestoreSystemLogs 
         } = useContext(AlertsContext);
@@ -58,10 +56,7 @@ function Logs() {
                     />
                 }
                 {activeTab === 'user' &&
-                    <UserLogs
-                        onDelete={onDeleteUserLogs}
-                        onRestore={onRestoreUserLogs}
-                    />
+                    <UserLogs/>
                 }
             </div>
         </div>

@@ -553,7 +553,7 @@ function App() {
     const handleAddDevice = async (newDeviceData) => {
         try {
             // Send the new device data to the backend API
-            const response = await axios.post(`${API_BASE_URL}/api/devices`, newDeviceData);
+            const response = await axios.post(`${API_BASE_URL}/api/devices`, {...newDeviceData, userID: loggedInUser.userID});
 
             // Add the device *returned by the server* to our state
             // This is important because the server response includes the new _id from MongoDB
@@ -571,7 +571,9 @@ function App() {
     const handleDeleteDevice = async (deviceId) => {
         try {
             // Send a delete request to the backend API
-            await axios.delete(`${API_BASE_URL}/api/devices/${deviceId}`);
+            await axios.delete(`${API_BASE_URL}/api/devices/${deviceId}`, {
+                data: {userID: loggedInUser.userID}
+            });
 
             // If the delete was successful, remove the device from our local state
             setDeviceLocations(prev => prev.filter(d => d._id !== deviceId));

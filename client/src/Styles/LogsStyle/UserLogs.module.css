@@ -745,15 +745,16 @@
     border: 1px solid transparent;
 }
 
-.type-configuration { background-color: #e9f7f0; color: #146c43; border-color: #b6e0c6; }
-.type-login { background-color: #e6f9f1; color: #237a57; border-color: #b8e8d2; }
-.type-logout { background-color: #fff4e5; color: #e65100; border-color: #ffcc80; }
-.type-account { background-color: #e6f7fb; color: #055160; border-color: #b6e0ed; }
-.type-deletion { background-color: #fdecea; color: #b71c1c; border-color: #f5c6c6; }
-.type-acknowledgement { background-color: #fff9e6; color: #8a6d1a; border-color: #ffeaa7; }
-.type-valve { background-color: #eef4ff; color: #1d4ed8; border-color: #bfdbfe; }
-.type-maintenance { background-color: #fef3f2; color: #b91c1c; border-color: #fca5a5; }
-.type-restoration {  background-color: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+.type-configuration { background-color: #e6f4ea; color: #1b5e20; border-color: #a5d6a7; }
+.type-login { background-color: #e8f5f0; color: #00695c; border-color: #80cbc4; }
+.type-logout { background-color: #fff3e0; color: #e65100; border-color: #ffb74d; }
+.type-account { background-color: #e3f2fd; color: #0d47a1; border-color: #90caf9; }
+.type-deletion { background-color: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
+.type-acknowledgement { background-color: #fffde7; color: #795548; border-color: #fff59d; }
+.type-valve { background-color: #ede7f6; color: #4527a0; border-color: #b39ddb; }
+.type-maintenance { background-color: #fff8e1; color: #ff6f00; border-color: #ffd54f; }
+.type-restoration { background-color: #e0f7fa; color: #006064; border-color: #80deea; }
+.type-device { background-color: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
 
 /* --- Responsive adjustments --- */
 @media (max-width: 768px) {

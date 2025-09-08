@@ -1,4 +1,5 @@
 const Device = require('../models/Device');
+const {createUserlog} = require('../helpers/createUserlog');
 
 /**
  * @desc    Create a new device
@@ -8,7 +9,7 @@ const Device = require('../models/Device');
 const createDevice = async (req, res) => {
   try {
     // Destructure the required fields from the request body
-    const { _id, label, location, position } = req.body;
+    const { _id, label, location, position, userID } = req.body;
 
     // --- Validation: Check if a device with this ID already exists ---
     const existingDevice = await Device.findById(_id);
@@ -28,6 +29,8 @@ const createDevice = async (req, res) => {
     // Save the new device to the database
     const savedDevice = await newDevice.save();
 
+    await createUserlog(userID, `added device "${label}" at location "${location}".`, 'Device')
+
     // Respond with the newly created device data and a 201 Created status
     res.status(201).json(savedDevice);
 
@@ -45,6 +48,7 @@ const createDevice = async (req, res) => {
 const deleteDevice = async (req, res) => {
   try {
     const deviceId = req.params.id;
+    const { userID } = req.body;
 
     // --- Validation: Check if the device exists before trying to delete ---
     const device = await Device.findById(deviceId);
@@ -52,6 +56,7 @@ const deleteDevice = async (req, res) => {
       return res.status(404).json({ message: 'Device not found.' });
     }
 
+    await createUserlog(userID, `deleted device "${device.label}" at location "${device.location}".`, "Deletion")
     // Remove the device from the database
     await device.deleteOne(); // Use deleteOne() on the document instance
 

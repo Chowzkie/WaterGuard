@@ -535,7 +535,8 @@ function App() {
         }
         try {
             await axios.put(`${API_BASE_URL}/api/alerts/restore`, {
-                idsToRestore
+                idsToRestore,
+                userID:  loggedInUser.userID
             });
         } catch (error) {
             console.error("Failed to restore alerts:", error);

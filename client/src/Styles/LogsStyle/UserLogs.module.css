@@ -747,12 +747,13 @@
 
 .type-configuration { background-color: #e9f7f0; color: #146c43; border-color: #b6e0c6; }
 .type-login { background-color: #e6f9f1; color: #237a57; border-color: #b8e8d2; }
-.type-logout { background-color: #fdecea; color: #c62828; border-color: #f5c2c0; }
+.type-logout { background-color: #fff4e5; color: #e65100; border-color: #ffcc80; }
 .type-account { background-color: #e6f7fb; color: #055160; border-color: #b6e0ed; }
-.type-deletion { background-color: #f4f5f6; color: #495057; border-color: #d3d6d8; }
+.type-deletion { background-color: #fdecea; color: #b71c1c; border-color: #f5c6c6; }
 .type-acknowledgement { background-color: #fff9e6; color: #8a6d1a; border-color: #ffeaa7; }
 .type-valve { background-color: #eef4ff; color: #1d4ed8; border-color: #bfdbfe; }
 .type-maintenance { background-color: #fef3f2; color: #b91c1c; border-color: #fca5a5; }
+.type-restoration {  background-color: #e3f2fd; color: #1565c0; border-color: #90caf9; }
 
 /* --- Responsive adjustments --- */
 @media (max-width: 768px) {

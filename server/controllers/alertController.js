@@ -91,14 +91,23 @@ exports.deleteHistoryAlerts = async (req, res) => {
 // 4. Restore History Alerts
 exports.restoreHistoryAlerts = async (req, res) => {
     try {
-        const { idsToRestore } = req.body; // Expect an array of IDs
+        const { idsToRestore, userID } = req.body; // Expect an array of IDs
         if (!idsToRestore || !Array.isArray(idsToRestore)) {
             return res.status(400).json({ message: "Invalid request body. Expected 'idsToRestore' array." });
         }
+
+        const alertsToRestore = await Alert.find({ _id: { $in: idsToRestore } }).select('originator');
+        const originatorIDs = [...new Set(alertsToRestore.map(alert => alert.originator))];
+        const originatorString = originatorIDs.join(', ');
         await Alert.updateMany(
             { _id: { $in: idsToRestore } },
             { $set: { isDeleted: false } }
         );
+        const restoredCount = idsToRestore.length;
+        const plural = restoredCount > 1 ? "s" : "";
+
+        await createUserlog(userID, `Restored ${restoredCount} alert record${plural} from history. Originator(s) ${originatorString}`, "Restoration")
+
         res.status(200).json({ message: "Alerts restored." });
     } catch (error) {
         console.error("Error restoring alerts:", error);

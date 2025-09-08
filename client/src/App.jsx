@@ -517,18 +517,10 @@ function App() {
             return acc;
         }, {});
 
-        Object.keys(groupedByDevice).forEach(deviceId => {
-            const count = groupedByDevice[deviceId].length;
-            const pluralS = count > 1 ? 's' : '';
-            const device = deviceLocations.find(d => d.id === deviceId);
-            const deviceLabel = device ? device.label : deviceId;
-            const logMessage = `Deleted ${count} alert record${pluralS} from history for device '${deviceLabel}'.`;
-            logUserAction(logMessage, 'Deletion');
-        });
-
         try {
             await axios.put(`${API_BASE_URL}/api/alerts/delete`, {
-                idsToDelete: Array.from(idsToDelete)
+                idsToDelete: Array.from(idsToDelete),
+                userID: loggedInUser.userID
             });
             setAlertsHistory(prev => prev.filter(a => !idsToDelete.has(a._id)));
         } catch (error) {

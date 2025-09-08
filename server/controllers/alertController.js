@@ -1,7 +1,7 @@
 // server/controllers/alertController.js
 
 const Alert = require('../models/Alert'); // Import the Alert model
-
+const {createUserlog} = require('../helpers/createUserlog');
 // 1. Get Alerts (with filtering)
 exports.getAlerts = async (req, res) => {
     try {
@@ -59,14 +59,28 @@ exports.acknowledgeAlert = async (req, res) => {
 // 3. Delete History Alerts (Soft Delete)
 exports.deleteHistoryAlerts = async (req, res) => {
     try {
-        const { idsToDelete } = req.body; // Expect an array of IDs
+        const { idsToDelete, userID } = req.body; // Expect an array of IDs
         if (!idsToDelete || !Array.isArray(idsToDelete)) {
             return res.status(400).json({ message: "Invalid request body. Expected 'idsToDelete' array." });
         }
+
+        // Find the alerts to get their originator information
+        const alertsToDelete = await Alert.find({ _id: { $in: idsToDelete } }).select('originator');
+        
+        // Extract unique originator IDs from the fetched alerts
+        const originatorIDs = [...new Set(alertsToDelete.map(alert => alert.originator))];
+        const originatorString = originatorIDs.join(', ');
+
         await Alert.updateMany(
             { _id: { $in: idsToDelete } },
             { $set: { isDeleted: true } }
         );
+
+        //Logs the delete
+        const deletedCount = idsToDelete.length;
+        const plural = deletedCount > 1 ? 's' : "";
+        await createUserlog(userID, `Deleted ${deletedCount} alert record${plural} from history. Originator(s) ${originatorString}`, "Deletion")
+
         res.status(200).json({ message: "Alerts marked as deleted." });
     } catch (error) {
         console.error("Error deleting alerts:", error);

@@ -510,13 +510,6 @@ function App() {
         const alertsToDelete = alertsHistory.filter(alert => idsToDelete.has(alert._id));
         if (alertsToDelete.length === 0) return;
 
-        const groupedByDevice = alertsToDelete.reduce((acc, alert) => {
-            const deviceId = alert.originator || 'unknown';
-            if (!acc[deviceId]) { acc[deviceId] = []; }
-            acc[deviceId].push(alert);
-            return acc;
-        }, {});
-
         try {
             await axios.put(`${API_BASE_URL}/api/alerts/delete`, {
                 idsToDelete: Array.from(idsToDelete),
@@ -529,10 +522,6 @@ function App() {
     }, [alertsHistory, deviceLocations]); // Dependencies
 
     const handleRestoreHistoryAlerts = useCallback(async (idsToRestore) => {
-        const alertsToLog = alertsHistory.filter(alert => idsToRestore.includes(alert._id));
-        if (alertsToLog.length > 0) {
-            // ... (logging logic is the same)
-        }
         try {
             await axios.put(`${API_BASE_URL}/api/alerts/restore`, {
                 idsToRestore,

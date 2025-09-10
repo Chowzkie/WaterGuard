@@ -55,42 +55,6 @@ const initialState = {
  * @param {object} newConfigs - The configuration object after changes.
  * @returns {string[]} An array of log message strings.
  */
-const generateChangeLogs = (oldConfigs, newConfigs) => {
-    const changes = [];
-
-    for (const category in newConfigs) {
-        if (!oldConfigs[category]) continue;
-
-        for (const field in newConfigs[category]) {
-            const oldValue = oldConfigs[category][field];
-            const newValue = newConfigs[category][field];
-
-            if (oldValue !== newValue) {
-                const categoryName = FIELD_NAME_MAP[category] || category;
-                const fieldName = FIELD_NAME_MAP[field] || field;
-
-                const unit = FIELD_UNIT_MAP[field] || FIELD_UNIT_MAP[category] || '';
-                let formattedOldValue = String(oldValue);
-                let formattedNewValue = String(newValue);
-
-                if (unit) {
-                    if (unit === '°C') {
-                        formattedOldValue = `${oldValue}${unit}`;
-                        formattedNewValue = `${newValue}${unit}`;
-                    } else {
-                        formattedOldValue = `${oldValue} ${unit}`;
-                        formattedNewValue = `${newValue} ${unit}`;
-                    }
-                }
-
-                changes.push(
-                    `Changed ${categoryName} parameter: '${fieldName}' from ${formattedOldValue} to ${formattedNewValue}`
-                );
-            }
-        }
-    }
-    return changes;
-};
 
 // =================================================================================
 // APP COMPONENT
@@ -612,18 +576,10 @@ function App() {
 
     // --- MODIFIED: handleSaveConfiguration sends a PUT request and logs changes ---
     const handleSaveConfiguration = useCallback(async (deviceId, newConfigs) => {
-        // Find device using the correct _id property
-        const deviceToUpdate = deviceLocations.find(d => d._id === deviceId);
-        if (deviceToUpdate) {
-            const changesToLog = generateChangeLogs(deviceToUpdate.configurations, newConfigs);
-            changesToLog.forEach(change => {
-                logUserAction(`Device '${deviceToUpdate.label}': ${change}`, 'Configuration');
-            });
-        }
 
         try {
             // Use the correct API endpoint
-            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/configurations`, newConfigs);
+            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/configurations`, {newConfigs, userID: loggedInUser.userID});
             
             // Update state with the exact data returned from the server
             setDeviceLocations(prevDevices =>

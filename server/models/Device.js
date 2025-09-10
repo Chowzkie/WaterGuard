@@ -32,7 +32,7 @@ const deviceSchema = new mongoose.Schema({
     TEMP: { type: Number, default: 25.0 },
     TURBIDITY: { type: Number, default: 3.0 },
   },
-  // Default configuration values are set here as you requested.
+  // Default configuration values are set
   configurations: {
     thresholds: {
       ph: {

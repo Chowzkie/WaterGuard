@@ -1,5 +1,6 @@
 const Device = require('../models/Device');
 const {createUserlog} = require('../helpers/createUserlog');
+const {compareConfigs} = require('../helpers/configDiff')
 
 /**
  * @desc    Create a new device
@@ -74,32 +75,52 @@ const deleteDevice = async (req, res) => {
  * @access  Private
  */
 const updateDeviceConfiguration = async (req, res) => {
-    try {
-        const { deviceId } = req.params;
-        const newConfigs = req.body; // This is the full configurations object from the frontend
+  try {
+    const { deviceId } = req.params;
+    const { newConfigs, userID } = req.body;
 
-        // Find the device by its ID and update its 'configurations' field.
-        // { new: true } ensures the updated document is returned to the frontend.
-        const updatedDevice = await Device.findByIdAndUpdate(
-            deviceId,
-            { $set: { configurations: newConfigs } }, // Use $set to replace the entire field
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedDevice) {
-            return res.status(404).json({ message: "Device not found." });
-        }
-
-        res.status(200).json({
-            message: "Configuration updated successfully",
-            updatedDevice: updatedDevice, // Send the updated device back
-        });
-
-    } catch (error) {
-        console.error('Error updating configuration:', error);
-        res.status(500).json({ message: 'Server error while updating configuration', error: error.message });
+    // 1. Find the device before updating to compare old configs
+    const oldDevice = await Device.findById(deviceId);
+    if (!oldDevice) {
+      return res.status(404).json({ message: "Device not found." });
     }
+
+    const oldConfigs = oldDevice.configurations;
+    const changes =  compareConfigs(oldConfigs, newConfigs); // call the helper
+
+    // 2. Update the device with the new configurations
+    const updatedDevice = await Device.findByIdAndUpdate(
+      deviceId,
+      { $set: { configurations: newConfigs } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedDevice) {
+      return res.status(404).json({ message: "Device not found." });
+    }
+
+    // 3. Log the changes in user logs if there are differences
+    if (changes.length > 0) {
+      const logAction = `Device ${updatedDevice.label} configuration updated.`;
+      const logDetails = `Changes: ${changes.join(", ")}`;
+      createUserlog(userID, `${logAction} ${logDetails}`, "Configuration");
+    }
+
+    // 4. Send success response
+    res.status(200).json({
+      message: "Configuration updated successfully",
+      updatedDevice: updatedDevice,
+    });
+
+  } catch (error) {
+    console.error("Error updating configuration:", error);
+    res.status(500).json({
+      message: "Server error while updating configuration",
+      error: error.message,
+    });
+  }
 };
+
 
 module.exports = {
   createDevice,

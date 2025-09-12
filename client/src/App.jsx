@@ -443,14 +443,9 @@ function App() {
     // =================================================================================
 
     const handleAcknowledgeAlert = async (alertId) => {
-        const alertToAck = activeAlerts.find(a => a._id === alertId);
-        
-        if (alertToAck) {
-            logUserAction(`Acknowledged alert: '${alertToAck.type}' for device '${alertToAck.originator}'.`, 'Acknowledgement');
-        }
         try {
             await axios.post(`${API_BASE_URL}/api/alerts/acknowledge/${alertId}`, {
-                username: loggedInUser.username
+                userID: loggedInUser.userID
             });
 
             // --- THIS IS THE FIX ---

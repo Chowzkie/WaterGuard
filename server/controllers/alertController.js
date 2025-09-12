@@ -34,6 +34,8 @@ exports.getAlerts = async (req, res) => {
 exports.acknowledgeAlert = async (req, res) => {
     try {
         const alert = await Alert.findById(req.params.id);
+        const { userID } = req.body
+
         if (!alert) {
             return res.status(404).json({ message: "Alert not found." });
         }
@@ -42,13 +44,11 @@ exports.acknowledgeAlert = async (req, res) => {
         // We ONLY update the acknowledged status. We do NOT change the
         // lifecycle or status, so the alert remains in the Active panel.
         alert.acknowledged = true;
-        alert.acknowledgedBy = {
-            username: req.body.username || 'system.user',
-            timestamp: new Date()
-        };
         
         await alert.save();
         res.status(200).json(alert);
+
+        createUserlog(userID, `Acknowledged alert: '${alert.type}' for device '${alert.originator}'.`, 'Acknowledgement');
 
     } catch (error) {
         console.error("Error acknowledging alert:", error);

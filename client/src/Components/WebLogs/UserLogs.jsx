@@ -344,7 +344,9 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
             {/* --- This container defines the area for the scrollable list --- */}
             <div className={Style['tableBody']}>
                 {loading ? (
-                    <div className={Style['loading']}>Loading user logs...</div>
+                    <div className={Style['loading-spinner']}>
+                        <div className={Style['spinner']}></div>
+                    </div>
                 ) : filteredDisplayLogs.length > 0 ? (
                     // --- Virtuoso now handles the rendering of the log list ---
                     <Virtuoso

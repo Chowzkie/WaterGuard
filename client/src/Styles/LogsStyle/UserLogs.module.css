@@ -745,6 +745,27 @@
     border: 1px solid transparent;
 }
 
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Make the spinner container fill the available space */
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--primary-color, #007bff); /* Use your app's primary color */
+    border-radius: 50%;
+    width: 10vh;
+    height: 10vh;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .type-configuration { background-color: #e6f4ea; color: #1b5e20; border-color: #a5d6a7; }
 .type-login { background-color: #e8f5f0; color: #00695c; border-color: #80cbc4; }
 .type-logout { background-color: #fff3e0; color: #e65100; border-color: #ffb74d; }

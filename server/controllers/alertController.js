@@ -1,6 +1,7 @@
 // server/controllers/alertController.js
 
 const Alert = require('../models/Alert'); // Import the Alert model
+const User = require('../models/User');
 const {createUserlog} = require('../helpers/createUserlog');
 // 1. Get Alerts (with filtering)
 exports.getAlerts = async (req, res) => {
@@ -33,9 +34,14 @@ exports.getAlerts = async (req, res) => {
 // 2. Acknowledge an Alert
 exports.acknowledgeAlert = async (req, res) => {
     try {
-        const alert = await Alert.findById(req.params.id);
+        
         const { userID } = req.body
+        const user = await User.findById(userID);
+        if (!user) {
+            return res.status(404).json({ message: "Acknowledging user not found." });
+        }
 
+        const alert = await Alert.findById(req.params.id);
         if (!alert) {
             return res.status(404).json({ message: "Alert not found." });
         }
@@ -44,6 +50,10 @@ exports.acknowledgeAlert = async (req, res) => {
         // We ONLY update the acknowledged status. We do NOT change the
         // lifecycle or status, so the alert remains in the Active panel.
         alert.acknowledged = true;
+        alert.acknowledgedBy = {
+            username: user.username, // or req.user.username
+            timestamp: new Date()
+        };
         
         await alert.save();
         res.status(200).json(alert);

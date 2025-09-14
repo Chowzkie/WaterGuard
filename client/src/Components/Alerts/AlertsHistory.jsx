@@ -423,7 +423,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                                     <div className={styles['details-content']}>
                                                         <div className={styles['detail-item']}>
                                                             <User size={16} />
-                                                            <span>Acknowledged by: <strong>{alert.acknowledgedBy.name}</strong></span>
+                                                            <span>Acknowledged by: <strong>{alert.acknowledgedBy.username}</strong></span>
                                                         </div>
                                                         <div className={styles['detail-item']}>
                                                             <Clock size={16} />

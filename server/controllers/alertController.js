@@ -73,7 +73,8 @@ exports.deleteHistoryAlerts = async (req, res) => {
 
         await Alert.updateMany(
             { _id: { $in: idsToDelete } },
-            { $set: { isDeleted: true } }
+            // Set isDeleted AND the new deletedAt timestamp
+            { $set: { isDeleted: true, deletedAt: new Date() } }
         );
 
         //Logs the delete
@@ -99,10 +100,13 @@ exports.restoreHistoryAlerts = async (req, res) => {
         const alertsToRestore = await Alert.find({ _id: { $in: idsToRestore } }).select('originator');
         const originatorIDs = [...new Set(alertsToRestore.map(alert => alert.originator))];
         const originatorString = originatorIDs.join(', ');
+
         await Alert.updateMany(
             { _id: { $in: idsToRestore } },
-            { $set: { isDeleted: false } }
+            // Set isDeleted to false and UNSET the deletedAt field
+            { $set: { isDeleted: false }, $unset: { deletedAt: "" } }
         );
+
         const restoredCount = idsToRestore.length;
         const plural = restoredCount > 1 ? "s" : "";
 
@@ -112,23 +116,5 @@ exports.restoreHistoryAlerts = async (req, res) => {
     } catch (error) {
         console.error("Error restoring alerts:", error);
         res.status(500).json({ message: "Server error while restoring alerts." });
-    }
-};
-
-// 5. Permanently deletes alerts from the database.
-exports.permanentlyDeleteAlerts = async (req, res) => {
-    try {
-        const { idsToDelete } = req.body;
-        if (!idsToDelete || !Array.isArray(idsToDelete)) {
-            return res.status(400).json({ message: "Invalid request body. Expected 'idsToDelete' array." });
-        }
-        
-        // Use Mongoose's deleteMany to permanently remove the documents.
-        const result = await Alert.deleteMany({ _id: { $in: idsToDelete } });
-
-        res.status(200).json({ message: "Alerts permanently deleted.", deletedCount: result.deletedCount });
-    } catch (error) {
-        console.error("Error permanently deleting alerts:", error);
-        res.status(500).json({ message: "Server error while permanently deleting alerts." });
     }
 };

@@ -40,7 +40,10 @@ const alertSchema = new mongoose.Schema({
 
     // ----- Soft Deletion -----
     // We use a flag instead of truly deleting so we can restore it later.
-    isDeleted: { type: Boolean, default: false, index: true }
+    isDeleted: { type: Boolean, default: false, index: true },
+    
+    //----- Scheduler for Permanent Deletion -----
+    deletedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Alert', alertSchema);

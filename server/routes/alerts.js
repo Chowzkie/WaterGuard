@@ -25,7 +25,4 @@ router.put('/delete', alertController.deleteHistoryAlerts);
 // Restores a batch of soft-deleted historical alerts.
 router.put('/restore', alertController.restoreHistoryAlerts);
 
-// NEW: This route handles the permanent deletion of alerts.
-router.delete('/permanent', alertController.permanentlyDeleteAlerts);
-
 module.exports = router;

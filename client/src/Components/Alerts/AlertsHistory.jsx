@@ -154,34 +154,22 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
     };
 
     useEffect(() => {
+        // If the toast is visible...
         if (showUndoToast) {
-            // Reset the flag every time the toast appears
-            wasUndoClicked.current = false; 
-
+            // ...set a timer that will simply hide it after 10 seconds.
             undoTimerRef.current = setTimeout(() => {
-                // When the 10-second timer finishes...
-                setShowUndoToast(false); // Hide the toast
-
-                // Check if the user did NOT click the "Undo" button.
-                if (!wasUndoClicked.current && lastDeleted.current.length > 0) {
-                    // If they didn't, proceed with permanent deletion.
-                    const idsToPurge = lastDeleted.current.map(a => a._id);
-                    onPermanentDeleteAlerts(idsToPurge); // Call the new handler
-                }
-                
-                // Clear the temporary storage regardless
-                lastDeleted.current = [];
-
-            }, 10000); // 10-second duration
+                setShowUndoToast(false);
+            }, 10000); 
         }
 
-        // Cleanup function
+        // The cleanup function remains important to prevent issues
+        // if the component unmounts while the timer is active.
         return () => {
             if (undoTimerRef.current) {
                 clearTimeout(undoTimerRef.current);
             }
         };
-    }, [showUndoToast, onPermanentDeleteAlerts]); // Add dependency
+    }, [showUndoToast]); // The dependency array now only needs showUndoToast
 
     // --- All existing filter handlers are unchanged ---
     const handlePillSelect = (filterType, value) => { setDraftFilters(prev => ({ ...prev, [filterType]: prev[filterType].includes(value) ? prev[filterType].filter(v => v !== value) : [...prev[filterType], value] })); };

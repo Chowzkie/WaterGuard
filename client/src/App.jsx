@@ -491,17 +491,6 @@ function App() {
         }
     }, [alertsHistory, deviceLocations]); // Dependencies
 
-    const handlePermanentDeleteAlerts = useCallback(async (idsToDelete) => {
-        try {
-            await axios.delete(`${API_BASE_URL}/api/alerts/permanent`, {
-                data: { idsToDelete }
-            });
-            console.log("Successfully purged alerts from database.");
-        } catch (error) {
-            console.error("Failed to permanently delete alerts:", error);
-        }
-    }, []); // No dependencies, this function will be created only once.
-
     const handleActiveFilterChange = (e) => setActiveFilterDevice(e.target.value);
     const handleRecentFilterChange = (e) => setRecentFilterDevice(e.target.value);
     const handleSelectDevice = (deviceId) => {
@@ -660,7 +649,6 @@ function App() {
         handleRecentFilterChange,
         onAcknowledgeAlert: handleAcknowledgeAlert,
         onDeleteHistoryAlerts: handleDeleteHistoryAlerts,
-        onPermanentDeleteAlerts: handlePermanentDeleteAlerts,
         onRestoreHistoryAlerts: handleRestoreHistoryAlerts,
         onDeleteSystemLogs: handleDeleteSystemLogs,
         onRestoreSystemLogs: handleRestoreSystemLogs,

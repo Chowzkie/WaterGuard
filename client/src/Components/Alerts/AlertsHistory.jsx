@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Trash2, Download, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
+import { Trash2, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
 import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/AlertsHistory.module.css';
 
@@ -221,7 +221,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                             <button onClick={() => setIsFilterOpen(o => !o)} className={styles['icon-button']}>
                                 <ListFilter className={styles['filter-icon']} size={18} />
                             </button>
-                            <Download className={styles['download-icon']} size={18} />
                         </>
                     )}
                     

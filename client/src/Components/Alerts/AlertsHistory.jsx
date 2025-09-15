@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Trash2, Download, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
+import { Trash2, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
 import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/AlertsHistory.module.css';
 
@@ -154,34 +154,22 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
     };
 
     useEffect(() => {
+        // If the toast is visible...
         if (showUndoToast) {
-            // Reset the flag every time the toast appears
-            wasUndoClicked.current = false; 
-
+            // ...set a timer that will simply hide it after 10 seconds.
             undoTimerRef.current = setTimeout(() => {
-                // When the 10-second timer finishes...
-                setShowUndoToast(false); // Hide the toast
-
-                // Check if the user did NOT click the "Undo" button.
-                if (!wasUndoClicked.current && lastDeleted.current.length > 0) {
-                    // If they didn't, proceed with permanent deletion.
-                    const idsToPurge = lastDeleted.current.map(a => a._id);
-                    onPermanentDeleteAlerts(idsToPurge); // Call the new handler
-                }
-                
-                // Clear the temporary storage regardless
-                lastDeleted.current = [];
-
-            }, 10000); // 10-second duration
+                setShowUndoToast(false);
+            }, 10000); 
         }
 
-        // Cleanup function
+        // The cleanup function remains important to prevent issues
+        // if the component unmounts while the timer is active.
         return () => {
             if (undoTimerRef.current) {
                 clearTimeout(undoTimerRef.current);
             }
         };
-    }, [showUndoToast, onPermanentDeleteAlerts]); // Add dependency
+    }, [showUndoToast]); // The dependency array now only needs showUndoToast
 
     // --- All existing filter handlers are unchanged ---
     const handlePillSelect = (filterType, value) => { setDraftFilters(prev => ({ ...prev, [filterType]: prev[filterType].includes(value) ? prev[filterType].filter(v => v !== value) : [...prev[filterType], value] })); };
@@ -233,7 +221,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                             <button onClick={() => setIsFilterOpen(o => !o)} className={styles['icon-button']}>
                                 <ListFilter className={styles['filter-icon']} size={18} />
                             </button>
-                            <Download className={styles['download-icon']} size={18} />
                         </>
                     )}
                     
@@ -435,7 +422,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                                     <div className={styles['details-content']}>
                                                         <div className={styles['detail-item']}>
                                                             <User size={16} />
-                                                            <span>Acknowledged by: <strong>{alert.acknowledgedBy.name}</strong></span>
+                                                            <span>Acknowledged by: <strong>{alert.acknowledgedBy.username}</strong></span>
                                                         </div>
                                                         <div className={styles['detail-item']}>
                                                             <Clock size={16} />

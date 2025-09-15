@@ -64,4 +64,24 @@ cron.schedule('* * * * *', async () => {
     }
 });
 
+// This job permanently purges soft-deleted alerts after a grace period.
+// It runs every 5 minutes to check for old records.
+cron.schedule('*/10 * * * *', async () => {
+    // 5 minutes ago is a safe buffer after the 10-second undo window.
+    const cutoff = new Date(Date.now() - 15 * 1000); 
+    
+    try {
+        const result = await Alert.deleteMany({
+            isDeleted: true,
+            deletedAt: { $lte: cutoff } // Find alerts deleted before the cutoff time
+        });
+
+        if (result.deletedCount > 0) {
+            console.log(`✅ Cron Job (Purge): Successfully purged ${result.deletedCount} soft-deleted alerts.`);
+        }
+    } catch (error) {
+        console.error('❌ Cron Job Error (Purge):', error);
+    }
+});
+
 startServer();

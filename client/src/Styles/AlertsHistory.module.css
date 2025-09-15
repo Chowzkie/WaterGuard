@@ -48,16 +48,6 @@
   color: rgb(245, 70, 70);
 }
 
-.download-icon{
-  color: #6c757d;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.download-icon:hover{
-  color: rgb(28, 170, 40);
-}
-
 /* === Table Layout (Identical structure) === */
 .alerts-table {
   border: 1px solid #eee;

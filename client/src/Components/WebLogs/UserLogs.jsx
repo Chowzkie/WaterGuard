@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
-import { ListFilter, Download, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { ListFilter, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
 import {formatDateTime} from '../../utils/formatDateTime'
 import axios from 'axios';
 
@@ -267,9 +267,6 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
                             <Trash2 className={Style['trash-icon']} size={18} onClick={handleToggleDeleteMode} />
                             <div className={Style['menu']} onClick={() => setIsFilterOpen(o => !o)}>
                                 <ListFilter size={18}/>
-                            </div>
-                            <div className={Style['download']}>
-                                <Download size={18}/>
                             </div>
                         </>
                     )}

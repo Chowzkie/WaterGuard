@@ -2,6 +2,12 @@
 
 const mongoose = require('mongoose');
 
+// A small, reusable schema for the 'acknowledgedBy' field
+const acknowledgedBySchema = new mongoose.Schema({
+    username: { type: String, required: true },
+    timestamp: { type: Date, required: true }
+}, { _id: false }); // _id: false prevents MongoDB from creating a separate ID for this sub-document
+
 const alertSchema = new mongoose.Schema({
     // ----- Core Alert Information -----
     originator: { type: String, required: true, index: true }, // The Device ID. Indexed for fast queries.
@@ -34,13 +40,17 @@ const alertSchema = new mongoose.Schema({
 
     // ----- Acknowledgment Tracking -----
     acknowledged: { type: Boolean, default: false },
+    acknowledgedBy: { type: acknowledgedBySchema }, // Embeds the sub-document defined above.
 
     // ----- Timestamps -----
     dateTime: { type: Date, default: Date.now, index: true }, // When the alert was created. Indexed for sorting by date.
 
     // ----- Soft Deletion -----
     // We use a flag instead of truly deleting so we can restore it later.
-    isDeleted: { type: Boolean, default: false, index: true }
+    isDeleted: { type: Boolean, default: false, index: true },
+    
+    //----- Scheduler for Permanent Deletion -----
+    deletedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Alert', alertSchema);

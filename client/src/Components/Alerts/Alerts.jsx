@@ -20,7 +20,6 @@ const Alerts = () => {
         // CHANGE: Get delete and restore functions from context
         onDeleteHistoryAlerts,
         onRestoreHistoryAlerts,
-        onPermanentDeleteAlerts,
         newlyAddedId,
         onAnimationComplete
     } = useAlerts();
@@ -88,7 +87,6 @@ const Alerts = () => {
                         // CHANGE: Pass delete and restore functions down as props
                         onDeleteHistoryAlerts={onDeleteHistoryAlerts}
                         onRestoreHistoryAlerts={onRestoreHistoryAlerts}
-                        onPermanentDeleteAlerts={onPermanentDeleteAlerts}
                     />
                 );
             default:

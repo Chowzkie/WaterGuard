@@ -620,22 +620,6 @@ function App() {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     };
 
-    // --- MODIFIED: handleValveToggle now also creates a system log ---
-    const handleValveToggle = (deviceId, newState) => {
-        const device = deviceLocations.find(d => d.id === deviceId);
-        if (device) {
-            const stateText = newState ? 'Opened' : 'Closed';
-            logUserAction(`${stateText} water valve for device '${device.label}'.`, 'Valve');
-            logSystemEvent({
-                deviceId: device.id,
-                component: 'valve',
-                event: `Valve ${stateText} manually`,
-                details: `Action by: ${CURRENT_USER.username}`,
-                status: 'Success',
-            });
-        }
-    };
-
     const contextValue = {
         activeAlerts,
         recentAlerts,
@@ -661,7 +645,6 @@ function App() {
         newlyAddedId,
         onAnimationComplete: handleAnimationComplete,
         onSaveConfiguration: handleSaveConfiguration,
-        onValveToggle: handleValveToggle,
         // --- Provide systemLogs to the context ---
         systemLogs,
         loggedInUser,

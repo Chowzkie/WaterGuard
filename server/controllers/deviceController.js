@@ -158,7 +158,7 @@ const sendValveCommand = async (req, res) => {
       message: `Command to set valve to ${commandValue} has been sent.`,
       device: device,
     });
-    createUserlog(userID, `${updatedDevice.label} Valve is set to ${valveState}`, "Valve"); // Call the crateUserlog Helper
+    createUserlog(userID, `${updatedDevice.label} Valve is set to ${commandValue}`, "Valve"); // Call the crateUserlog Helper
 
   } catch (error) {
     console.error("Error sending valve command:", error);

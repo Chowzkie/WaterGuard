@@ -24,6 +24,25 @@ const deviceSchema = new mongoose.Schema({
     pump: { type: String, default: 'IDLE' },
     valve: { type: String, default: 'CLOSED' },
     lastContact: { type: Date, default: () => new Date() }, // Sets current time on creation
+
+     sensorStatus: {
+      PH: {
+        status: { type: String, default: 'Online' },
+        lastReadingTimestamp: { type: Date, default: () => new Date() }
+      },
+      TDS: {
+        status: { type: String, default: 'Online' },
+        lastReadingTimestamp: { type: Date, default: () => new Date() }
+      },
+      TEMP: {
+        status: { type: String, default: 'Online' },
+        lastReadingTimestamp: { type: Date, default: () => new Date() }
+      },
+      TURBIDITY: {
+        status: { type: String, default: 'Online' },
+        lastReadingTimestamp: { type: Date, default: () => new Date() }
+      }
+    }
   },
   latestReading: {
     timestamp: { type: Date, default: () => new Date() },

@@ -32,8 +32,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
-  /* ✅ MODIFIED: Set a fixed height for the panels */
-  min-height: 200px; 
+  min-height: 220px; 
 }
 
 .details-card {
@@ -169,4 +168,67 @@
 .page-container::-webkit-scrollbar-thumb {
   background-color: #bbb;
   border-radius: 4px;
+}
+
+/* Specific.module.css */
+
+.sensor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem; /* MODIFIED: Reduced gap between cards */
+  padding-top: 0.25rem;
+}
+
+.sensor-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.6rem; /* MODIFIED: Significantly reduced padding */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* MODIFIED: Helps align content vertically */
+  gap: 0.4rem; /* MODIFIED: Reduced internal gap */
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.sensor-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.sensor-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* MODIFIED: Reduced gap between icon and text */
+}
+
+.sensor-icon {
+  color: #495057;
+}
+
+.sensor-name {
+  font-weight: 600;
+  font-size: 0.85rem; /* MODIFIED: Reduced font size */
+  color: #343a40;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* MODIFIED: Reduced gap */
+  font-size: 0.8rem; /* MODIFIED: Reduced font size */
+  padding-left: 2px;
+}
+
+.status-dot {
+  width: 9px; /* MODIFIED: Made dot smaller */
+  height: 9px; /* MODIFIED: Made dot smaller */
+  border-radius: 50%;
+}
+
+.statusOnline {
+  background-color: #22c55e;
+}
+
+.statusOffline {
+  background-color: #ef4444;
 }

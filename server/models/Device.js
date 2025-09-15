@@ -7,6 +7,12 @@ const deviceSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  // Use to get the UserID
+  userID: {
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "User",
+    required: true,
+  },
   label: {
     type: String,
     required: true,

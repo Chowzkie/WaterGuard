@@ -25,6 +25,7 @@ const createDevice = async (req, res) => {
       label,
       location,
       position,
+      userID,
     });
 
     // Save the new device to the database

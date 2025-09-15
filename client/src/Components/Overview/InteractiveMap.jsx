@@ -149,7 +149,7 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
         <div className="modal-backdrop" onClick={onCancel}>
             {validationError && <ConfirmationModal title="Invalid Input" message={validationError} confirmText="OK" onConfirm={() => setValidationError(null)} isError={true} />}
             <div className="add-device-form-content" onClick={e => e.stopPropagation()}>
-                <div className="modal-header"><h3>Add New Device Pin</h3><button onClick={onCancel} className="modal-close-button"><X size={20} /></button></div>
+                <div className="modal-header"><h3>Add New Device</h3><button onClick={onCancel} className="modal-close-button"><X size={20} /></button></div>
                 <form onSubmit={handleSubmit} className="modal-form">
                     <div className="form-group">
                         <label htmlFor="device-number">Device Number</label>
@@ -171,7 +171,7 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
                         <label htmlFor="lng">Longitude</label><input id="lng" type="text" value={lng} onChange={e => setLng(e.target.value)} placeholder="e.g., 120.61" />
                     </div>
                         <div className="form-actions"><button type="button" onClick={onCancel} className="button-secondary">Cancel</button>
-                        <button type="submit" className="button-primary">Add Pin</button>
+                        <button type="submit" className="button-primary">Add Device</button>
                     </div>
                 </form>
             </div>

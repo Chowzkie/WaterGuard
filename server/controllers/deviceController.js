@@ -156,6 +156,7 @@ const updateValveState = async (req, res) => {
       message: `Valve state updated to ${valveState}`,
       device: updatedDevice,
     });
+    createUserlog(userID, `${updatedDevice.label} Valve is set to ${valveState}`, "Valve"); // Call the crateUserlog Helper
 
   } catch (error) {
     console.error("Error updating valve state:", error);

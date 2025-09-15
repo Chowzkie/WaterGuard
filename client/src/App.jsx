@@ -720,7 +720,7 @@ function App() {
                         path="/devices/:deviceId"
                         element={
                             <ProtectedRoute >
-                                <SpecificDevice onSetHeaderDeviceLabel={setHeaderDeviceLabel} />
+                                <SpecificDevice onSetHeaderDeviceLabel={setHeaderDeviceLabel} userID={loggedInUser.userID}/>
                             </ProtectedRoute>
                         }
                     />

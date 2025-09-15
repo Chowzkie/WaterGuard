@@ -104,7 +104,7 @@ function DetailsPanel({ device }) {
 
 const API_BASE_URL = 'http://localhost:8080';
 
-function SpecificDevice({ onSetHeaderDeviceLabel }) {
+function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     const { devices } = useContext(AlertsContext);
     const { deviceId } = useParams();
     const navigate = useNavigate();
@@ -142,8 +142,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
     // NEW: Handler function to call the backend
     const handleValveToggle = async (deviceId, isNowOpen) => {
         const newValveState = isNowOpen ? 'OPEN' : 'CLOSED';
-        // You'll need a way to get the current user's ID. For now, we'll hardcode it.
-        const userID = 'SYSTEM_USER'; // Replace with actual logged-in user ID
 
         try {
             const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/valve`, {

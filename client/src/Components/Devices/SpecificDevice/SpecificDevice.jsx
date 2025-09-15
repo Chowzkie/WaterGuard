@@ -141,23 +141,22 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
 
     // NEW: Handler function to call the backend
     const handleValveToggle = async (deviceId, isNowOpen) => {
-        const newValveState = isNowOpen ? 'OPEN' : 'CLOSED';
+        const newCommandValue = isNowOpen ? 'OPEN' : 'CLOSED';
 
         try {
-            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/valve`, {
-                valveState: newValveState,
+            // Call the new '/command' endpoint
+            await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/command`, {
+                commandValue: newCommandValue,
                 userID: userID
             });
 
-            // IMPORTANT: Update the local state to reflect the change immediately
-            // This makes the UI feel responsive without waiting for a full refresh
-            setCurrentDevice(response.data.device);
+            // The UI will update automatically when the hardware updates the 'currentState'.
+            // For now, we just give the user feedback that the command was sent.
+            addToast(`Command to ${newCommandValue.toLowerCase()} valve sent!`, 'success');
 
-            addToast(`Valve is now ${newValveState}!`, 'success');
         } catch (error) {
-            console.error('Failed to toggle valve:', error);
-            addToast('Error: Could not update valve state.', 'error');
-            // Optionally, revert the switch's visual state here if the API call fails
+            console.error('Failed to send valve command:', error);
+            addToast('Error: Could not send command to device.', 'error');
         }
     };
 

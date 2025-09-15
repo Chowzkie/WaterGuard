@@ -26,12 +26,12 @@ const deviceSchema = new mongoose.Schema({
     required: true,
   },
   currentState: {
-    status: { type: String, default: 'Online' },
-    pump: { type: String, default: 'IDLE' },
-    valve: { type: String, default: 'CLOSED' },
+    status: { type: String, enum: ['Online', 'Offline', 'Error'], default: 'Online' },
+    pump: { type: String, enum: ['IDLE', 'FILLING', 'DRAINING'], default: 'IDLE' },
+    valve: { type: String, enum: ['OPEN', 'CLOSED'], default: 'CLOSED' },
     lastContact: { type: Date, default: () => new Date() }, // Sets current time on creation
 
-     sensorStatus: {
+    sensorStatus: {
       PH: {
         status: { type: String, default: 'Online' },
         lastReadingTimestamp: { type: Date, default: () => new Date() }
@@ -56,6 +56,10 @@ const deviceSchema = new mongoose.Schema({
     TDS: { type: Number, default: 300.0 },
     TEMP: { type: Number, default: 25.0 },
     TURBIDITY: { type: Number, default: 3.0 },
+  },
+  commands: {
+    setValve: { type: String, enum: ['OPEN', 'CLOSED', 'NONE'], default: 'NONE' },
+    setPump: { type: String, enum: ['IDLE', 'FILL', 'DRAIN', 'NONE'], default: 'NONE' }
   },
   // Default configuration values are set
   configurations: {

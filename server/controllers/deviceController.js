@@ -122,9 +122,53 @@ const updateDeviceConfiguration = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Update a device's valve state
+ * @route   PUT /api/devices/:deviceId/valve
+ * @access  Private
+ */
+const updateValveState = async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    // The new state ('OPEN' or 'CLOSED') will be sent in the request body
+    const { valveState, userID } = req.body;
+
+    // Validate the incoming state to ensure it's one of the expected values
+    if (!['OPEN', 'CLOSED'].includes(valveState)) {
+      return res.status(400).json({ message: 'Invalid valve state provided.' });
+    }
+
+    // Find the device and update the valve state in a single operation
+    const updatedDevice = await Device.findByIdAndUpdate(
+      deviceId,
+      // Use dot notation to update a nested field
+      { $set: { 'currentState.valve': valveState } },
+      // Options: return the modified document and run schema validators
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedDevice) {
+      return res.status(404).json({ message: "Device not found." });
+    }
+
+    // Send the updated device object back to the client
+    res.status(200).json({
+      message: `Valve state updated to ${valveState}`,
+      device: updatedDevice,
+    });
+
+  } catch (error) {
+    console.error("Error updating valve state:", error);
+    res.status(500).json({
+      message: "Server error while updating valve state",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   createDevice,
   deleteDevice,
   updateDeviceConfiguration,
+  updateValveState,
 };

@@ -3,7 +3,7 @@ const router = express.Router();
 
 // Import the database model and controller functions
 const Device = require('../models/Device');
-const { createDevice, deleteDevice, updateDeviceConfiguration } = require('../controllers/deviceController');
+const { createDevice, deleteDevice, updateDeviceConfiguration, updateValveState } = require('../controllers/deviceController');
 
 // =================================================================================
 // --- DATABASE-DRIVEN ROUTES ---
@@ -42,5 +42,11 @@ router.delete('/:id', deleteDevice);
  */
 // AFTER
 router.put("/:deviceId/configurations", updateDeviceConfiguration);
+
+/**
+ * @desc    Update the valve state for a specific device
+ * @route   PUT /api/devices/:deviceId/valve
+ */
+router.put("/:deviceId/valve", updateValveState);
 
 module.exports = router;

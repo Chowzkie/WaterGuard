@@ -105,13 +105,11 @@ function DetailsPanel({ device }) {
 const API_BASE_URL = 'http://localhost:8080';
 
 function SpecificDevice({ onSetHeaderDeviceLabel }) {
+    const { devices } = useContext(AlertsContext);
     const { deviceId } = useParams();
     const navigate = useNavigate();
     const [currentDevice, setCurrentDevice] = useState(null);
-    // --- MODIFIED: Get recentAlerts from context ---
-    const { devices, onValveToggle, recentAlerts } = useContext(AlertsContext);
 
-    // ✅ Toast state & handlers
     const [toasts, setToasts] = useState([]);
     const toastTimeouts = useRef({});
 
@@ -141,6 +139,30 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
         toastTimeouts.current[id] = setTimeout(() => startToastExit(id), 3000);
     }, [startToastExit]);
 
+    // NEW: Handler function to call the backend
+    const handleValveToggle = async (deviceId, isNowOpen) => {
+        const newValveState = isNowOpen ? 'OPEN' : 'CLOSED';
+        // You'll need a way to get the current user's ID. For now, we'll hardcode it.
+        const userID = 'SYSTEM_USER'; // Replace with actual logged-in user ID
+
+        try {
+            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/valve`, {
+                valveState: newValveState,
+                userID: userID
+            });
+
+            // IMPORTANT: Update the local state to reflect the change immediately
+            // This makes the UI feel responsive without waiting for a full refresh
+            setCurrentDevice(response.data.device);
+
+            addToast(`Valve is now ${newValveState}!`, 'success');
+        } catch (error) {
+            console.error('Failed to toggle valve:', error);
+            addToast('Error: Could not update valve state.', 'error');
+            // Optionally, revert the switch's visual state here if the API call fails
+        }
+    };
+
     useEffect(() => {
         const foundDevice = devices.find(device => device._id === deviceId);
         setCurrentDevice(foundDevice);
@@ -152,7 +174,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
         };
     }, [deviceId, devices, onSetHeaderDeviceLabel]);
 
-    // ✅ STEP 2: Update the useEffect to fetch data based on the timeRange.
+    // Update the useEffect to fetch data based on the timeRange.
     useEffect(() => {
         if (deviceId) {
             const fetchHistoricalData = async () => {
@@ -171,11 +193,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
             fetchHistoricalData();
         }
     }, [deviceId, timeRange]); // 👈 Re-run this effect when deviceId OR timeRange changes
-
-    // --- NEW: Filter alerts specifically for this device ---
-    const deviceSpecificAlerts = recentAlerts
-        ? recentAlerts.filter(alert => alert.originator === deviceId)
-        : [];
 
     const handleGoBack = () => navigate('/devices');
 
@@ -204,9 +221,12 @@ function SpecificDevice({ onSetHeaderDeviceLabel }) {
                     <DetailsPanel device={currentDevice} />
                 </div>
                 <ValveSwitch 
-                    deviceId={deviceId} 
+                    deviceId={deviceId}
+                    // Pass the actual valve state, not the overall device status
+                    valveState={currentDevice.currentState?.valve} 
                     deviceStatus={currentDevice.currentState?.status}
-                    onToggle={onValveToggle} 
+                    // Pass our new handler function
+                    onToggle={handleValveToggle}
                     addToast={addToast}
                 />
             </div>

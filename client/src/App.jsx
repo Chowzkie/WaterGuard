@@ -77,6 +77,8 @@ function App() {
         return savedUser? JSON.parse(savedUser) : null;
     });
 
+    const userID = loggedInUser?.userID //A helper to set the loggedin user
+
     useEffect(() => {
         //fetch the user details into the backend
         const fetchUserProfile = async() => {
@@ -445,7 +447,7 @@ function App() {
     const handleAcknowledgeAlert = async (alertId) => {
         try {
             await axios.post(`${API_BASE_URL}/api/alerts/acknowledge/${alertId}`, {
-                userID: loggedInUser.userID
+                userID
             });
 
             // --- THIS IS THE FIX ---
@@ -472,7 +474,7 @@ function App() {
         try {
             await axios.put(`${API_BASE_URL}/api/alerts/delete`, {
                 idsToDelete: Array.from(idsToDelete),
-                userID: loggedInUser.userID
+                userID
             });
             setAlertsHistory(prev => prev.filter(a => !idsToDelete.has(a._id)));
         } catch (error) {
@@ -484,7 +486,7 @@ function App() {
         try {
             await axios.put(`${API_BASE_URL}/api/alerts/restore`, {
                 idsToRestore,
-                userID:  loggedInUser.userID
+                userID
             });
         } catch (error) {
             console.error("Failed to restore alerts:", error);
@@ -501,7 +503,7 @@ function App() {
     const handleAddDevice = async (newDeviceData) => {
         try {
             // Send the new device data to the backend API
-            const response = await axios.post(`${API_BASE_URL}/api/devices`, {...newDeviceData, userID: loggedInUser.userID});
+            const response = await axios.post(`${API_BASE_URL}/api/devices`, {...newDeviceData, userID});
 
             // Add the device *returned by the server* to our state
             // This is important because the server response includes the new _id from MongoDB
@@ -520,7 +522,7 @@ function App() {
         try {
             // Send a delete request to the backend API
             await axios.delete(`${API_BASE_URL}/api/devices/${deviceId}`, {
-                data: {userID: loggedInUser.userID}
+                data: {userID}
             });
 
             // If the delete was successful, remove the device from our local state
@@ -563,7 +565,7 @@ function App() {
 
         try {
             // Use the correct API endpoint
-            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/configurations`, {newConfigs, userID: loggedInUser.userID});
+            const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/configurations`, {newConfigs, userID});
             
             // Update state with the exact data returned from the server
             setDeviceLocations(prevDevices =>
@@ -720,7 +722,7 @@ function App() {
                         path="/devices/:deviceId"
                         element={
                             <ProtectedRoute >
-                                <SpecificDevice onSetHeaderDeviceLabel={setHeaderDeviceLabel} userID={loggedInUser.userID}/>
+                                <SpecificDevice onSetHeaderDeviceLabel={setHeaderDeviceLabel} userID={userID}/>
                             </ProtectedRoute>
                         }
                     />

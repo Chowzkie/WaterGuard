@@ -1,30 +1,34 @@
 // server/controllers/sensorReadingController.js
 
+const Device = require('../models/Device'); // 1. Import the Mongoose Device model
 const Alert = require('../models/Alert');
-const allDevices = require('../mockData/devices.js');
-const { evaluateSensorReading } = require('../utils/SensorLogic');
+const { evaluateSensorReading } = require('../utils/SensorLogic'); // Assumes SensorLogic.js is in utils
 
 exports.processReading = async (req, res) => {
     const reading = req.body;
+    const deviceId = reading.deviceId;
 
-    if (!reading || !reading.deviceId) {
+    if (!reading || !deviceId) {
         return res.status(400).json({ message: "Invalid sensor reading payload." });
     }
 
     try {
-        // --- FIX: Reverted to call evaluateSensorReading without device-specific configs ---
-        const allEvaluatedAlerts = evaluateSensorReading(reading);
+        // 3. Find the device in the database to get its configurations
+        const device = await Device.findById(deviceId);
+        if (!device) {
+            return res.status(404).json({ message: `Device with ID ${deviceId} not found.` });
+        }
+
+        // 4. Call evaluateSensorReading with the device-specific configs
+        const allEvaluatedAlerts = evaluateSensorReading(reading, device.configurations);
         const actionsTaken = [];
-
-        // This map is still useful for getting the device label for alerts.
-        const deviceMap = new Map(allDevices.map(d => [d.id, d.label]));
-
+        
         // --- Part 1: Process Abnormal Readings (Warnings and Criticals) ---
         const abnormalAlerts = allEvaluatedAlerts.filter(a => a.severity !== 'Normal');
 
         for (const newAlertData of abnormalAlerts) {
-            const originatorLabel = deviceMap.get(newAlertData.originator) || newAlertData.originator;
-            const finalAlertData = { ...newAlertData, originator: originatorLabel };
+            // 5. Use the device label directly from the database object
+            const finalAlertData = { ...newAlertData, originator: device.label }; 
             const { originator, parameter, severity } = finalAlertData;
 
             const existingAlert = await Alert.findOne({
@@ -53,9 +57,8 @@ exports.processReading = async (req, res) => {
         const normalAlerts = allEvaluatedAlerts.filter(a => a.severity === 'Normal');
 
         for (const normalReading of normalAlerts) {
-            const originatorLabel = deviceMap.get(normalReading.originator) || normalReading.originator;
             const activeAlertToResolve = await Alert.findOne({
-                originator: originatorLabel,
+                originator: device.label, // Use device label
                 parameter: normalReading.parameter,
                 lifecycle: 'Active'
             });
@@ -68,7 +71,7 @@ exports.processReading = async (req, res) => {
 
                 await Alert.create({
                     ...normalReading,
-                    originator: originatorLabel,
+                    originator: device.label, // Use device label
                     type: `${normalReading.parameter} is back to normal`,
                     status: 'Active',
                     lifecycle: 'Active',

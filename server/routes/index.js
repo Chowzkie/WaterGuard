@@ -5,7 +5,7 @@ const sensorRoutes = require("./sensorReadings");
 const auth = require("./auth.js")
 const alertRoutes = require('./alerts');
 const logsRoute = require('./Logs.js')
-const readingsRoutes = require('./readings');
+const historicalReadingsRoutes = require('./historical-readings.js');
 
 module.exports = (app) => {
   app.use("/api/devices", devicesRoutes);
@@ -14,5 +14,5 @@ module.exports = (app) => {
   app.use("/api/auth", auth);
   app.use('/api/alerts', alertRoutes);
   app.use('/api/logs', logsRoute);
-  app.use('/api/readings', readingsRoutes);
+  app.use('/api/historical-readings', historicalReadingsRoutes);
 };

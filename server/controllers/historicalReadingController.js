@@ -1,5 +1,5 @@
 // server/controllers/readingController.js
-const Reading = require('../models/Reading');
+const Reading = require('../models/HistoricalReading');
 
 /**
  * @desc    Get historical readings for a specific device, aggregated by a time range.

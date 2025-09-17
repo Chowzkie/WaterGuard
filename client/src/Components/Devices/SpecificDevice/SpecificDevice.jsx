@@ -178,7 +178,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                 setIsChartLoading(true);
                 try {
                     // Append the range query parameter to the API call
-                    const response = await axios.get(`${API_BASE_URL}/api/readings/${deviceId}?range=${timeRange}`);
+                    const response = await axios.get(`${API_BASE_URL}/api/historical-readings/${deviceId}?range=${timeRange}`);
                     setHistoricalData(response.data);
                 } catch (error) {
                     console.error(`Failed to fetch historical data for ${deviceId} with range ${timeRange}:`, error);

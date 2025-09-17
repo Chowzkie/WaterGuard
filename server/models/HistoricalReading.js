@@ -23,5 +23,5 @@
         }
     });
 
-    module.exports = mongoose.model('Reading', ReadingSchema);
+    module.exports = mongoose.model('Historical Reading', ReadingSchema);
     

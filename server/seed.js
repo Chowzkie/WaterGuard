@@ -1,7 +1,7 @@
 // server/seed.js
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
-const Reading = require('./models/Reading');
+const Reading = require('./models/HistoricalReading');
 
 // =================================================================
 // --- Configuration ---

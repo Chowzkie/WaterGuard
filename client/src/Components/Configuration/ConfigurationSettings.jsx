@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../Styles/ConfigurationSettings.module.css';
 import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff } from 'lucide-react';
 
@@ -53,6 +53,8 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         shutoff: false,
     });
 
+    const initializedDeviceIdRef = useRef(null);
+
     // --- LIFECYCLE HOOKS ---
 
     /**
@@ -60,14 +62,20 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
      * It creates deep copies of the device's configurations for both the 'original' and 'draft' states.
      * It also gracefully handles cases where a device has no pre-existing configuration data by defaulting to an empty object.
      */
-    useEffect(() => {
-        const initialConfigs = device.configurations
-            ? JSON.parse(JSON.stringify(device.configurations))
-            : {};
-        
-        setOriginalConfigs(initialConfigs);
-        setDraftConfigs(initialConfigs);
-        setSaveSuccess(false); // Reset save success state when device changes
+     useEffect(() => {
+        // Only reset the form if the actual device ID has changed.
+        if (device && device._id !== initializedDeviceIdRef.current) {
+            const initialConfigs = device.configurations
+                ? JSON.parse(JSON.stringify(device.configurations))
+                : {};
+            
+            setOriginalConfigs(initialConfigs);
+            setDraftConfigs(initialConfigs);
+            setSaveSuccess(false); 
+            
+            // Update the ref to remember the ID of the device we just loaded
+            initializedDeviceIdRef.current = device._id;
+        }
     }, [device]);
 
     // --- UTILITY & EVENT HANDLERS ---

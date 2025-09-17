@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../Styles/ConfigurationSettings.module.css';
-import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff } from 'lucide-react';
+import GuidelinesModal from './GuidelinesModal';
+import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff, HelpCircle } from 'lucide-react';
 
 /**
  * A reusable component to display a message when a setting is not configured.
@@ -54,6 +55,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     });
 
     const initializedDeviceIdRef = useRef(null);
+    const [showGuidelines, setShowGuidelines] = useState(false);
 
     // --- LIFECYCLE HOOKS ---
 
@@ -208,9 +210,18 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         return <><Save size={16} /><span>Save Configurations</span></>;
     };
 
+     /**
+     * @function handleShowGuidelines - Opens the guidelines modal.
+     * It stops event propagation to prevent the collapsible panel from toggling.
+     */
+    const handleShowGuidelines = (e) => {
+        e.stopPropagation(); // This is crucial!
+        setShowGuidelines(true);
+    };
+
     // --- RENDER LOGIC ---
 
-    if (!draftConfigs) {
+   if (!draftConfigs) {
         return <div>Loading configurations...</div>;
     }
 
@@ -237,7 +248,16 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     <div className={styles['settings-container']}>
                         {/* --- Alert Thresholds Panel --- */}
                         <CollapsiblePanel
-                            title="Alert Thresholds"
+                            title={
+                                <div className={styles['header-with-icon']}>
+                                    <span>Alert Thresholds</span>
+                                    <HelpCircle 
+                                        size={16} 
+                                        className={styles['guidelines-icon']} 
+                                        onClick={handleShowGuidelines} 
+                                    />
+                                </div>
+                            }
                             icon={<AlertTriangle size={18} className={`${styles['header-icon']} ${styles['icon-alerts']}`} />}
                             isOpen={openPanels.alerts}
                             onToggle={() => handleTogglePanel('alerts')}
@@ -407,6 +427,9 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     </div>
                 </div>
             )}
+
+            {/* --- GUIDELINES MODAL --- */}
+            {showGuidelines && <GuidelinesModal onClose={() => setShowGuidelines(false)} />}
         </>
     );
 };
@@ -415,6 +438,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
 /**
  * A reusable collapsible panel component for the accordion layout.
+ * MODIFIED: The title prop now directly renders JSX for more flexibility.
  */
 const CollapsiblePanel = ({ icon, title, isOpen, onToggle, children }) => {
     return (
@@ -422,7 +446,8 @@ const CollapsiblePanel = ({ icon, title, isOpen, onToggle, children }) => {
             <div className={styles['collapsible-header']} onClick={onToggle}>
                 <div className={styles['header-title-group']}>
                     {icon}
-                    <h4>{title}</h4>
+                    {/* This change allows us to pass in the title with the icon */}
+                    {title}
                 </div>
                 <ChevronDown size={20} className={`${styles['chevron-icon']} ${isOpen ? styles['open'] : ''}`} />
             </div>

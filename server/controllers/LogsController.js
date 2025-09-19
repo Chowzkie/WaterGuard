@@ -1,4 +1,5 @@
 const UserLogModel = require('../models/UserLogs');
+const SystemLogModel = require('../models/SystemLogs');
 
 exports.getUserLogs = async (req, res) => {
     try{
@@ -54,5 +55,17 @@ exports.restoreUserLogs = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server Error" });
+    }
+}
+
+//System Logs Controller
+
+exports.getSystemLogs = async (req, res) => {
+    try{
+        const SystemLogs = await SystemLogModel.find({})
+        res.json(SystemLogs)
+    }catch(error){
+        console.error(errpr);
+        res.status(500).json({message: "Server Error"})
     }
 }

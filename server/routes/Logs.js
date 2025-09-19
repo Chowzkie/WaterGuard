@@ -5,5 +5,6 @@ const LogsController = require("../controllers/LogsController")
 router.get("/userlogs", LogsController.getUserLogs);
 router.post('/delete', LogsController.deleteUserLogs);
 router.post('/restore', LogsController.restoreUserLogs);
+router.post("/systemlogs", LogsController.getSystemLogs)
 
 module.exports = router;

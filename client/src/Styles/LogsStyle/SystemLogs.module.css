@@ -303,7 +303,7 @@
 .tableHeader {
     display: grid;
     /* --- FIX: Adjusted column widths to add space between Details and Status --- */
-    grid-template-columns: 1.7fr 1fr 1.5fr 1.5fr 2.5fr 0.8fr;
+    grid-template-columns: 1.7fr 1fr 1.5fr 3.5fr 0.8fr;
     background-color: #f8f9fa;
     padding: 0 20px;
     font-weight: 600;
@@ -328,7 +328,7 @@
 .tableRow {
     display: grid;
     /* --- FIX: Must match the header's new column layout --- */
-    grid-template-columns: 1.7fr 1fr 1.5fr 1.5fr 2.5fr 0.8fr;
+    grid-template-columns: 1.7fr 1fr 1.5fr 3.5fr 0.8fr;
     padding: 8px 20px;
     border-bottom: 1px solid #eee;
     align-items: center;

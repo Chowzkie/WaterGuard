@@ -3,6 +3,7 @@ import { Virtuoso } from 'react-virtuoso';
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css';
 import { ListFilter, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
 import { PARAMETER_TO_COMPONENT_MAP } from '../../utils/logMaps';
+import {formatDateTime} from '../../utils/formatDateTime'
 
 /**
  * SystemLogs Component: Displays system-generated logs with filtering and deletion capabilities.
@@ -297,14 +298,6 @@ function SystemLogs({ logs, onDelete, onRestore }) {
         setDeviceIdSearchTerm('');
     };
 
-    // --- HELPER FUNCTIONS ---
-    const formatDateTime = (dateTimeStr) => {
-        if (!dateTimeStr) return '–';
-        const date = new Date(dateTimeStr);
-        if (isNaN(date.getTime())) return 'Invalid Date';
-        const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-        return date.toLocaleString('en-US', options);
-    };
 
     const getStatusStyle = (status) => {
         switch (status?.toLowerCase()) {
@@ -454,7 +447,6 @@ function SystemLogs({ logs, onDelete, onRestore }) {
                 <div className={Style.headerItem}>Date & Time</div>
                 <div className={Style.headerItem}>Device ID</div>
                 <div className={Style.headerItem}>Component</div>
-                <div className={Style.headerItem}>Event</div>
                 <div className={Style.headerItem}>Details</div>
                 <div className={Style.headerItem}>Status</div>
                  {deleteMode === 'select' && (
@@ -484,7 +476,6 @@ function SystemLogs({ logs, onDelete, onRestore }) {
                                 <div className={Style.tableCell} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
                                 <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
                                 <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
-                                <div className={Style.tableCell} data-label="Event">{log.event}</div>
                                 <div className={Style.tableCell} data-label="Details">{log.details}</div>
                                 <div className={`${Style.tableCell} ${getStatusStyle(log.status)}`} data-label="Status">{log.status}</div>
                                 {deleteMode === 'select' && (

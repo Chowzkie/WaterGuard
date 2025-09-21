@@ -17,7 +17,6 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
-import { mockSystemLogs } from './utils/LogsMockUp';
 import { 
     PARAMETER_TO_COMPONENT_MAP, 
     FIELD_NAME_MAP, 
@@ -172,11 +171,6 @@ function App() {
     const [assigneeList, setAssigneeList] = useState([]);
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
-
-    const [recentlyDeletedUserLogs, setRecentlyDeletedUserLogs] = useState([]);
-
-    const [systemLogs, setSystemLogs] = useState(mockSystemLogs); 
-    const [recentlyDeletedSystemLogs, setRecentlyDeletedSystemLogs] = useState([]);
 
     // --- FIX: Ref to hold previous device state to prevent inaccurate logging ---
     const previousDevicesRef = useRef([]);
@@ -592,25 +586,6 @@ function App() {
         }
     }, [alertsHistory]);
 
-    /**
-     * --- NEW: Handles the deletion of system logs ---
-     */
-    const handleDeleteSystemLogs = (idsToDelete) => {
-        const logsToMove = systemLogs.filter(log => idsToDelete.has(log.id));
-        const logsToKeep = systemLogs.filter(log => !idsToDelete.has(log.id));
-        setRecentlyDeletedSystemLogs(logsToMove); // Store for undo
-        setSystemLogs(logsToKeep); // Update the main state
-    };
-
-    /**
-     * --- NEW: Handles the restoration of system logs ---
-     */
-    const handleRestoreSystemLogs = () => {
-        // Merges the recently deleted logs back into the main array
-        setSystemLogs(prevLogs => [...recentlyDeletedSystemLogs, ...prevLogs]);
-        setRecentlyDeletedSystemLogs([]); // Clear the undo buffer
-    };
-
     // --- NEW: Handlers for managing notification read status ---
     const handleMarkNotificationAsRead = (notificationId) => {
         setNotifications(prev =>
@@ -636,8 +611,6 @@ function App() {
         onAcknowledgeAlert: handleAcknowledgeAlert,
         onDeleteHistoryAlerts: handleDeleteHistoryAlerts,
         onRestoreHistoryAlerts: handleRestoreHistoryAlerts,
-        onDeleteSystemLogs: handleDeleteSystemLogs,
-        onRestoreSystemLogs: handleRestoreSystemLogs,
         onSelectMapDevice: handleSelectDevice,
         onAddDevice: handleAddDevice,
         onDeleteDevice: handleDeleteDevice,
@@ -647,8 +620,6 @@ function App() {
         newlyAddedId,
         onAnimationComplete: handleAnimationComplete,
         onSaveConfiguration: handleSaveConfiguration,
-        // --- Provide systemLogs to the context ---
-        systemLogs,
         loggedInUser,
         onUserUpdate: handleUserUpdate
     };

@@ -3,19 +3,12 @@ import UserLogs from "./UserLogs"
 import Style from "../../Styles/LogsStyle/Logs.module.css"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
-import { useState, useContext } from "react"
-import AlertsContext from "../../utils/AlertsContext"
+import { useState } from "react"
 
 
 function Logs() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('system');
-
-    // --- MODIFIED: Get both userLogs and systemLogs from the global context ---
-    const { systemLogs,
-            onDeleteSystemLogs,
-            onRestoreSystemLogs 
-        } = useContext(AlertsContext);
 
     const handleTabClick = (tab) => {
         setActiveTab(tab);
@@ -49,11 +42,7 @@ function Logs() {
             <div className={Style['logContent']}>
                 {/* MODIFIED: Pass the systemLogs from context to the SystemLogs component */}
                 {activeTab === 'system' && 
-                    <SystemLogs 
-                        logs={systemLogs || []} 
-                        onDelete={onDeleteSystemLogs} 
-                        onRestore={onRestoreSystemLogs}
-                    />
+                    <SystemLogs/>
                 }
                 {activeTab === 'user' &&
                     <UserLogs/>

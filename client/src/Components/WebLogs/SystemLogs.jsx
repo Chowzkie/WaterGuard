@@ -4,15 +4,78 @@ import Style from '../../Styles/LogsStyle/SystemLogs.module.css';
 import { ListFilter, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
 import { PARAMETER_TO_COMPONENT_MAP } from '../../utils/logMaps';
 import {formatDateTime} from '../../utils/formatDateTime'
+import axios from 'axios';
 
-/**
- * SystemLogs Component: Displays system-generated logs with filtering and deletion capabilities.
- * @param {object[]} logs - An array of system log objects to display.
- * @param {function} onDelete - A function passed from the parent to handle the deletion of logs.
- * @param {function} onRestore - A function passed from the parent to handle restoring deleted logs.
- */
-function SystemLogs({ logs, onDelete, onRestore }) {
+const API_BASE_URL = 'http://localhost:8080/api';
+
+function SystemLogs() {
     // --- STATE MANAGEMENT ---
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true)
+    const [lastDeletedLogs, setLastDeletedLogs] = useState([]);
+
+    useEffect(() => {
+        const fetchSystemLogs = async() => {
+            try{
+                const response = await axios.get(`${API_BASE_URL}/logs/systemlogs`);
+                setLogs(response.data.map(log => ({...log, id: log._id}))); // Update the logs state with the fetched data, adding a local 'id' field for keying.
+            }catch(error){
+                console.error("Error fetching system logs:", error);
+            }finally{
+                setLoading(false);
+            }
+        };
+        fetchSystemLogs();
+    },[]);
+
+    const handleDeleteLogs = async (idsToDelete) => {
+        const idsArray = Array.from(idsToDelete);
+
+        try{
+            // Store the full log objects of the items that will be deleted.
+            const logsToRestore = logs.filter(log => idsArray.includes(log.id));
+            setLastDeletedLogs(logsToRestore);
+
+            const logsToKeep = logs.filter(log => !idsArray.includes(log.id));
+            setLogs(logsToKeep);
+
+            // Make a POST request to the backend with the array of IDs.
+            await axios.post(`${API_BASE_URL}/logs/deleteSysLog`, { ids: idsArray });
+        }catch(error){
+            console.error("Error deleting logs:", error);
+            // Revert the UI state if the API call fails.
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]);
+            // Clear the undo state since the delete failed.
+            setLastDeletedLogs([]);
+        }
+    }
+
+    const handleRestoreLogs = async() => {
+        if (lastDeletedLogs.length === 0) return;
+        try {
+            // Make a POST request to the backend to restore the logs.
+            await axios.post(`${API_BASE_URL}/logs/restoreSysLog`, { logs: lastDeletedLogs });
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]); // Add the restored logs back to the main logs state.
+            setLastDeletedLogs([]); // Clear the temporary restore state.
+        } catch (error) {
+            console.error("Error restoring logs:", error);
+            const response = await axios.get(`${API_BASE_URL}/logs/systemlogs`); // Re-fetch all logs from the backend to ensure data consistency in case of failure.
+            setLogs(response.data.map(log => ({ ...log, id: log._id })));
+        }
+    }
+
+    return(
+        <SystemLogsContent
+            logs={logs}
+            loading={loading}
+            onDelete={handleDeleteLogs}
+            onRestore={handleRestoreLogs}
+        />
+    )
+}
+
+function SystemLogsContent({logs, loading, onDelete, onRestore}){
+
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
@@ -55,11 +118,6 @@ function SystemLogs({ logs, onDelete, onRestore }) {
     const uniqueDeviceIds = useMemo(() => {
         const deviceIds = new Set(logs.map(log => log.deviceId));
         return Array.from(deviceIds).sort();
-    }, [logs]);
-
-    const uniqueEvents = useMemo(() => {
-        const events = new Set(logs.map(log => log.event));
-        return Array.from(events).sort();
     }, [logs]);
 
     const componentTypes = ['Device', 'Valve Actuator', 'pH Sensor', 'TDS Sensor', 'Temp Sensor', 'Turbidity Sensor'];
@@ -384,30 +442,6 @@ function SystemLogs({ logs, onDelete, onRestore }) {
                                         </div>
                                     </div>
                                 </div>
-                                
-                                {/* --- FIX: Event Type Filter using new compact dropdown style --- */}
-                                <div className={Style['filter-row']} ref={eventDropdownRef}>
-                                    <label className={Style['filter-label']}>Event Type</label>
-                                    <div className={Style['filter-control']}>
-                                        <div className={Style['type-input-container']} onClick={() => document.getElementById('event-type-input').focus()}>
-                                            {draftFilters.event.length === 0 && !eventSearchTerm && <span className={Style['type-placeholder']}>Any Event Type</span>}
-                                            {draftFilters.event.map(item => (
-                                                <div key={item} className={Style['type-pill']}>
-                                                    <span>{item}</span>
-                                                    <button onClick={(e) => { e.stopPropagation(); removeMultiSelectItem('event', item); }}><X size={12}/></button>
-                                                </div>
-                                            ))}
-                                            <input id="event-type-input" type="text" className={Style['type-input-field']} value={eventSearchTerm} onChange={(e) => setEventSearchTerm(e.target.value)} onFocus={() => setIsEventDropdownOpen(true)} />
-                                        </div>
-                                        {isEventDropdownOpen && (
-                                            <div className={Style['type-dropdown-list']}>
-                                                {uniqueEvents.filter(item => item.toLowerCase().includes(eventSearchTerm.toLowerCase()) && !draftFilters.event.includes(item)).map(item => (
-                                                    <div key={item} className={Style['type-dropdown-item']} onClick={() => { handleMultiSelect('event', item); setEventSearchTerm(''); }}>{item}</div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
 
                                 {/* --- FIX: Device ID Filter using new compact dropdown style --- */}
                                 <div className={Style['filter-row']} ref={deviceIdDropdownRef}>
@@ -477,7 +511,7 @@ function SystemLogs({ logs, onDelete, onRestore }) {
                                 <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
                                 <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
                                 <div className={Style.tableCell} data-label="Details">{log.details}</div>
-                                <div className={`${Style.tableCell} ${getStatusStyle(log.status)}`} data-label="Status">{log.status}</div>
+                                <div className={`${Style.tableCell} ${getStatusStyle(log.stats)}`} data-label="Status">{log.stats}</div>
                                 {deleteMode === 'select' && (
                                     <div className={Style['checkbox-cell']}>
                                         <label className={Style['custom-checkbox-container']}>

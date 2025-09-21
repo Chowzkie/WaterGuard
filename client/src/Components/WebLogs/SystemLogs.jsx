@@ -500,39 +500,43 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
 
             {/* 2. This container uses flexbox to define the scrollable area's height. */}
             <div className={Style.tableBody}>
-                {filteredDisplayLogs.length > 0 ? (
-                    // 3. Virtuoso replaces the .map() loop and fills 100% of the container's height.
-                    <Virtuoso
-                        style={{ height: '100%' }}
-                        data={filteredDisplayLogs}
-                        itemContent={(index, log) => (
-                            <div className={`${Style.tableRow} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} key={log.id}>
-                                <div className={Style.tableCell} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
-                                <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
-                                <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
-                                <div className={Style.tableCell} data-label="Details">{log.details}</div>
-                                <div className={`${Style.tableCell} ${getStatusStyle(log.stats)}`} data-label="Status">{log.stats}</div>
-                                {deleteMode === 'select' && (
-                                    <div className={Style['checkbox-cell']}>
-                                        <label className={Style['custom-checkbox-container']}>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedToDelete.includes(log.id)}
-                                                onChange={() => handleCheckboxChange(log.id)}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
-                                            <span className={Style['checkmark']}></span>
-                                        </label>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    />
-                ) : (
-                    <div className={Style.noData}>
-                        {logs.length === 0 ? "No system logs available." : "No system logs match the current filters."}
+                {loading ? (
+                    <div className={Style['loading-spinner']}>
+                        <div className={Style['spinner']}></div>
                     </div>
-                )}
+                ) : filteredDisplayLogs.length > 0 ? (
+                        <Virtuoso
+                            style={{ height: '100%' }}
+                            data={filteredDisplayLogs}
+                            itemContent={(index, log) => (
+                                <div className={`${Style.tableRow} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''} ${selectedToDelete.includes(log.id) ? Style['selected-for-deletion'] : ''}`} key={log.id}>
+                                    <div className={Style.tableCell} data-label="Date & Time">{formatDateTime(log.dateTime)}</div>
+                                    <div className={Style.tableCell} data-label="Device ID">{log.deviceId}</div>
+                                    <div className={Style.tableCell} data-label="Component">{PARAMETER_TO_COMPONENT_MAP[log.component] || log.component}</div>
+                                    <div className={Style.tableCell} data-label="Details">{log.details}</div>
+                                    <div className={`${Style.tableCell} ${getStatusStyle(log.stats)}`} data-label="Status">{log.stats}</div>
+                                    {deleteMode === 'select' && (
+                                        <div className={Style['checkbox-cell']}>
+                                            <label className={Style['custom-checkbox-container']}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedToDelete.includes(log.id)}
+                                                    onChange={() => handleCheckboxChange(log.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <span className={Style['checkmark']}></span>
+                                            </label>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        />
+                    ) : (
+                        <div className={Style.noData}>
+                            {logs.length === 0 ? "No system logs available." : "No system logs match the current filters."}
+                        </div>
+                    )  
+                }
             </div>
 
             {showConfirmModal && (

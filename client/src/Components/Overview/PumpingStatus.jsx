@@ -70,7 +70,8 @@ const PumpingStatus = ({ stations, onSave }) => {
         }
         setError('');
         const newStation = {
-            id: Date.now(),
+            
+            tempId: Date.now(), // Using a temporary key
             label: newLabel,
             location: newLocation,
             operation: newOperation
@@ -81,27 +82,30 @@ const PumpingStatus = ({ stations, onSave }) => {
         setNewOperation('On-going');
     };
 
-    const handleRemoveStationFromDraft = (id) => {
-        setDraftStations(draftStations.filter(station => station.id !== id));
+    const handleRemoveStationFromDraft = (idToRemove) => {
+        setDraftStations(draftStations.filter(station => (station._id || station.tempId) !== idToRemove));
     };
 
-    const handleOperationChangeInDraft = (id, newOp) => {
-        // FIX: The condition is now simplified to only trigger for 'Maintenance'.
+    const handleOperationChangeInDraft = (idToChange, newOp) => {
+        const station = draftStations.find(s => (s._id || s.tempId) === idToChange);
+        if (!station) return;
+
         if (newOp === 'Maintenance') {
-            const station = draftStations.find(s => s.id === id);
             // 1. Store the original status in case the user cancels.
-            setStationBeingDetailed({ id: id, originalOp: station.operation });
+            setStationBeingDetailed({ id: idToChange, originalOp: station.operation });
             
             // 2. Update the draft state IMMEDIATELY.
-            setDraftStations(draftStations.map(s => s.id === id ? { ...s, operation: newOp } : s));
+            setDraftStations(draftStations.map(s => 
+                (s._id || s.tempId) === idToChange ? { ...s, operation: newOp } : s
+            ));
             
             // 3. Open the details form.
-            setDetailsForStationId(id);
-            setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' , date: new Date().toISOString().split('T')[0] });
+            setDetailsForStationId(idToChange);
+            setDraftDetails({ cause: '', date: new Date().toISOString().split('T')[0], startTime: '', endTime: '' });
         } else {
             // This block now runs for both "On-going" and "Offline".
             setDraftStations(draftStations.map(s =>
-                s.id === id ? { ...s, operation: newOp, maintenanceInfo: null } : s
+                (s._id || s.tempId) === idToChange ? { ...s, operation: newOp, maintenanceInfo: null } : s
             ));
             
             // Hide the details form if it was open.
@@ -111,40 +115,33 @@ const PumpingStatus = ({ stations, onSave }) => {
         }
     };
 
-    // FIX: The save handler is now much simpler.
     const handleSaveDetails = () => {
         if (!draftDetails.cause || !draftDetails.date || !draftDetails.startTime || !draftDetails.endTime) {
             alert("Please fill in all detail fields.");
             return;
         }
         
-        // The station's 'operation' is already correct in the draft. We just add the details.
         setDraftStations(draftStations.map(s =>
-            s.id === detailsForStationId ? {
+            (s._id || s.tempId) === detailsForStationId ? {
                 ...s,
                 maintenanceInfo: { ...draftDetails }
             } : s
         ));
         
-        // Close the form and clear the tracking state.
         setDetailsForStationId(null);
         setStationBeingDetailed(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
     };
 
-    // FIX: New handler for the "Cancel" button on the details form.
     const handleCancelDetails = () => {
-        // Revert the station's operation back to its original value.
         setDraftStations(draftStations.map(s =>
-            s.id === stationBeingDetailed.id ? { ...s, operation: stationBeingDetailed.originalOp, maintenanceInfo: null } : s
+            (s._id || s.tempId) === stationBeingDetailed.id ? { ...s, operation: stationBeingDetailed.originalOp, maintenanceInfo: null } : s
         ));
         
-        // Close the form and clear tracking state.
         setDetailsForStationId(null);
         setStationBeingDetailed(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
-    };
-
+    }
 
     return (
         <>
@@ -162,7 +159,7 @@ const PumpingStatus = ({ stations, onSave }) => {
                         </div>
                         <div className="station-list-items">
                             {stations.map((s) => (
-                                <div key={s.id} className="station-item">
+                                <div key={s._id} className="station-item">
                                     <div>{s.label}</div>
                                     <div>{s.location}</div>
                                     <div>
@@ -189,14 +186,14 @@ const PumpingStatus = ({ stations, onSave }) => {
                         <div className="modal-body-scroll">
                             <div className="modal-list">
                                 {draftStations.map(station => (
-                                    <div key={station.id} className="station-item">
+                                    <div key={station._id || station.tempId} className="station-item">
                                         <div>{station.label}</div>
                                         <div>{station.location}</div>
                                         <div>
                                             <select
                                                 className="form-select-inline"
                                                 value={station.operation}
-                                                onChange={(e) => handleOperationChangeInDraft(station.id, e.target.value)}
+                                                onChange={(e) => handleOperationChangeInDraft(station._id || station.tempId, e.target.value)}
                                             >
                                                 <option>On-going</option>
                                                 <option>Offline</option>
@@ -205,13 +202,13 @@ const PumpingStatus = ({ stations, onSave }) => {
                                         </div>
                                         <div>
                                             <button
-                                                onClick={() => handleRemoveStationFromDraft(station.id)}
+                                                onClick={() => handleRemoveStationFromDraft(station._id || station.tempId)}
                                                 className="remove-button"
                                             >
                                                 Remove
                                             </button>
                                         </div>
-                                        {detailsForStationId === station.id && (
+                                        {detailsForStationId === (station._id || station.tempId) && (
                                             <div className="details-form-container">
                                                 <div className="details-form-header">
                                                     <h4>Details for {station.operation} Status</h4>

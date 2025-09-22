@@ -1,10 +1,9 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const { getStations, batchUpdateStations } = require('../controllers/stationController');
 
-const FAKE_STATIONS_DATA = require("../mockData/stations");
-
-router.get("/", (req, res) => {
-  res.json(FAKE_STATIONS_DATA);
-});
+// Define the routes
+router.get('/', getStations);
+router.post('/batch-update', batchUpdateStations);
 
 module.exports = router;

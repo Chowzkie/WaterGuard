@@ -75,7 +75,7 @@ exports.batchUpdateStations = async (req, res) => {
                 });
                 const savedStation = await newStation.save();
                 // Log the addition
-                await createUserlog(userID, `Added new station: '${savedStation.label}'`, 'Device');
+                await createUserlog(userID, `Added new station: '${savedStation.label}'`, 'Station');
             }
         }
 

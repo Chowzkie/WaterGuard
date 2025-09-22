@@ -34,10 +34,10 @@ function LoginForm({ onLogin }) {
                 // Pass the token and user object to the onLogin function from App.jsx
                 onLogin(response.data.token, response.data.user);
                 navigate('/overview'); // Navigate to the overview page
-                setMessage('Login successful!'); // display success message briefly
+                setMessage(response.data.message); // display success message coming from backend
             } else {
                 //Handle cases where the backend returns a successful response but with an unexpected format
-                setMessage('Login failed. Please check your username and password.');
+                setMessage(response.data.message); // get the error message from the backend
                 setIsError(true);
                 setShake(true);
             }

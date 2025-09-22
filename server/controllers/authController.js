@@ -22,14 +22,14 @@ exports.loginUser = async (req, res) => {
         const user = await UserModel.findOne({ username });
         if (!user) {
             //Return a error for invalid credentials
-            return res.status(401).json({ message: "Login failed. Please check your username and password." });
+            return res.status(401).json({ message: "Please check your username and password." });
         }
 
         // Check the inputted password against the password stored in the database
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             // Return the same message for security reasons
-            return res.status(401).json({ message: "Login failed. Please check your username and password." });
+            return res.status(401).json({ message: "Please check your username and password." });
         }
 
         // Generate a JSON Web Token (JWT) 
@@ -56,14 +56,14 @@ exports.loginUser = async (req, res) => {
         await createUserlog(user._id, `User ${user.username} logged in`, "Login")
 
         res.json({
-            message: "Login successful",
+            message: "Login successful!",
             token, // Send the token
             user: userWithoutPassword // Send the user data
         });
 
     } catch (error) {
         console.error("Login error:", error);
-        res.status(500).json({ message: "Server error during login" });
+        res.status(500).json({ message: "An error occurred during login. Please try again." });
     }
 };
 

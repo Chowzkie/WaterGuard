@@ -528,11 +528,13 @@ function App() {
         }
     };
     
-     // --- MODIFIED: handleSaveStations now sends data to the backend ---
     const handleSaveStations = async (updatedStations) => {
         try {
-            // Send the entire list of stations to the backend for processing
-            const response = await axios.post(`${API_BASE_URL}/api/stations/batch-update`, updatedStations);
+            // UPDATED: Send the required payload structure with userID for logging
+            const response = await axios.post(`${API_BASE_URL}/api/stations/batch-update`, {
+                stationsFromClient: updatedStations,
+                userID: loggedInUser?.userID 
+            });
 
             // Update the frontend state with the final, authoritative list from the server
             setPumpingStations(response.data);
@@ -540,7 +542,6 @@ function App() {
 
         } catch (error) {
             console.error("Error saving stations:", error);
-            // Optionally, you could add user-facing error notifications here
         }
     };
 

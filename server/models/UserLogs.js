@@ -5,6 +5,7 @@ const userLogsSchema = new mongoose.Schema({
     dateTime: { type: Date, default: Date.now},
     action: String,
     type: String,
+    details: { type: mongoose.Schema.Types.Mixed, default: null } // Added to store maintenance info
 }, { timestamps: true })
 
 module.exports = mongoose.model("UserLog", userLogsSchema);

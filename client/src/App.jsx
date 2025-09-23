@@ -527,28 +527,19 @@ function App() {
             console.error("Error deleting device:", error.response.data);
         }
     };
-
-    // --- MODIFIED: handleSaveStations now sends data to the backend ---
-    // --- MODIFIED: This function now logs detailed changes ---
+    
     const handleSaveStations = async (updatedStations) => {
         try {
-            const previousStations = pumpingStations; 
-
-            updatedStations.forEach(newStation => {
-                const oldStation = previousStations.find(s => s.id === newStation.id);
-                
-                if (oldStation && oldStation.operation !== 'Maintenance' && newStation.operation === 'Maintenance' && newStation.maintenanceInfo) {
-                    const { cause, date, startTime, endTime } = newStation.maintenanceInfo;
-                    const formatTime = (time) => new Date(`1970-01-01T${time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-
-                    const logMessage = `Set station '${newStation.label}' to Maintenance. Cause: ${cause}. Scheduled: ${date} from ${formatTime(startTime)} to ${formatTime(endTime)}.`;
-                    
-                    logUserAction(logMessage, 'Maintenance', newStation.maintenanceInfo);
-                }
+            // UPDATED: Send the required payload structure with userID for logging
+            const response = await axios.post(`${API_BASE_URL}/api/stations/batch-update`, {
+                stationsFromClient: updatedStations,
+                userID: loggedInUser?.userID 
             });
 
-            setPumpingStations(updatedStations);
-            console.log("Simulated saving stations:", updatedStations);
+            // Update the frontend state with the final, authoritative list from the server
+            setPumpingStations(response.data);
+            console.log("Successfully saved stations to the database.");
+
         } catch (error) {
             console.error("Error saving stations:", error);
         }

@@ -9,7 +9,7 @@ const {createUserlog} = require('../helpers/createUserlog')
 
 
 // store this in .env file. Temporary key only
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'Waterguard@2025';
 
 
 

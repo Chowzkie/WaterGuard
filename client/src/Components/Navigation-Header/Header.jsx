@@ -7,6 +7,7 @@ import styles from '../../Styles/Nav-Head-Style/Header.module.css';
 import Logo from '../../assets/Logo.png'; 
 import Notifications from './Notifications'; // The separate notifications component
 import AlertsContext from '../../utils/AlertsContext';
+import routeTitleMap from '../../utils/routeTitleMap';
 
 
 function Header({
@@ -23,17 +24,6 @@ function Header({
     const { loggedInUser } = useContext(AlertsContext);
     const [subTitle, setSubTitle] = useState('WaterGuard');
 
-    // -This logic dynamically sets the subtitle based on the current page ---
-    const routeTitleMap = {
-        '/overview': 'Overview',
-        '/dashboard': 'Readings',
-        '/alerts': 'Alerts',
-        '/devices': 'Devices',
-        '/configurations': 'Configuration',
-        '/logs': 'Logs',
-        '/account-settings': 'Account Settings',
-    };
-
     useEffect(() => {
         let currentSubTitle;
         if (deviceLabelForHeader) {
@@ -46,7 +36,6 @@ function Header({
             currentSubTitle = routeTitleMap[location.pathname] || 'WaterGuard';
         }
         setSubTitle(currentSubTitle);
-        document.title = `WaterGuard | ${currentSubTitle}`;
     }, [location.pathname, deviceLabelForHeader]);
 
 

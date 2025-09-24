@@ -17,6 +17,8 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
+
+import routeTitleMap from './utils/routeTitleMap';
 import { 
     PARAMETER_TO_COMPONENT_MAP, 
     FIELD_NAME_MAP, 
@@ -67,6 +69,14 @@ function App() {
     const showHeader = !noHeaderPaths.includes(location.pathname);
     const showNavigation = !noNavPaths.includes(location.pathname);
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
+
+    const navigate = useNavigate();
+
+    // Use to dynamically change the document title when logging out
+    useEffect(() => {
+        let currentTitle = routeTitleMap[location.pathname] || "WaterGuard";
+        document.title = `WaterGuard | ${currentTitle}`;
+    }, [location.pathname]);
 
 
     //// State for the currently logged-in user
@@ -126,8 +136,6 @@ function App() {
         // Handle invalid token case
     }
     };
-
-    const navigate = useNavigate();
 
     const handleLogout = async() => {
         try{

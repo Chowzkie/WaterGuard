@@ -19,13 +19,6 @@ import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
 
 import routeTitleMap from './utils/routeTitleMap';
-import { 
-    PARAMETER_TO_COMPONENT_MAP, 
-    FIELD_NAME_MAP, 
-    FIELD_UNIT_MAP, 
-    USER_FIELD_MAP 
-} from './utils/logMaps';
-import { Beaker } from 'lucide-react';
 
 // =================================================================================
 // SIMULATED CURRENT USER
@@ -74,9 +67,18 @@ function App() {
 
     // Use to dynamically change the document title when logging out
     useEffect(() => {
-        let currentTitle = routeTitleMap[location.pathname] || "WaterGuard";
+        let currentTitle = "WaterGuard";
+
+        if (headerDeviceLabel) {
+            // If we have a device label, show it
+            currentTitle = location.pathname.startsWith("/devices/") ? `Device | ${headerDeviceLabel}` : `Configuration | ${headerDeviceLabel}`;
+        } else {
+            // Otherwise, use routeTitleMap or fallback
+            currentTitle = routeTitleMap[location.pathname] || "WaterGuard";
+        }
+
         document.title = `WaterGuard | ${currentTitle}`;
-    }, [location.pathname]);
+    }, [location.pathname, headerDeviceLabel]);
 
 
     //// State for the currently logged-in user

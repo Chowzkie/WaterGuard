@@ -16,6 +16,7 @@ const deviceSchema = new mongoose.Schema({
   label: {
     type: String,
     required: true,
+    unique: true,
   },
   location: {
     type: String,

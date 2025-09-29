@@ -4,82 +4,134 @@ const cron = require('node-cron');
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
 
+// --- Configuration for the retry mechanism ---
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 5000; // 5 seconds
+
 /**
  * @function initializeAlertCronJobs
  * @desc Sets up and starts all the scheduled tasks for automated alert management.
- * This should be called once when the server starts.
  */
 const initializeAlertCronJobs = () => {
   console.log('⏰ Initializing dynamic, per-device alert management jobs...');
 
-  // --- Job 1: Auto-clear "Back to Normal" alerts based on per-device settings ---
-  // Runs every 30 seconds to check for alerts to clear.
+  // --- Job 1: Auto-clear "Back to Normal" alerts ---
   cron.schedule('*/30 * * * * *', async () => {
-    try {
-      const devices = await Device.find({});
-      
-      for (const device of devices) {
-        // Get the device-specific setting in seconds. Fallback to a default if not set.
-        const activeToRecentSeconds = device.configurations?.logging?.alertIntervals?.activeToRecent || 30;
-        const cutoff = new Date(Date.now() - activeToRecentSeconds * 1000);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const devices = await Device.find({});
+        for (const device of devices) {
+          const activeToRecentSeconds =
+            device.configurations?.logging?.alertIntervals?.activeToRecent || 30;
+          const cutoff = new Date(Date.now() - activeToRecentSeconds * 1000);
 
-        await Alert.updateMany(
-          {
-            originator: device._id, // CORRECTED: Use 'originator' to match the Alert schema
-            lifecycle: 'Active',
-            isBackToNormal: true,
-            dateTime: { $lte: cutoff }
-          },
-          { $set: { lifecycle: 'Recent', status: 'Cleared' } }
+          const result = await Alert.updateMany(
+            {
+              originator: device.label, 
+              lifecycle: 'Active',
+              isBackToNormal: true,
+              dateTime: { $lte: cutoff },
+            },
+            { $set: { lifecycle: 'Recent', status: 'Cleared' } }
+          );
+
+          if (result.modifiedCount > 0) {
+            console.log(
+              `🔄 Cleared ${result.modifiedCount} 'Back to Normal' alerts for device ${device.label}`
+            );
+          }
+        }
+        return; // Success
+      } catch (error) {
+        console.error(
+          `Cron Job Error (Clear Normals) - Attempt ${attempt}/${MAX_RETRIES}:`,
+          error.message
         );
+        if (attempt === MAX_RETRIES) {
+          console.error(
+            'Cron job (Clear Normals) failed after all retries.',
+            error
+          );
+        } else {
+          await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+        }
       }
-    } catch (error) {
-      console.error('Cron Job Error (Clear Normals):', error);
     }
   });
 
-  // --- Job 2: Archive "Recent" alerts to "History" based on per-device settings ---
-  // Runs every minute to check for alerts to archive.
+  // --- Job 2: Archive "Recent" alerts to "History" ---
   cron.schedule('* * * * *', async () => {
-    try {
-      const devices = await Device.find({});
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const devices = await Device.find({});
+        for (const device of devices) {
+          const recentToHistoryMinutes =
+            device.configurations?.logging?.alertIntervals?.recentToHistory || 5;
+          const cutoff = new Date(Date.now() - recentToHistoryMinutes * 60 * 1000);
 
-      for (const device of devices) {
-        // Get the device-specific setting in minutes. Fallback to a default if not set.
-        const recentToHistoryMinutes = device.configurations?.logging?.alertIntervals?.recentToHistory || 5;
-        const cutoff = new Date(Date.now() - recentToHistoryMinutes * 60 * 1000);
+          const result = await Alert.updateMany(
+            {
+              originator: device.label, 
+              lifecycle: 'Recent',
+              dateTime: { $lte: cutoff },
+            },
+            { $set: { lifecycle: 'History' } }
+          );
 
-        await Alert.updateMany(
-          {
-            originator: device._id, // CORRECTED: Use 'originator' to match the Alert schema
-            lifecycle: 'Recent',
-            dateTime: { $lte: cutoff }
-          },
-          { $set: { lifecycle: 'History' } }
+          if (result.modifiedCount > 0) {
+            console.log(
+              `📦 Archived ${result.modifiedCount} 'Recent' alerts to 'History' for device ${device.label}`
+            );
+          }
+        }
+        return; // Success
+      } catch (error) {
+        console.error(
+          `Cron Job Error (Archive Recents) - Attempt ${attempt}/${MAX_RETRIES}:`,
+          error.message
         );
+        if (attempt === MAX_RETRIES) {
+          console.error(
+            'Cron job (Archive Recents) failed after all retries.',
+            error
+          );
+        } else {
+          await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+        }
       }
-    } catch (error) {
-      console.error('Cron Job Error (Archive Recents):', error);
     }
   });
 
-  // --- Job 3: Permanently purge soft-deleted alerts (Global) ---
-  // This job remains global as it's a general cleanup task.
-  // Runs every 5 minutes.
-  cron.schedule('*/5 * * * *', async () => {
-    const cutoff = new Date(Date.now() - 5 * 60 * 1000); // 5-minute grace period
-    
-    try {
-      const result = await Alert.deleteMany({
-        isDeleted: true,
-        deletedAt: { $lte: cutoff }
-      });
+  // --- Job 3: Permanently purge soft-deleted alerts ---
+  cron.schedule('* * * * *', async () => { // Runs the job every minute
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const cutoff = new Date(Date.now() - 5 * 60 * 1000); // A 5 minute grace period for solf-deleted alerts
+        const result = await Alert.deleteMany({
+          isDeleted: true,
+          deletedAt: { $lte: cutoff },
+        });
 
-      if (result.deletedCount > 0) {
-        console.log(`✅ Cron Job (Purge): Successfully purged ${result.deletedCount} soft-deleted alerts.`);
+        if (result.deletedCount > 0) {
+          console.log(
+            `🗑️ Purged ${result.deletedCount} soft-deleted alerts permanently.`
+          );
+        }
+        return; // Success
+      } catch (error) {
+        console.error(
+          `Cron Job Error (Purge) - Attempt ${attempt}/${MAX_RETRIES}:`,
+          error.message
+        );
+        if (attempt === MAX_RETRIES) {
+          console.error(
+            'Cron job (Purge) failed after all retries.',
+            error
+          );
+        } else {
+          await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+        }
       }
-    } catch (error) {
-      console.error('❌ Cron Job Error (Purge):', error);
     }
   });
 };

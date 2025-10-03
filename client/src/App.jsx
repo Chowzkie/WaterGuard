@@ -88,7 +88,7 @@ function App() {
         return savedUser? JSON.parse(savedUser) : null;
     });
 
-    const userID = loggedInUser?.userID //A helper to set the loggedin user
+    const userID = loggedInUser?.id //A helper to set the loggedin user
 
     useEffect(() => {
         //fetch the user details into the backend
@@ -98,7 +98,7 @@ function App() {
 
             try{
                 // Fetch user profile using token
-                const response = await axios.get(`${API_BASE_URL}/auth/user`, {
+                const response = await axios.get(`${API_BASE_URL}/api/auth/user`, {
                     headers: {Authorization: `Bearer ${token}`}
                 });
                 // Update state and localStorage with new fetched data
@@ -126,15 +126,14 @@ function App() {
     // Check if a user is authenticated
     const isAuthenticated = loggedInUser ? true : false;
     // Called after successful login with JWT token
-    const handleLogin = (token) => { // Expect the JWT token from the Login component
+    const handleLogin = (token, user) => { // Expect the JWT token from the Login component
     try {
-        const decodedUser = jwtDecode(token);
         localStorage.setItem("token", token); // Store the token, not the user object
-        localStorage.setItem("user", JSON.stringify(decodedUser)) // store the decoded user in localstorage
-        setLoggedInUser(decodedUser); // Set the state with the decoded user object
-        console.log("App.jsx - handleLogin: User logged in, decoded user object:", decodedUser);
+        localStorage.setItem("user", JSON.stringify(user)) // store the decoded user in localstorage
+        setLoggedInUser(user); 
+        console.log("App.jsx - user logged in:", user);
     } catch (e) {
-        console.error("Failed to decode token", e);
+        console.error("Failed to get user", e);
         // Handle invalid token case
     }
     };

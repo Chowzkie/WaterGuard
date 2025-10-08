@@ -8,6 +8,7 @@ import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css';
 import ToastStyle from '../../../Styles/ToastStyle/Toast.module.css'
 import AlertsContext from '../../../utils/AlertsContext';
 import { CheckCircle2, AlertCircle,  Waves, Thermometer, TestTube2, Gauge } from 'lucide-react';
+import io from 'socket.io-client'; // 👈 1. IMPORT THE LIBRARY
 
 //add toast 
 const Toast = ({ message, type, status, onClose }) => {
@@ -103,9 +104,10 @@ function DetailsPanel({ device }) {
 }
 
 const API_BASE_URL = 'http://localhost:8080';
+const socket = io(API_BASE_URL); // 👈 2. ESTABLISH THE CONNECTION ONCE
 
 function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
-    const { devices } = useContext(AlertsContext);
+    const { devices, setDevices } = useContext(AlertsContext);
     const { deviceId } = useParams();
     const navigate = useNavigate();
     const [currentDevice, setCurrentDevice] = useState(null);
@@ -117,6 +119,24 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     const [isChartLoading, setIsChartLoading] = useState(true);
 
     const [timeRange, setTimeRange] = useState('7d'); // Default to 7 days
+
+    // 👇 ADD THIS ENTIRE useEffect BLOCK
+    useEffect(() => {
+        // Listen for 'deviceUpdate' events from the server
+        socket.on('deviceUpdate', (updatedDevice) => {
+            console.log('Received real-time update:', updatedDevice);
+            // This updates the master list of devices for your whole app
+            setDevices(prevDevices =>
+                prevDevices.map(d => d._id === updatedDevice._id ? updatedDevice : d)
+            );
+        });
+
+        // This is a cleanup function. It removes the event listener
+        // when the component is unmounted to prevent memory leaks.
+        return () => {
+            socket.off('deviceUpdate');
+        };
+    }, [setDevices]); // The dependency array ensures this sets up only once
 
     const removeToast = useCallback((id) => {
         setToasts((curr) => curr.filter(t => t.id !== id));
@@ -142,34 +162,28 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     // NEW: Handler function to call the backend
     const handleValveToggle = async (deviceId, isNowOpen) => {
         const newCommandValue = isNowOpen ? 'OPEN' : 'CLOSED';
-
         try {
-            // Call the new '/command' endpoint
+            // The only job is to send the command to the correct endpoint
             await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/command`, {
-                commandValue: newCommandValue,
-                userID: userID
+                commandValue: newCommandValue
             });
-
-            // The UI will update automatically when the hardware updates the 'currentState'.
-            // For now, we just give the user feedback that the command was sent.
-            addToast(`Command to ${newCommandValue.toLowerCase()} valve sent!`, 'success');
-
+            // The UI will update automatically via the socket event.
+            // You can add a success toast here if you want immediate feedback.
+            // addToast(`Command to ${newCommandValue.toLowerCase()} valve sent!`, 'success');
         } catch (error) {
             console.error('Failed to send valve command:', error);
-            addToast('Error: Could not send command to device.', 'error');
+            // addToast('Error: Could not send command to device.', 'error');
         }
     };
 
     useEffect(() => {
-        const foundDevice = devices.find(device => device._id === deviceId);
+        const foundDevice = devices.find(d => d._id === deviceId);
         setCurrentDevice(foundDevice);
+
         if (onSetHeaderDeviceLabel) {
-            onSetHeaderDeviceLabel(foundDevice ? foundDevice.label : null);
+            onSetHeaderDeviceLabel(foundDevice ? foundDevice.label : 'Device Details');
         }
-        return () => {
-            if (onSetHeaderDeviceLabel) onSetHeaderDeviceLabel(null);
-        };
-    }, [deviceId, devices, onSetHeaderDeviceLabel]);
+    }, [deviceId, devices, onSetHeaderDeviceLabel]); // Now depends on 'devices'
 
     // Update the useEffect to fetch data based on the timeRange.
     useEffect(() => {

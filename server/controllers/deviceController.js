@@ -123,49 +123,40 @@ const updateDeviceConfiguration = async (req, res) => {
 };
 
 /**
- * @desc    Send a command to a device's valve
+ * @desc    Send a command to a device's valve via Socket.IO
  * @route   PUT /api/devices/:deviceId/command
  * @access  Private
  */
 const sendValveCommand = async (req, res) => {
   try {
     const { deviceId } = req.params;
-    // The command value ('OPEN' or 'CLOSED') will be sent in the request body
     const { commandValue, userID } = req.body;
 
-    // Validate the incoming command
     if (!['OPEN', 'CLOSED'].includes(commandValue)) {
-      return res.status(400).json({ message: 'Invalid command value provided.' });
+      return res.status(400).json({ message: 'Invalid command value.' });
     }
 
-    // Find the device and update the command state in a single operation
-    const device = await Device.findByIdAndUpdate(
-      deviceId,
-      // Use dot notation to update the nested 'commands.setValve' field
-      { $set: { 'commands.setValve': commandValue } },
-      { new: true }
-    );
-
-    if (!device) {
-      return res.status(404).json({ message: "Device not found." });
-    }
-
-    // You can add a user log here if you wish
-
-    // Send a 202 Accepted response. This tells the client the command
-    // was received, but not necessarily completed yet.
-    res.status(202).json({
-      message: `Command to set valve to ${commandValue} has been sent.`,
-      device: device,
+    // 1. Update the database with the desired command
+    await Device.findByIdAndUpdate(deviceId, {
+      $set: { 'commands.setValve': commandValue }
     });
-    createUserlog(userID, `${updatedDevice.label} Valve is set to ${commandValue}`, "Valve"); // Call the crateUserlog Helper
+
+    // 2. Get the Socket.IO instance from the app object
+    const io = req.app.get('io');
+
+    // 3. Emit the command directly to the device's private room
+    io.to(deviceId).emit('command', { type: 'setValve', value: commandValue });
+    console.log(`📢 Emitted command to ${deviceId}: setValve to ${commandValue}`);
+
+    // (Optional) Create a user log for this action
+    // await createUserlog(userID, `sent command to set valve to ${commandValue} for device ${deviceId}`, "Control");
+
+    // 4. Respond to the web client that the command was successfully sent
+    res.status(202).json({ message: `Command to set valve to ${commandValue} has been sent.` });
 
   } catch (error) {
     console.error("Error sending valve command:", error);
-    res.status(500).json({
-      message: "Server error while sending valve command",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Server error while sending command" });
   }
 };
 

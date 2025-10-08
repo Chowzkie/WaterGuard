@@ -165,14 +165,15 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         try {
             // The only job is to send the command to the correct endpoint
             await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/command`, {
-                commandValue: newCommandValue
+                commandValue: newCommandValue,
+                userID
             });
             // The UI will update automatically via the socket event.
             // You can add a success toast here if you want immediate feedback.
-            // addToast(`Command to ${newCommandValue.toLowerCase()} valve sent!`, 'success');
+            addToast(`Command to ${newCommandValue.toLowerCase()} valve sent!`, 'success');
         } catch (error) {
             console.error('Failed to send valve command:', error);
-            // addToast('Error: Could not send command to device.', 'error');
+            addToast('Error: Could not send command to device.', 'error');
         }
     };
 

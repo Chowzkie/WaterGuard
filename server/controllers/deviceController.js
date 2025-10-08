@@ -148,8 +148,7 @@ const sendValveCommand = async (req, res) => {
     io.to(deviceId).emit('command', { type: 'setValve', value: commandValue });
     console.log(`📢 Emitted command to ${deviceId}: setValve to ${commandValue}`);
 
-    // (Optional) Create a user log for this action
-    // await createUserlog(userID, `sent command to set valve to ${commandValue} for device ${deviceId}`, "Control");
+    await createUserlog(userID, `sent command to set valve to ${commandValue} for device ${deviceId}`, "Valve");
 
     // 4. Respond to the web client that the command was successfully sent
     res.status(202).json({ message: `Command to set valve to ${commandValue} has been sent.` });

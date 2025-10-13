@@ -17,120 +17,108 @@ exports.processReading = async (req, res) => {
       return res.status(404).json({ message: `Device with ID ${deviceId} not found.` });
     }
 
-    // Evaluate alerts (your existing logic)
-    const allEvaluatedAlerts = evaluateSensorReading(reading, device.configurations);
+    // Evaluate all parameters based on thresholds
+    const evaluatedAlerts = evaluateSensorReading(reading, device.configurations);
     const actionsTaken = [];
 
-    // --- Handle abnormal alerts (Warnings & Criticals) ---
-    const abnormalAlerts = allEvaluatedAlerts.filter(a => a.severity !== 'Normal');
-    for (const newAlertData of abnormalAlerts) {
-      const finalAlertData = { ...newAlertData, originator: device.label };
-      const { originator, parameter, severity } = finalAlertData;
+    for (const alertData of evaluatedAlerts) {
+      const { parameter, severity } = alertData;
+      const originator = device.label;
 
+      // Get the latest active alert for this parameter
       const existingAlert = await Alert.findOne({
         originator,
         parameter,
-        lifecycle: 'Active'
-      });
+        lifecycle: 'Active',
+      }).sort({ createdAt: -1 });
 
-      if (existingAlert) {
-        if (severity !== existingAlert.severity) {
-          existingAlert.status = 'Escalated';
-          existingAlert.lifecycle = 'Recent';
-          await existingAlert.save();
-          actionsTaken.push(`Escalated existing '${parameter}' alert.`);
-
-          await Alert.create({ ...finalAlertData, status: 'Active', lifecycle: 'Active' });
-          actionsTaken.push(`Created new escalated '${parameter}' alert.`);
-        }
-      } else {
-        await Alert.create({ ...finalAlertData, status: 'Active', lifecycle: 'Active' });
-        actionsTaken.push(`Created new '${parameter}' alert.`);
+      // --- CASE 1: No existing alert, and severity is abnormal → create new alert ---
+      if (!existingAlert && severity !== 'Normal') {
+        await Alert.create({
+          ...alertData,
+          originator,
+          lifecycle: 'Active',
+        });
+        actionsTaken.push(`Created new '${parameter}' ${severity} alert.`);
       }
-    }
 
-    // --- Handle "Back to Normal" alerts ---
-    const normalAlerts = allEvaluatedAlerts.filter(a => a.severity === 'Normal');
-    for (const normalReading of normalAlerts) {
-      const activeAlertToResolve = await Alert.findOne({
-        originator: device.label,
-        parameter: normalReading.parameter,
-        lifecycle: 'Active'
-      });
-
-      if (activeAlertToResolve) {
-        activeAlertToResolve.status = 'Resolved';
-        activeAlertToResolve.lifecycle = 'Recent';
-        await activeAlertToResolve.save();
-        actionsTaken.push(`Resolved existing '${normalReading.parameter}' alert.`);
+      // --- CASE 2: Existing abnormal alert changes severity (e.g. Warning → Critical) ---
+      else if (existingAlert && severity !== 'Normal' && severity !== existingAlert.severity) {
+        existingAlert.status = 'Escalated';
+        existingAlert.lifecycle = 'Recent';
+        await existingAlert.save();
 
         await Alert.create({
-          ...normalReading,
-          originator: device.label,
-          type: `${normalReading.parameter} is back to normal`,
-          status: 'Active',
+          ...alertData,
+          originator,
           lifecycle: 'Active',
-          isBackToNormal: true,
         });
-        actionsTaken.push(`Created 'Back to Normal' notification.`);
+        actionsTaken.push(`Escalated '${parameter}' alert to ${severity}.`);
+      }
+
+      // --- CASE 3: Alert resolves (Critical/Warning → Normal) ---
+      else if (existingAlert && existingAlert.severity !== 'Normal' && severity === 'Normal') {
+        // Close the old one
+        existingAlert.status = 'Resolved';
+        existingAlert.lifecycle = 'Recent';
+        await existingAlert.save();
+
+        // Create only ONE "back to normal"
+        const recentNormal = await Alert.findOne({
+          originator,
+          parameter,
+          severity: 'Normal',
+          lifecycle: 'Active',
+        }).sort({ createdAt: -1 });
+
+        if (!recentNormal) {
+          await Alert.create({
+            ...alertData,
+            originator,
+            type: `${parameter} is back to normal`,
+            lifecycle: 'Active',
+            isBackToNormal: true,
+          });
+          actionsTaken.push(`Created single 'Back to Normal' alert for ${parameter}.`);
+        }
+      }
+
+      // --- CASE 4: No severity change (still Normal, or same as last) → skip ---
+      else {
+        actionsTaken.push(`No new alert for ${parameter}, same state.`);
       }
     }
 
-    // 1) Update device latestReading & lastContact & sensorStatus timestamps
+    // Update device latest readings and status
     device.latestReading = {
       timestamp: reading.timestamp ? new Date(reading.timestamp) : new Date(),
-      PH: reading.pH !== undefined ? reading.pH : device.latestReading.PH,
-      TDS: reading.tds !== undefined ? reading.tds : device.latestReading.TDS,
-      TEMP: reading.temp !== undefined ? reading.temp : device.latestReading.TEMP,
-      TURBIDITY: reading.turbidity !== undefined ? reading.turbidity : device.latestReading.TURBIDITY,
+      PH: reading.pH ?? device.latestReading.PH,
+      TDS: reading.tds ?? device.latestReading.TDS,
+      TEMP: reading.temp ?? device.latestReading.TEMP,
+      TURBIDITY: reading.turbidity ?? device.latestReading.TURBIDITY,
     };
-
-    device.currentState = device.currentState || {};
     device.currentState.lastContact = new Date();
-
-    // Update per-sensor lastReadingTimestamp and keep status Online
-    device.currentState.sensorStatus = device.currentState.sensorStatus || {};
-    const now = new Date();
-    if (reading.pH !== undefined) {
-      device.currentState.sensorStatus.PH = device.currentState.sensorStatus.PH || {};
-      device.currentState.sensorStatus.PH.lastReadingTimestamp = now;
-      device.currentState.sensorStatus.PH.status = 'Online';
-    }
-    if (reading.tds !== undefined) {
-      device.currentState.sensorStatus.TDS = device.currentState.sensorStatus.TDS || {};
-      device.currentState.sensorStatus.TDS.lastReadingTimestamp = now;
-      device.currentState.sensorStatus.TDS.status = 'Online';
-    }
-    if (reading.temp !== undefined) {
-      device.currentState.sensorStatus.TEMP = device.currentState.sensorStatus.TEMP || {};
-      device.currentState.sensorStatus.TEMP.lastReadingTimestamp = now;
-      device.currentState.sensorStatus.TEMP.status = 'Online';
-    }
-    if (reading.turbidity !== undefined) {
-      device.currentState.sensorStatus.TURBIDITY = device.currentState.sensorStatus.TURBIDITY || {};
-      device.currentState.sensorStatus.TURBIDITY.lastReadingTimestamp = now;
-      device.currentState.sensorStatus.TURBIDITY.status = 'Online';
-    }
 
     await device.save();
 
-    // 2) Emit socket events
-    const io = req.app.get('io');
+    // Emit updates to UI
+    const io = req.app.get("io");
     if (io) {
-      // lightweight event for quick UI updates
-      io.emit('newReading', {
+      io.emit("newReading", {
         deviceId: device._id,
         label: device.label,
         latestReading: device.latestReading,
       });
-
-      // full device state when UI needs to update devices list / status
-      io.emit('deviceUpdated', device); // emits full device object
+      io.emit("deviceUpdated", device);
     }
 
-    return res.status(200).json({ message: "Sensor reading processed successfully.", reading: device.latestReading });
+    return res.status(200).json({
+      message: "Sensor reading processed successfully.",
+      actionsTaken,
+      reading: device.latestReading,
+    });
   } catch (error) {
-    console.error("Error processing sensor reading:", error);
+    console.error("❌ Error processing sensor reading:", error);
     return res.status(500).json({ message: "Server error while processing reading." });
   }
 };

@@ -27,7 +27,7 @@ const initializeAlertCronJobs = () => {
 
           const result = await Alert.updateMany(
             {
-              originator: device.label, 
+              originator: device.label,
               lifecycle: 'Active',
               isBackToNormal: true,
               dateTime: { $lte: cutoff },
@@ -48,10 +48,7 @@ const initializeAlertCronJobs = () => {
           error.message
         );
         if (attempt === MAX_RETRIES) {
-          console.error(
-            'Cron job (Clear Normals) failed after all retries.',
-            error
-          );
+          console.error('Cron job (Clear Normals) failed after all retries.', error);
         } else {
           await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
         }
@@ -71,7 +68,7 @@ const initializeAlertCronJobs = () => {
 
           const result = await Alert.updateMany(
             {
-              originator: device.label, 
+              originator: device.label,
               lifecycle: 'Recent',
               dateTime: { $lte: cutoff },
             },
@@ -91,10 +88,7 @@ const initializeAlertCronJobs = () => {
           error.message
         );
         if (attempt === MAX_RETRIES) {
-          console.error(
-            'Cron job (Archive Recents) failed after all retries.',
-            error
-          );
+          console.error('Cron job (Archive Recents) failed after all retries.', error);
         } else {
           await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
         }
@@ -103,7 +97,7 @@ const initializeAlertCronJobs = () => {
   });
 
   // --- Job 3: Permanently purge soft-deleted alerts ---
-  cron.schedule('* * * * *', async () => { // Runs the job every minute
+  cron.schedule('* * * * *', async () => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         const cutoff = new Date(Date.now() - 5 * 60 * 1000); // A 5 minute grace period for solf-deleted alerts
@@ -124,10 +118,54 @@ const initializeAlertCronJobs = () => {
           error.message
         );
         if (attempt === MAX_RETRIES) {
-          console.error(
-            'Cron job (Purge) failed after all retries.',
-            error
+          console.error('Cron job (Purge) failed after all retries.', error);
+        } else {
+          await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+        }
+      }
+    }
+  });
+
+  // --- 🧹 Job 4: Auto-clear stuck or stale "Active" alerts ---
+  cron.schedule('*/60 * * * * *', async () => {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const devices = await Device.find({});
+        for (const device of devices) {
+          const staleActiveMinutes =
+            device.configurations?.logging?.alertIntervals?.staleActiveToRecent || 10;
+          const cutoff = new Date(Date.now() - staleActiveMinutes * 60 * 1000);
+
+          const result = await Alert.updateMany(
+            {
+              originator: device.label,
+              lifecycle: 'Active',
+              isBackToNormal: false,
+              dateTime: { $lte: cutoff },
+            },
+            {
+              $set: {
+                lifecycle: 'Recent',
+                status: 'Expired',
+                isBackToNormal: true,
+              },
+            }
           );
+
+          if (result.modifiedCount > 0) {
+            console.log(
+              `🧹 Auto-cleared ${result.modifiedCount} stale 'Active' alerts for ${device.label} that never resolved.`
+            );
+          }
+        }
+        return; // Success
+      } catch (error) {
+        console.error(
+          `Cron Job Error (Clear Stale Actives) - Attempt ${attempt}/${MAX_RETRIES}:`,
+          error.message
+        );
+        if (attempt === MAX_RETRIES) {
+          console.error('Cron job (Clear Stale Actives) failed after all retries.', error);
         } else {
           await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
         }

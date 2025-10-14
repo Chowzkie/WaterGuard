@@ -4,11 +4,12 @@ import axios from 'axios';
 import ParamChart from './ParamChart';
 import SpecificReadings from './SpecificReadings';
 import ValveSwitch from './ValveSwitch';
+import ControlPanel from './controlPanel';
 import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css';
 import ToastStyle from '../../../Styles/ToastStyle/Toast.module.css'
 import AlertsContext from '../../../utils/AlertsContext';
 import { CheckCircle2, AlertCircle,  Waves, Thermometer, TestTube2, Gauge } from 'lucide-react';
-import io from 'socket.io-client'; // 👈 1. IMPORT THE LIBRARY
+import io from 'socket.io-client'; 
 
 //add toast 
 const Toast = ({ message, type, status, onClose }) => {
@@ -177,6 +178,16 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         }
     };
 
+    // temporary placeholder: UI-only pump handler (no backend yet)
+    const handlePumpToggle = async (deviceId, isNowOn) => {
+        // This is UI-only for now: show a toast to indicate the UI action
+        const action = isNowOn ? 'turned ON' : 'turned OFF';
+        addToast(`Pump ${action} (UI only). Backend integration pending.`, 'success');
+
+        // If later you want to call backend, use axios.put similar to handleValveToggle:
+        // await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/pump`, { pumpState: isNowOn ? 'ON' : 'OFF', userID });
+    };
+
     useEffect(() => {
         const foundDevice = devices.find(d => d._id === deviceId);
         setCurrentDevice(foundDevice);
@@ -232,13 +243,13 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                     <SensorStatusPanel device={currentDevice} />
                     <DetailsPanel device={currentDevice} />
                 </div>
-                <ValveSwitch 
+                <ControlPanel
                     deviceId={deviceId}
-                    // Pass the actual valve state, not the overall device status
-                    valveState={currentDevice.currentState?.valve} 
                     deviceStatus={currentDevice.currentState?.status}
-                    // Pass our new handler function
-                    onToggle={handleValveToggle}
+                    valveState={currentDevice.currentState?.valve}
+                    pumpState={currentDevice.currentState?.pump || 'OFF'}  // fallback: 'OFF'
+                    onValveToggle={handleValveToggle}
+                    onPumpToggle={handlePumpToggle}
                     addToast={addToast}
                 />
             </div>

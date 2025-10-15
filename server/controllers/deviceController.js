@@ -159,9 +159,47 @@ const sendValveCommand = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Send a command to a device's pump via Socket.IO
+ * @route   PUT /api/devices/:deviceId/pumpCommand
+ * @access  Private
+ */
+const sendPumpCommand = async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { commandValue, userID } = req.body;
+
+    // Acceptable commands for pump (match schema enum): 'FILL', 'DRAIN', 'IDLE'
+    if (!['FILL', 'DRAIN', 'IDLE'].includes(commandValue)) {
+      return res.status(400).json({ message: 'Invalid pump command value.' });
+    }
+
+    // Update DB to reflect desired command
+    await Device.findByIdAndUpdate(deviceId, {
+      $set: { 'commands.setPump': commandValue }
+    });
+
+    // Emit to device room via socket
+    const io = req.app.get('io');
+    io.to(deviceId).emit('command', { type: 'setPump', value: commandValue });
+    console.log(`📢 Emitted pump command to ${deviceId}: setPump to ${commandValue}`);
+
+    // Create user log
+    await createUserlog(userID, `sent pump command (${commandValue}) to device ${deviceId}`, "Pump");
+
+    // Respond to client
+    res.status(202).json({ message: `Pump command ${commandValue} sent.` });
+
+  } catch (error) {
+    console.error("Error sending pump command:", error);
+    res.status(500).json({ message: "Server error while sending pump command" });
+  }
+};
+
 module.exports = {
   createDevice,
   deleteDevice,
   updateDeviceConfiguration,
   sendValveCommand,
+  sendPumpCommand,
 };

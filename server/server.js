@@ -42,12 +42,25 @@ const startServer = async () => {
       console.log("✅ Socket client connected:", socket.id);
 
       // --- ESP32 Joins Its Own Room ---
-      socket.on("joinRoom", (deviceId) => {
+      socket.on("joinRoom", async (deviceId) => {
         socket.join(deviceId);
         console.log(`📲 Device ${deviceId} joined room: ${deviceId}`);
+
+        // Send current pumpCycleIntervals config to device (so ESP can use it)
+        try {
+          const device = await Device.findById(deviceId).lean();
+          if (device && device.configurations && device.configurations.controls) {
+            const pumpConfig = device.configurations.controls.pumpCycleIntervals || {};
+            // Emit a dedicated event with the config
+            socket.emit('deviceConfig', { pumpCycleIntervals: pumpConfig });
+            console.log(`📡 Sent pump config to ${deviceId}:`, pumpConfig);
+          }
+        } catch (err) {
+          console.error("Error sending pump config on join:", err);
+        }
       });
 
-      // --- Handle Valve Command from Server (existing logic) ---
+      // --- Handle Valve Command state updates (existing) ---
       socket.on("stateUpdate", async (data) => {
         try {
           const { deviceId, valveState } = data;
@@ -70,6 +83,32 @@ const startServer = async () => {
           }
         } catch (error) {
           console.error("Error processing state update from device:", error);
+        }
+      });
+
+    // --- NEW: Handle Pump State Updates from ESP32 ---
+      socket.on("pumpStateUpdate", async (data) => {
+        try {
+          const { deviceId, pumpState } = data; // pumpState expected: 'FILLING' | 'DRAINING' | 'IDLE'
+          console.log(`⚡ Received pump state update from ${deviceId}: Pump is ${pumpState}`);
+
+          const updatedDevice = await Device.findByIdAndUpdate(
+            deviceId,
+            {
+              $set: {
+                "currentState.pump": pumpState,
+                "commands.setPump": "NONE",
+                "currentState.lastContact": new Date(),
+              },
+            },
+            { new: true }
+          );
+
+          if (updatedDevice) {
+            io.emit("deviceUpdate", updatedDevice);
+          }
+        } catch (error) {
+          console.error("Error processing pump state update from device:", error);
         }
       });
 

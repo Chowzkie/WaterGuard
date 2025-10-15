@@ -178,14 +178,22 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         }
     };
 
-    // temporary placeholder: UI-only pump handler (no backend yet)
     const handlePumpToggle = async (deviceId, isNowOn) => {
-        // This is UI-only for now: show a toast to indicate the UI action
-        const action = isNowOn ? 'turned ON' : 'turned OFF';
-        addToast(`Pump ${action} (UI only). Backend integration pending.`, 'success');
-
-        // If later you want to call backend, use axios.put similar to handleValveToggle:
-        // await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/pump`, { pumpState: isNowOn ? 'ON' : 'OFF', userID });
+    // Map boolean switch to command value
+    // If turning ON -> start cycle with 'FILL' (we start with filling)
+    // If turning OFF -> 'IDLE' to stop the cycle
+    const newCommandValue = isNowOn ? 'FILL' : 'IDLE';
+    try {
+        await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/pumpCommand`, {
+        commandValue: newCommandValue,
+        userID
+        });
+        addToast(`Pump command ${newCommandValue.toLowerCase()} sent!`, 'success');
+        // UI will update when server emits deviceUpdate via socket
+    } catch (error) {
+        console.error('Failed to send pump command:', error);
+        addToast('Error: Could not send pump command to device.', 'error');
+    }
     };
 
     useEffect(() => {

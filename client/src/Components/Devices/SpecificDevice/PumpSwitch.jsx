@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Style from '../../../Styles/SpecificDeviceStyle/ValveSwitch.module.css'; // reuse existing styles
 
 function PumpSwitch({ deviceId, deviceStatus, pumpState, onToggle, addToast }) {
-    const [isPumpOn, setIsPumpOn] = useState(pumpState === 'ON');
+    const [isPumpOn, setIsPumpOn] = useState(false);
 
     useEffect(() => {
-        setIsPumpOn(pumpState === 'ON');
+        // Treat FILLING, DRAINING, DELAY as "ON" states for UI purposes
+        const activeStates = ['ON', 'FILLING', 'DRAINING', 'DELAY'];
+        setIsPumpOn(activeStates.includes(pumpState));
     }, [pumpState]);
 
     const togglePump = () => {
@@ -22,9 +24,17 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, onToggle, addToast }) {
         <div className={Style['valve-container']}>
             <div className={Style['valve-title']}>Pump Control</div>
             <div className={Style['status-section']}>
-                <div className={`${Style['led-indicator']} ${isPumpOn ? Style['led-green'] : Style['led-red']}`}></div>
+                <div
+                    className={`${Style['led-indicator']} ${
+                        isPumpOn ? Style['led-green'] : Style['led-red']
+                    }`}
+                ></div>
                 <span className={Style['status-text']}>
-                    {isPumpOn ? 'Pump is ON' : 'Pump is OFF'}
+                    {pumpState === 'IDLE'
+                        ? 'Pump is IDLE'
+                        : isPumpOn
+                        ? `Pump is ${pumpState}`
+                        : 'Pump is OFF'}
                 </span>
                 <label className={Style['switch']}>
                     <input

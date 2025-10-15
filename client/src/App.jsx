@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import Axios
+import socket from "./socket";
 import {io} from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode'
 import './App.css';
@@ -67,7 +68,7 @@ function App() {
 
     const navigate = useNavigate();
 
-        // create socket once
+    /*    // create socket once
     const socketRef = useRef(null);
     useEffect(() => {
     socketRef.current = io(API_BASE_URL); // adjust origin
@@ -103,6 +104,29 @@ function App() {
         socket.off('newReading');
         socket.disconnect();
     };
+    }, []); */
+    useEffect(() => {
+        socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
+        socket.on("disconnect", () => console.log("❌ Socket disconnected"));
+
+        socket.on("deviceUpdated", (updatedDevice) => {
+            setDeviceLocations(prev => {
+            const idx = prev.findIndex(d => d._id === updatedDevice._id);
+            if (idx === -1) return [...prev, updatedDevice];
+            const copy = [...prev];
+            copy[idx] = updatedDevice;
+            return copy;
+            });
+        });
+
+        socket.on("newReading", (payload) => {
+            // optional UI updates
+        });
+
+        return () => {
+            socket.off("deviceUpdated");
+            socket.off("newReading");
+        };
     }, []);
 
     // Use to dynamically change the document title when logging out

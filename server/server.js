@@ -8,6 +8,7 @@ const createDefaultUser = require("./utils/createDefaultUser");
 const { initializeAlertCronJobs } = require("./helpers/alertManager");
 const Device = require("./models/Device");
 const { processReading } = require("./controllers/sensorReadingController"); // ✅ integrate alert logic
+const { createSystemLogs } = require("./helpers/createSystemLogs")
 
 const app = express();
 const server = http.createServer(app);
@@ -44,6 +45,7 @@ const startServer = async () => {
       // --- ESP32 Joins Its Own Room ---
       socket.on("joinRoom", async (deviceId) => {
         socket.join(deviceId);
+        socket.deviceId = deviceId;
         console.log(`📲 Device ${deviceId} joined room: ${deviceId}`);
 
         // Send current pumpCycleIntervals config to device (so ESP can use it)
@@ -152,6 +154,7 @@ const startServer = async () => {
       // --- Handle Disconnect ---
       socket.on("disconnect", () => {
         console.log("❌ Socket client disconnected:", socket.id);
+        createSystemLogs(null, socket.deviceId, "Micro controller" ,"Device is offline", "error");
       });
     });
 

@@ -206,7 +206,6 @@ function App() {
 
     const [deviceLocations, setDeviceLocations] = useState([]);
     const [pumpingStations, setPumpingStations] = useState([]);
-    const [mockSensorReadings, setMockSensorReadings] = useState([]);
 
     const [selectedMapDeviceId, setSelectedMapDeviceId] = useState(null);
     const [refocusTrigger, setRefocusTrigger] = useState(0);
@@ -311,59 +310,6 @@ function App() {
         return () => clearInterval(intervalId);
     }, [playNotificationSound]);
 
-
-    // --- THIS useEffect FETCHES THE SIMULATION DATA ---
-    // This runs once when the application loads.
-    useEffect(() => {
-        const fetchSimulationData = async () => {
-            try {
-                const response = await axios.get(`${API_BASE_URL}/api/sensor-readings`);
-                setMockSensorReadings(response.data); // Store the fetched data in state
-                console.log("Successfully fetched simulation data from server.");
-            } catch (error) {
-                console.error("Failed to fetch simulation data:", error);
-            }
-        };
-
-        fetchSimulationData();
-    }, []); // Empty array ensures this runs only once.
-
-    // =================================================================================
-    // REAL-TIME SIMULATION FEED
-    // =================================================================================
-    // This useEffect simulates a live stream of sensor data. It waits for the
-    // mockSensorReadings to be fetched before it starts.
-    useEffect(() => {
-        // Only start the simulation if we have mock readings to process.
-        if (mockSensorReadings.length === 0) return;
-
-        let readingIndex = 0;
-        const intervalId = setInterval(async () => {
-            if (readingIndex < mockSensorReadings.length) {
-                const currentReading = mockSensorReadings[readingIndex];
-                console.log(`SIMULATING: Sending reading ${readingIndex + 1}`, currentReading);
-
-                try {
-                    // Send the reading to the backend for processing.
-                    await axios.post(`${API_BASE_URL}/api/sensor-readings/process`, currentReading);
-                } catch (error) {
-                    console.error("Error sending simulated sensor reading:", error);
-                }
-                
-                readingIndex++;
-            } else {
-                // Once all readings are sent, stop the simulation.
-                console.log("SIMULATION: All mock readings have been processed.");
-                clearInterval(intervalId);
-            }
-        }, 5000); // Sends a new reading every 5 seconds.
-
-        // Cleanup function to stop the timer if the component unmounts.
-        return () => clearInterval(intervalId);
-
-    }, [mockSensorReadings]); // <-- This dependency is the key to the whole process.
-
-
     // --- NEW: Centralized function to add a new notification ---
     // This function handles the creation of a new notification object and adds it to the state.
     const addNotification = useCallback((notificationData) => {
@@ -419,12 +365,10 @@ function App() {
             try {
                 const [devicesRes, stationsRes, sensorReadingsRes] = await Promise.all([
                     axios.get(`${API_BASE_URL}/api/devices`),
-                    axios.get(`${API_BASE_URL}/api/stations`),
-                    axios.get(`${API_BASE_URL}/api/sensor-readings`)
+                    axios.get(`${API_BASE_URL}/api/stations`)
                 ]);
                 setDeviceLocations(devicesRes.data);
                 setPumpingStations(stationsRes.data);
-                setMockSensorReadings(sensorReadingsRes.data);
                 // --- FIX: Prime the ref with the initial device state ---
                 previousDevicesRef.current = devicesRes.data;
             } catch (error) {

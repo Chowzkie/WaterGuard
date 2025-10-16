@@ -233,6 +233,7 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
             case 'Restoration': return Style['type-restoration'];
             case 'Acknowledgement': return Style['type-acknowledgement'];
             case 'Valve': return Style['type-valve'];
+            case 'Pump' : return Style['type-pump'];
             case 'Maintenance': return Style['type-maintenance'];
             case 'Station': return Style['type-station'];
             case 'Device': return Style['type-device']
@@ -296,7 +297,7 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
                                     <label className={Style['filter-label']}>Category</label>
                                     <div className={Style['filter-control']}>
                                         <div className={Style['pill-group']}>
-                                            {['Configuration', 'Login', 'Logout', 'Account', 'Deletion', 'Restoration','Acknowledgement', 'Valve', 'Maintenance', 'Device', 'Station'].map(category => (
+                                            {['Configuration', 'Login', 'Logout', 'Account', 'Deletion', 'Restoration','Acknowledgement', 'Valve', 'Pump','Maintenance', 'Device', 'Station'].map(category => (
                                                 <button
                                                     key={category}
                                                     onClick={() => handlePillSelect('category', category)}

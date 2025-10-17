@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import Axios
 import socket from "./socket";
-import {io} from 'socket.io-client';
 import { jwtDecode } from 'jwt-decode'
 import './App.css';
 

@@ -42,8 +42,30 @@ const startServer = async () => {
     io.on("connection", (socket) => {
       console.log("✅ Socket client connected:", socket.id);
 
+        socket.onAny((event, ...args) => {
+          console.log(`📨 [${socket.id}] event received: ${event}`, args);
+        });
+
+      socket.on("requestDeviceConfig", async (rawDeviceId) => {
+        try {
+          const deviceId = String(rawDeviceId).replace(/"/g, ""); // sanitize if quotes present
+          const device = await Device.findById(deviceId).lean();
+          if (device && device.configurations && device.configurations.controls) {
+            const pumpConfig = device.configurations.controls.pumpCycleIntervals || {};
+            socket.emit("deviceConfig", { pumpCycleIntervals: pumpConfig });
+            console.log(`📡 (on request) Sent pump config to ${deviceId}:`, pumpConfig);
+          } else {
+            console.warn(`⚠️ (on request) No pump config for device ${deviceId}`);
+            socket.emit("deviceConfig", { pumpCycleIntervals: {} });
+          }
+        } catch (err) {
+          console.error("Error fetching pump config on request:", err);
+        }
+      });
+
       // --- ESP32 Joins Its Own Room ---
-      socket.on("joinRoom", async (deviceId) => {
+      socket.on("joinRoom", async (rawDeviceId) => {
+        const deviceId = String(rawDeviceId).replace(/"/g, "");
         socket.join(deviceId);
         socket.deviceId = deviceId;
         console.log(`📲 Device ${deviceId} joined room: ${deviceId}`);
@@ -118,13 +140,20 @@ const startServer = async () => {
       socket.on("esp32_data", async (payload) => {
         try {
           const data = payload;
-          const { deviceId, TEMP, TDS } = data;
+          const { deviceId, TEMP, TDS, TURBIDITY } = data;
 
-          console.log(`📡 ESP32 Reading from ${deviceId} → TEMP: ${TEMP}°C, TDS: ${TDS} ppm`);
+          console.log(`📡 ESP32 Reading from ${deviceId} → TEMP: ${TEMP}°C, TDS: ${TDS} ppm, TURBIDITY: ${TURBIDITY} ntu`);
+
+          // Helper to sanitize and default invalid readings to 0
+          const safeRound = (val) => {
+            const num = Number(val);
+            return isNaN(num) ? 0 : Math.round(num * 10) / 10;
+          };
 
           // Round to single decimal
-          const tempRounded = Math.round(TEMP * 10) / 10;
-          const tdsRounded = Math.round(TDS * 10) / 10;
+          const tempRounded = safeRound(TEMP);
+          const tdsRounded = safeRound(TDS);
+          const turbRounded = safeRound(TURBIDITY);
 
           // Instead of just updating DB, call the existing alert + device update controller
           const req = {
@@ -132,6 +161,7 @@ const startServer = async () => {
               deviceId,
               temp: tempRounded,
               tds: tdsRounded,
+              turbidity: turbRounded,
               timestamp: new Date(),
             },
             app, // so controller can access io

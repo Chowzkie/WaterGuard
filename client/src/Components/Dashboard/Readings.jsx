@@ -26,7 +26,7 @@ const ReadingCard = ({ title, value, min, max, unit, color, status, selectedDevi
     }
 
     const normalizedValue = (value - min) / (max - min);
-    const percentage = normalizedValue * 100;
+    const percentage = Math.min(Math.max(normalizedValue * 100, 0), 100)
 
     const data = {
         datasets: [

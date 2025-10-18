@@ -68,7 +68,7 @@ const startServer = async () => {
       socket.on("joinRoom", async (rawDeviceId) => {
         const deviceId = String(rawDeviceId).replace(/"/g, "");
         socket.join(deviceId);
-        socket.deviceId = rawDeviceId.deviceId;
+        socket.deviceId = deviceId;
         console.log(`📲 Device ${deviceId} joined room: ${deviceId}`);
 
         // Send current pumpCycleIntervals config to device (so ESP can use it)

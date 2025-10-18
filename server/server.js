@@ -28,6 +28,7 @@ app.set("io", io);
 const PORT = process.env.PORT || 8080;
 
 const startServer = async () => {
+  const DEVID = "unknownDevice";
   try {
     await connectDB();
     createDefaultUser();
@@ -40,7 +41,7 @@ const startServer = async () => {
     // 🔌 SOCKET.IO HANDLERS
     // ===========================
     io.on("connection", (socket) => {
-      console.log("✅ Socket client connected:", socket.id);
+      console.log(`✅ Socket client connected:`, socket.id);
 
         socket.onAny((event, ...args) => {
           console.log(`📨 [${socket.id}] event received: ${event}`, args);
@@ -67,7 +68,7 @@ const startServer = async () => {
       socket.on("joinRoom", async (rawDeviceId) => {
         const deviceId = String(rawDeviceId).replace(/"/g, "");
         socket.join(deviceId);
-        socket.deviceId = deviceId;
+        socket.deviceId = rawDeviceId.deviceId;
         console.log(`📲 Device ${deviceId} joined room: ${deviceId}`);
 
         // Send current pumpCycleIntervals config to device (so ESP can use it)
@@ -183,7 +184,7 @@ const startServer = async () => {
 
       // --- Handle Disconnect ---
       socket.on("disconnect", () => {
-        console.log("❌ Socket client disconnected:", socket.id);
+        console.log(`❌ Socket client disconnected:`, socket.id);
         createSystemLogs(null, socket.deviceId, "Micro controller" ,"Device is offline", "error");
       });
     });

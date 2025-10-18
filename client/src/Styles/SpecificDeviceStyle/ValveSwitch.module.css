@@ -92,6 +92,11 @@ input:checked + .slider:before { transform: translateX(26px); }
   z-index: 10;
   animation: fadeInOut 2.5s forwards;
 }
+.switch-disabled {
+  pointer-events: auto; /* Still clickable */
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(10px); }

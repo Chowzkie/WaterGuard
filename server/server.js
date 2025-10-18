@@ -8,7 +8,8 @@ const createDefaultUser = require("./utils/createDefaultUser");
 const { initializeAlertCronJobs } = require("./helpers/alertManager");
 const Device = require("./models/Device");
 const { processReading } = require("./controllers/sensorReadingController"); // ✅ integrate alert logic
-const { createSystemLogs } = require("./helpers/createSystemLogs")
+const { createSystemLogs } = require("./helpers/createSystemLogs");
+const { Socket } = require("dgram");
 
 const app = express();
 const server = http.createServer(app);
@@ -184,8 +185,9 @@ const startServer = async () => {
 
       // --- Handle Disconnect ---
       socket.on("disconnect", () => {
+        const deviceId = socket.deviceId ? socket.deviceId : "unknown device";
         console.log(`❌ Socket client disconnected:`, socket.id);
-        createSystemLogs(null, socket.deviceId, "Micro controller" ,"Device is offline", "error");
+        createSystemLogs(null, deviceId, "Micro controller" ,"Device is offline", "error");
       });
     });
 

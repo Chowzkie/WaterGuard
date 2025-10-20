@@ -20,6 +20,13 @@ const StationSchema = new Schema({
         required: [true, 'Station location is required.'],
         trim: true
     },
+    deviceId: {
+        type: String,
+        ref: 'Device',  // Links to the 'Device' model
+        unique: true,   // Ensures one device cannot be assigned to two stations
+        sparse: true,   // Allows multiple stations to have a 'null' deviceId
+        default: null
+    },
     operation: {
         type: String,
         required: true,

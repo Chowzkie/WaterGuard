@@ -7,7 +7,6 @@ import styles from '../../Styles/Overview.module.css';
 import { useAlerts } from '../../utils/AlertsContext';
 
 const Overview = () => {
-    // --- MODIFIED --- Get newlyAddedId from context
     const {
         activeAlerts,
         recentAlerts,
@@ -24,7 +23,7 @@ const Overview = () => {
         onAddDevice,
         onDeleteDevice,
         onSaveStations,
-        newlyAddedId, // <-- ADD THIS
+        newlyAddedId,
         onAnimationComplete
     } = useAlerts();
 
@@ -51,6 +50,7 @@ const Overview = () => {
             <PumpingStatus
                 stations={pumpingStations}
                 onSave={onSaveStations}
+                devices={devices}
             />
             <RecentAlerts
                 recentAlerts={recentAlerts}

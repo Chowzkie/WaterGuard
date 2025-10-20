@@ -1,24 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'; // Import useMemo
 import {  SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare } from 'lucide-react';
 import '../../Styles/PumpingStatus.css';
 
-const PumpingStatus = ({ stations, onSave }) => {
+// --- UPDATED: Accept 'devices' prop ---
+const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devices to empty array
     
     const [isEditing, setIsEditing] = useState(false);
     const [draftStations, setDraftStations] = useState(null);
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
     
     const [newLabel, setNewLabel] = useState('');
+    // --- UPDATED: 'newLocation' is now auto-filled ---
     const [newLocation, setNewLocation] = useState('');
+    // --- NEW: State to track the selected device ID ---
+    const [selectedDeviceId, setSelectedDeviceId] = useState('');
     const [newOperation, setNewOperation] = useState('On-going');
     const [error, setError] = useState('');
 
     const [detailsForStationId, setDetailsForStationId] = useState(null);
     const [draftDetails, setDraftDetails] = useState({ cause: '', date: '', startTime: '', endTime: '' });
-
-    // FIX: Add state to remember the station being detailed, including its original operation status.
-    // This is crucial for handling the "Cancel" action correctly.
     const [stationBeingDetailed, setStationBeingDetailed] = useState(null);
+
+    // --- NEW: Memoized list of available devices ---
+    // This now depends on 'draftStations' to update the dropdown
+    // as you add new stations in the modal.
+    const availableDevices = useMemo(() => {
+        // If the modal isn't open, draftStations is null. Don't bother.
+        if (!draftStations) return []; 
+        
+        // Get all device IDs assigned in the *current draft*
+        const assignedDeviceIds = new Set(
+            draftStations.map(s => s.deviceId?._id || s.deviceId).filter(Boolean)
+        );
+        
+        // Return devices that are NOT in the assigned set
+        return devices.filter(d => !assignedDeviceIds.has(d._id));
+    }, [devices, draftStations]); // <-- UPDATED DEPENDENCY
+
+    // --- NEW: Handler for the device dropdown ---
+    const handleDeviceSelectChange = (e) => {
+        const deviceId = e.target.value;
+        setSelectedDeviceId(deviceId);
+
+        if (deviceId) {
+            // Find the selected device and auto-fill the location
+            const selectedDevice = devices.find(d => d._id === deviceId);
+            if (selectedDevice) {
+                setNewLocation(selectedDevice.location);
+            }
+        } else {
+            // Clear location if "Select a Device" is chosen
+            setNewLocation('');
+        }
+    };
 
     const hasUnsavedChanges = () => {
         if (!draftStations) return false;
@@ -37,8 +71,12 @@ const PumpingStatus = ({ stations, onSave }) => {
         setError('');
         setDetailsForStationId(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
-        // FIX: Clear the station detail tracking state on close.
         setStationBeingDetailed(null);
+        // --- NEW: Reset new station fields on close ---
+        setNewLabel('');
+        setNewLocation('');
+        setSelectedDeviceId('');
+        setNewOperation('On-going');
     };
 
     const handleAttemptClose = () => {
@@ -54,7 +92,17 @@ const PumpingStatus = ({ stations, onSave }) => {
             alert('Please save or cancel the details for the selected station first.');
             return;
         }
-        onSave(draftStations);
+        
+        // --- UPDATED: Prepare stations for saving ---
+        // Ensure deviceId is just the ID string, not the populated object
+        const stationsToSave = draftStations.map(s => ({
+            ...s,
+            // If deviceId is an object (from populate), just send its _id.
+            // If it's a string (from new add), send it as is.
+            deviceId: s.deviceId?._id || s.deviceId || null,
+        }));
+        
+        onSave(stationsToSave);
         closeAndCleanup();
     };
 
@@ -64,21 +112,27 @@ const PumpingStatus = ({ stations, onSave }) => {
 
     const handleAddStationToDraft = (e) => {
         e.preventDefault();
-        if (!newLabel || !newLocation) {
-            setError('Please fill out all fields to add a station.');
+        // --- UPDATED: Validation check ---
+        if (!newLabel || !selectedDeviceId) {
+            setError('Please fill out Label and select a Device.');
             return;
         }
         setError('');
+        
+        // --- UPDATED: New station object ---
         const newStation = {
-            
-            tempId: Date.now(), // Using a temporary key
+            tempId: Date.now(),
             label: newLabel,
-            location: newLocation,
+            location: newLocation, // The auto-filled location
+            deviceId: selectedDeviceId, // Store the ID. We'll look up the label for display
             operation: newOperation
         };
         setDraftStations([...draftStations, newStation]);
+        
+        // --- UPDATED: Reset fields ---
         setNewLabel('');
         setNewLocation('');
+        setSelectedDeviceId('');
         setNewOperation('On-going');
     };
 
@@ -86,6 +140,8 @@ const PumpingStatus = ({ stations, onSave }) => {
         setDraftStations(draftStations.filter(station => (station._id || station.tempId) !== idToRemove));
     };
 
+    // ... (handleOperationChangeInDraft, handleSaveDetails, handleCancelDetails remain the same) ...
+    // ...
     const handleOperationChangeInDraft = (idToChange, newOp) => {
         const station = draftStations.find(s => (s._id || s.tempId) === idToChange);
         if (!station) return;
@@ -142,6 +198,27 @@ const PumpingStatus = ({ stations, onSave }) => {
         setStationBeingDetailed(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
     }
+    // ...
+    
+    // --- NEW: Helper to get device label for display ---
+    // Handles both populated objects (from DB) and string IDs (newly added)
+    const getDeviceLabel = (deviceId) => {
+        if (!deviceId) return 'N/A';
+        
+        // If it's an object (populated from DB), return its label
+        if (typeof deviceId === 'object' && deviceId.label) {
+            return deviceId.label;
+        }
+        
+        // If it's a string ID (newly added in modal), find it in the 'devices' prop
+        if (typeof deviceId === 'string') {
+            const device = devices.find(d => d._id === deviceId);
+            return device ? device.label : 'Unknown';
+        }
+        
+        return 'N/A';
+    };
+
 
     return (
         <>
@@ -155,13 +232,17 @@ const PumpingStatus = ({ stations, onSave }) => {
                     </div>
                     <div className="station-list">
                         <div className="station-list-header">
-                            <div>Label</div><div>Location</div><div>Operation</div>
+                            {/* --- UPDATED: Added Device column --- */}
+                            <div>Label</div><div>Location</div><div>Device</div><div>Operation</div>
                         </div>
                         <div className="station-list-items">
                             {stations.map((s) => (
                                 <div key={s._id} className="station-item">
                                     <div>{s.label}</div>
                                     <div>{s.location}</div>
+                                    {/* --- UPDATED: Display device label --- */}
+                                    {/* s.deviceId is populated by the backend as { _id: '...', label: '...' } */}
+                                    <div>{s.deviceId?.label || 'N/A'}</div>
                                     <div>
                                         <span className={`status-badge ${s.operation.toLowerCase().replace('-', '_')}`}>
                                             {s.operation}
@@ -189,6 +270,8 @@ const PumpingStatus = ({ stations, onSave }) => {
                                     <div key={station._id || station.tempId} className="station-item">
                                         <div>{station.label}</div>
                                         <div>{station.location}</div>
+                                        {/* --- UPDATED: Display device label --- */}
+                                        <div>{getDeviceLabel(station.deviceId)}</div>
                                         <div>
                                             <select
                                                 className="form-select-inline"
@@ -232,7 +315,6 @@ const PumpingStatus = ({ stations, onSave }) => {
                                                     </div>
                                                 </div>
                                                 <div className="details-form-footer">
-                                                    {/* FIX: The Cancel button now correctly reverts the status change. */}
                                                     <button className="button-secondary-small" onClick={handleCancelDetails}>Cancel</button>
                                                     <button className="button-primary-small" onClick={handleSaveDetails}>Set Details</button>
                                                 </div>
@@ -242,6 +324,7 @@ const PumpingStatus = ({ stations, onSave }) => {
                                 ))}
                             </div>
 
+                            {/* --- UPDATED: Add Station Form --- */}
                             <form className="add-station-form" onSubmit={handleAddStationToDraft} noValidate>
                                 <h4 className="form-title">Add New Station</h4>
                                 <div className="form-inputs">
@@ -254,15 +337,38 @@ const PumpingStatus = ({ stations, onSave }) => {
                                             className="form-input"
                                         />
                                     </div>
+                                    
+                                    {/* --- NEW: Device Dropdown --- */}
+                                    <div className="form-input-group">
+                                        <select
+                                            value={selectedDeviceId}
+                                            onChange={handleDeviceSelectChange}
+                                            className="form-select"
+                                        >
+                                            <option value="">Select a Device</option>
+                                            {/* We use 'availableDevices' to only show unassigned devices */}
+                                            {availableDevices.map(device => (
+                                                <option key={device._id} value={device._id}>
+                                                    {device.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* --- UPDATED: Location Input (Auto-filled) --- */}
                                     <div className="form-input-group">
                                         <input
                                             type="text"
-                                            placeholder="Location"
+                                            placeholder="Location (from device)"
                                             value={newLocation}
+                                            // You can make this readOnly if you never want the user to change it
+                                            // readOnly
+                                            // Or allow them to edit it:
                                             onChange={e => setNewLocation(e.target.value)}
                                             className="form-input"
                                         />
                                     </div>
+                                    
                                     <div className="form-input-group">
                                         <select
                                             value={newOperation}

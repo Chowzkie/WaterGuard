@@ -151,7 +151,7 @@ function App() {
         return savedUser? JSON.parse(savedUser) : null;
     });
 
-    const userID = loggedInUser?.id //A helper to set the loggedin user
+    const userID = loggedInUser?._id //A helper to set the loggedin user
 
     useEffect(() => {
         //fetch the user details into the backend
@@ -550,7 +550,7 @@ function App() {
             // UPDATED: Send the required payload structure with userID for logging
             const response = await axios.post(`${API_BASE_URL}/api/stations/batch-update`, {
                 stationsFromClient: updatedStations,
-                userID: loggedInUser?.userID 
+                userID: userID 
             });
 
             // Update the frontend state with the final, authoritative list from the server

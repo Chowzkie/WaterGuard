@@ -72,6 +72,7 @@ exports.batchUpdateStations = async (req, res) => {
                     location: station.location,
                     operation: station.operation,
                     maintenanceInfo: station.maintenanceInfo || null,
+                    deviceId: station.deviceId || null // Add the deviceId
                 });
                 const savedStation = await newStation.save();
                 // Log the addition
@@ -79,8 +80,8 @@ exports.batchUpdateStations = async (req, res) => {
             }
         }
 
-        // Return the fresh, complete list from the DB
-        const updatedStations = await Station.find({});
+        // Return the fresh, complete list from the DB, *with device info populated*.
+        const updatedStations = await Station.find({}).populate('deviceId', '_id label');
         res.status(200).json(updatedStations);
 
     } catch (error) {

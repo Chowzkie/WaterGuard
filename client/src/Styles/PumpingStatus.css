@@ -65,7 +65,7 @@
 .station-list-header,
 .station-item {
     display: grid;
-    grid-template-columns: 3fr 4fr 2fr;
+    grid-template-columns: 3fr 4fr 3fr 2fr;
     align-items: center;
     gap: 16px;
     padding: 8px 0;
@@ -206,7 +206,7 @@
 }
 
 .modal-list .station-item {
-    grid-template-columns: 3fr 4fr 3fr auto;
+    grid-template-columns: 3fr 4fr 3fr 3fr auto;
 }
 
 .form-select-inline {

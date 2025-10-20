@@ -16,8 +16,7 @@ const ActiveAlerts = ({
   const [expandedAlertId, setExpandedAlertId] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-    // --- THIS IS THE FIX ---
-  // This effect watches the newlyAddedId prop. When it gets a value, it starts a timer.
+    // This effect handles the new-alert animation
   useEffect(() => {
     // If there is an alert to animate...
     if (newlyAddedId) {
@@ -30,11 +29,8 @@ const ActiveAlerts = ({
         // This cleans up the timer if the component unmounts before the animation is done.
         return () => clearTimeout(timer);
     }
-  }, [newlyAddedId, onAnimationComplete]); // It only runs when these change.
+  }, [newlyAddedId, onAnimationComplete]);
   
-  // --- MODIFIED: All animation state (useState and useEffect) has been removed ---
-  // The component no longer needs to track maxSeenId.
-
   const getSeverityClass = (severity) => {
     switch (severity.toLowerCase()) {
       case 'critical': return styles['severity-critical'];
@@ -45,7 +41,10 @@ const ActiveAlerts = ({
 
   const toggleDropdown = (alertId) => setExpandedAlertId(prev => (prev === alertId ? null : alertId));
   const toggleDeviceDropdown = () => setDropdownOpen(prev => !prev);
+  
+  // --- UPDATED: Use device._id ---
   const handleDeviceSelect = (deviceId) => { onDeviceFilterChange({ target: { value: deviceId } }); setDropdownOpen(false); };
+  
   const handleAcknowledgeClick = (alertId) => { onAcknowledgeAlert(alertId); setExpandedAlertId(null); };
   
   const filteredAlerts = (selectedDevice === 'All Devices' || !selectedDevice
@@ -62,7 +61,8 @@ const ActiveAlerts = ({
                     <label>Filter by Device:</label>
                     <div className={styles['custom-dropdown']}>
                         <div className={styles['dropdown-header']} onClick={toggleDeviceDropdown}>
-                            {(devices || []).find(d => d.id === selectedDevice)?.label || 'All Devices'}
+                            {/* --- UPDATED: Find by device._id --- */}
+                            {(devices || []).find(d => d._id === selectedDevice)?.label || 'All Devices'}
                             <span className={styles['dropdown-arrow']}>
                                 {dropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </span>
@@ -72,7 +72,8 @@ const ActiveAlerts = ({
                                 All Devices
                             </div>
                             {(devices || []).map(device => (
-                                <div key={device.id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device.id)}>
+                                /* --- UPDATED: Use key={device._id} and pass device._id --- */
+                                <div key={device._id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device._id)}>
                                     {device.label}
                                 </div>
                             ))}
@@ -94,6 +95,7 @@ const ActiveAlerts = ({
             <div className={styles['alerts-body']}>
                 {filteredAlerts.length > 0 ? (
                     filteredAlerts.map(alert => (
+                        // This key={alert._id} was already correct!
                         <div key={alert._id}>
                             <div 
                                 className={`${styles['alerts-row']} ${alert._id === newlyAddedId ? styles['new-alert'] : ''} ${alert.acknowledged ? styles['alert-acknowledged'] : ''}`} 

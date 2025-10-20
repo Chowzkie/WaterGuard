@@ -21,6 +21,8 @@ const RecentAlerts = ({
   };
 
   const toggleDeviceDropdown = () => setDropdownOpen(prev => !prev);
+  
+  // --- UPDATED: Use device._id ---
   const handleDeviceSelect = (deviceId) => {
     onDeviceFilterChange({ target: { value: deviceId } });
     setDropdownOpen(false);
@@ -40,7 +42,8 @@ const RecentAlerts = ({
             <label>Filter by Device:</label>
             <div className={styles['custom-dropdown']}>
               <div className={styles['dropdown-header']} onClick={toggleDeviceDropdown}>
-                {(devices || []).find(d => d.id === selectedDevice)?.label || 'All Devices'}
+                {/* --- UPDATED: Find by device._id --- */}
+                {(devices || []).find(d => d._id === selectedDevice)?.label || 'All Devices'}
                 <span className={styles['dropdown-arrow']}>
                     {dropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </span>
@@ -48,7 +51,8 @@ const RecentAlerts = ({
               <div className={`${styles['dropdown-list']} ${dropdownOpen ? styles['dropdown-open'] : ''}`}>
                 <div className={styles['dropdown-item']} onClick={() => handleDeviceSelect('All Devices')}>All Devices</div>
                 {(devices || []).map(device => (
-                  <div key={device.id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device.id)}>{device.label}</div>
+                  /* --- UPDATED: Use key={device._id} and pass device._id --- */
+                  <div key={device._id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device._id)}>{device.label}</div>
                 ))}
               </div>
             </div>
@@ -67,6 +71,7 @@ const RecentAlerts = ({
         <div className={styles['alerts-body']}>
           {filteredAlerts.length > 0 ? (
             filteredAlerts.map(alert => (
+              // This key={alert._id} was already correct!
               <div key={alert._id} className={styles['alerts-row']}>
                 <div>{formatDateTime(alert.dateTime)}</div>
                 <div>{alert.originator}</div>

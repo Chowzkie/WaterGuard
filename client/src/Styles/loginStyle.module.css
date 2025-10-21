@@ -183,3 +183,11 @@
     top: 110px;
     }
 }
+
+/* Hide the default password reveal icon from Microsoft Edge/Chromium
+  and the 'x' clear button from Internet Explorer.
+*/
+:global(input[type="password"]::-ms-reveal),
+:global(input[type="password"]::-ms-clear) {
+  display: none;
+}

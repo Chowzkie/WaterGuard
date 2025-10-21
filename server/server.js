@@ -8,6 +8,7 @@ const createDefaultUser = require("./utils/createDefaultUser");
 const { initializeAlertCronJobs } = require("./helpers/alertManager");
 const Device = require("./models/Device");
 const { processReading } = require("./controllers/sensorReadingController"); // ✅ integrate alert logic
+const HistoricalReading = require("./models/HistoricalReading");
 const { createSystemLogs } = require("./helpers/createSystemLogs");
 const { Socket } = require("dgram");
 
@@ -156,6 +157,24 @@ const startServer = async () => {
           const tempRounded = safeRound(TEMP);
           const tdsRounded = safeRound(TDS);
           const turbRounded = safeRound(TURBIDITY);
+          const currentTimestamp = new Date();
+
+          try {
+            const newHistoricalReading = new HistoricalReading({
+              deviceId: deviceId,
+              timestamp: currentTimestamp,
+              reading: {
+                PH: null, // See warning below: PH is not sent by ESP32
+                TDS: tdsRounded,
+                TEMP: tempRounded,
+                TURBIDITY: turbRounded,
+              },
+            });
+            await newHistoricalReading.save();
+            console.log(`💾 Saved historical reading for ${deviceId}`);
+          } catch (saveError) {
+            console.error("❌ Error saving historical reading:", saveError);
+          }
 
           // Instead of just updating DB, call the existing alert + device update controller
           const req = {

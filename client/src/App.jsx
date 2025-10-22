@@ -67,48 +67,11 @@ function App() {
 
     const navigate = useNavigate();
 
-    /*    // create socket once
-    const socketRef = useRef(null);
-    useEffect(() => {
-    socketRef.current = io(API_BASE_URL); // adjust origin
-    const socket = socketRef.current;
-
-    socket.on('connect', () => {
-        console.log('Socket connected', socket.id);
-        setSocketConnected(true);
-    });
-
-    socket.on('disconnect', () => setSocketConnected(false));
-
-    // When backend emits deviceUpdated, update deviceLocations
-    socket.on('deviceUpdated', (updatedDevice) => {
-        setDeviceLocations(prev => {
-        // if device exists, replace it; otherwise add it
-        const idx = prev.findIndex(d => d._id === updatedDevice._id);
-        if (idx === -1) return [...prev, updatedDevice];
-        const copy = [...prev];
-        copy[idx] = updatedDevice;
-        return copy;
-        });
-    });
-
-    // optional: handle lightweight newReading event if you prefer
-    socket.on('newReading', (payload) => {
-        // optional UI effects like toasts or local state updates
-        // console.log('newReading', payload);
-    });
-
-    return () => {
-        socket.off('deviceUpdated');
-        socket.off('newReading');
-        socket.disconnect();
-    };
-    }, []); */
     useEffect(() => {
         socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
         socket.on("disconnect", () => console.log("❌ Socket disconnected"));
 
-        socket.on("deviceUpdated", (updatedDevice) => {
+        socket.on("deviceUpdate", (updatedDevice) => {
             setDeviceLocations(prev => {
             const idx = prev.findIndex(d => d._id === updatedDevice._id);
             if (idx === -1) return [...prev, updatedDevice];
@@ -123,7 +86,7 @@ function App() {
         });
 
         return () => {
-            socket.off("deviceUpdated");
+            socket.off("deviceUpdate");
             socket.off("newReading");
         };
     }, []);

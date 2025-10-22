@@ -121,24 +121,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
 
     const [timeRange, setTimeRange] = useState('7d'); // Default to 7 days
 
-    // 👇 ADD THIS ENTIRE useEffect BLOCK
-    useEffect(() => {
-        // Listen for 'deviceUpdate' events from the server
-        socket.on('deviceUpdate', (updatedDevice) => {
-            console.log('Received real-time update:', updatedDevice);
-            // This updates the master list of devices for your whole app
-            setDevices(prevDevices =>
-                prevDevices.map(d => d._id === updatedDevice._id ? updatedDevice : d)
-            );
-        });
-
-        // This is a cleanup function. It removes the event listener
-        // when the component is unmounted to prevent memory leaks.
-        return () => {
-            socket.off('deviceUpdate');
-        };
-    }, [setDevices]); // The dependency array ensures this sets up only once
-
     const removeToast = useCallback((id) => {
         setToasts((curr) => curr.filter(t => t.id !== id));
         if (toastTimeouts.current[id]) {

@@ -2,6 +2,7 @@
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
 const { evaluateSensorReading } = require('../utils/SensorLogic');
+const { createSystemLogs } = require('../helpers/createSystemLogs');
 
 exports.processReading = async (req, res) => {
   const reading = req.body;
@@ -20,8 +21,90 @@ exports.processReading = async (req, res) => {
     // Evaluate all parameters based on thresholds
     const evaluatedAlerts = evaluateSensorReading(reading, device.configurations);
     const actionsTaken = [];
+    
+    const io = req.app.get("io"); // Get the socket.io instance
 
+    // =================================================================
+    // --- ⬇️ AUTOMATION LOGIC BLOCK (SHUT-OFF & OPEN) ⬇️ ---
+    // =================================================================
+
+    // 1. Get rules, current state, and feature flags
+    const shutOffRules = device.configurations.controls.valveShutOff;
+    const openOnNormalEnabled = device.configurations.controls.valveOpenOnNormal.enabled; //
+    const currentValveState = device.currentState.valve;
+    
+    let triggeringParameters = [];
+
+    // 2. Check reading against the *shut-off thresholds*
+    if (reading.pH && (reading.pH < shutOffRules.phLow || reading.pH > shutOffRules.phHigh)) {
+      triggeringParameters.push("pH");
+    }
+    if (reading.turbidity && reading.turbidity > shutOffRules.turbidityCrit) {
+      triggeringParameters.push("Turbidity");
+    }
+    if (reading.tds && reading.tds > shutOffRules.tdsCrit) {
+      triggeringParameters.push("TDS");
+    }
+
+    // --- LOGIC 1: AUTO SHUT-OFF ---
+    // If any parameter is critical AND the valve is OPEN, send CLOSE command.
+    if (triggeringParameters.length > 0 && currentValveState === 'OPEN') {
+      
+      device.commands.setValve = 'CLOSED';
+
+      const commandPayload = { type: "setValve", value: "CLOSED" };
+
+      if (io) {
+        io.to(deviceId).emit("command", commandPayload);
+      }
+
+      const logMessage = `Auto-shutoff: Valve command sent due to critical ${triggeringParameters.join(" & ")} reading(s).`;
+      actionsTaken.push(logMessage);
+
+      await createSystemLogs(
+        null,                                     // readingsID
+        deviceId,                                 // deviceId
+        "Valve Actuator",                         // component
+        logMessage,                               // The new dynamic message
+        "error"                                   // stats
+      );
+    } 
+    
+    // --- ⬇️ ADD THIS NEW LOGIC BLOCK ⬇️ ---
+    // --- LOGIC 2: AUTO OPEN-ON-NORMAL ---
+    // ELSE IF the feature is enabled, AND no parameters are critical, AND the valve is CLOSED, send OPEN command.
+    else if (openOnNormalEnabled && triggeringParameters.length === 0 && currentValveState === 'CLOSED') {
+      
+      device.commands.setValve = 'OPEN';
+
+      const commandPayload = { type: "setValve", value: "OPEN" };
+
+      if (io) {
+        io.to(deviceId).emit("command", commandPayload);
+      }
+
+      const logMessage = "Auto-open: Valve command sent as readings returned to normal.";
+      actionsTaken.push(logMessage);
+
+      // We use "success" as the status to indicate a return to a good state
+      await createSystemLogs(
+        null,                                     // readingsID
+        deviceId,                                 // deviceId
+        "Valve Actuator",                         // component
+        logMessage,                               // details
+        "success"                                 // stats
+      );
+    }
+    // --- ⬆️ END OF NEW LOGIC BLOCK ⬆️ ---
+    
+    // =================================================================
+    // --- ⬆️ END OF AUTOMATION LOGIC ⬆️ ---
+    // =================================================================
+
+
+    // This loop handles creating/updating Alert *documents*
     for (const alertData of evaluatedAlerts) {
+      // ... (rest of the existing loop for creating alerts)
       const { parameter, severity } = alertData;
       const originator = device.label;
 
@@ -89,7 +172,7 @@ exports.processReading = async (req, res) => {
       }
     }
 
-    // Update device latest readings and status
+    // ... (rest of the function: update readings, save device, emit to UI)
     device.latestReading = {
       timestamp: reading.timestamp ? new Date(reading.timestamp) : new Date(),
       PH: reading.pH ?? device.latestReading.PH,
@@ -102,7 +185,6 @@ exports.processReading = async (req, res) => {
     await device.save();
 
     // Emit updates to UI
-    const io = req.app.get("io");
     if (io) {
       io.emit("newReading", {
         deviceId: device._id,

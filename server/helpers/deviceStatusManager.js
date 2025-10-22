@@ -31,10 +31,19 @@ const initializeDeviceStatusCheck = (io) => {
         const deviceId = device._id.toString();
         console.warn(`[StatusCheck] Marking device ${deviceId} as Offline.`);
         
+       // 1. Mark the device itself Offline
         device.currentState.status = "Offline"; //
+
+        // 2. ✅ NEW: Mark all its sensors Offline at the same time
+        device.currentState.sensorStatus.PH.status = "Offline";
+        device.currentState.sensorStatus.TEMP.status = "Offline";
+        device.currentState.sensorStatus.TDS.status = "Offline";
+        device.currentState.sensorStatus.TURBIDITY.status = "Offline";
+
+        // 3. Save the changes
         await device.save();
 
-        // Create the system log
+        // 4. Create the system log
         createSystemLogs(
           null,
           deviceId,
@@ -43,7 +52,7 @@ const initializeDeviceStatusCheck = (io) => {
           "error"
         );
 
-        // Notify the frontend
+        // 5. Notify the frontend
         io.emit("deviceUpdate", device);
       }
     } catch (err) {

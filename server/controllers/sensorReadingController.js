@@ -1,41 +1,64 @@
 // server/controllers/sensorReadingController.js
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
-const { evaluateSensorReading } = require('../utils/SensorLogic');
-const { createSystemLogs } = require('../helpers/createSystemLogs');
+const { evaluateSensorReading } = require('../utils/SensorLogic'); // Assumed helper function
+const { createSystemLogs } = require('../helpers/createSystemLogs'); //
 
+/**
+ * processReading
+ * This is the main controller function for handling all incoming sensor data.
+ * It is triggered by the 'esp32_data' socket event in server.js.
+ *
+ * Responsibilities:
+ * 1. Validate the payload and find the corresponding device.
+ * 2. Evaluate sensor readings against alert thresholds.
+ * 3. Trigger valve automation (auto-shutoff or auto-open) based on rules.
+ * 4. Create or update Alert documents in the database.
+ * 5. Update the device's 'latestReading' object.
+ * 6. Update the device's main 'lastContact' heartbeat.
+ * 7. Update the individual sensor 'status' and 'lastReadingTimestamp' fields.
+ * 8. Save the updated device document.
+ * 9. Emit socket events to notify the frontend of the new data.
+ */
 exports.processReading = async (req, res) => {
+  // Extract the full reading payload and the deviceId from the request body
   const reading = req.body;
   const deviceId = reading.deviceId;
 
+  // Basic payload validation
   if (!reading || !deviceId) {
     return res.status(400).json({ message: "Invalid sensor reading payload." });
   }
 
   try {
-    const device = await Device.findById(deviceId);
+    // --- 1. Find the Device ---
+    const device = await Device.findById(deviceId); //
     if (!device) {
+      // If no device is found, we can't process the reading.
       return res.status(404).json({ message: `Device with ID ${deviceId} not found.` });
     }
 
-    // Evaluate all parameters based on thresholds
-    const evaluatedAlerts = evaluateSensorReading(reading, device.configurations);
-    const actionsTaken = [];
+    // Get the socket.io instance, which was attached to the 'app' in server.js
+    const io = req.app.get("io");
     
-    const io = req.app.get("io"); // Get the socket.io instance
-
+    // --- 2. Evaluate Readings for Alerts ---
+    // This helper function (from /utils) compares readings to the device's
+    // configured thresholds and returns an array of alert objects.
+    const evaluatedAlerts = evaluateSensorReading(reading, device.configurations);
+    const actionsTaken = []; // An array to log what actions this function performs
+    
     // =================================================================
-    // --- ⬇️ AUTOMATION LOGIC BLOCK (SHUT-OFF & OPEN) ⬇️ ---
+    // --- 3. AUTOMATION LOGIC BLOCK (SHUT-OFF & OPEN) ---
     // =================================================================
 
-    // 1. Get rules, current state, and feature flags
+    // Get automation rules and current state from the device model
     const shutOffRules = device.configurations.controls.valveShutOff;
-    const openOnNormalEnabled = device.configurations.controls.valveOpenOnNormal.enabled; //
+    const openOnNormalEnabled = device.configurations.controls.valveOpenOnNormal.enabled;
     const currentValveState = device.currentState.valve;
     
-    let triggeringParameters = [];
+    let triggeringParameters = []; // To store which sensor(s) caused a shutoff
 
-    // 2. Check reading against the *shut-off thresholds*
+    // Check reading against the *shut-off thresholds*
     if (reading.pH && (reading.pH < shutOffRules.phLow || reading.pH > shutOffRules.phHigh)) {
       triggeringParameters.push("pH");
     }
@@ -47,13 +70,16 @@ exports.processReading = async (req, res) => {
     }
 
     // --- LOGIC 1: AUTO SHUT-OFF ---
-    // If any parameter is critical AND the valve is OPEN, send CLOSE command.
+    // If any parameter is critical AND the valve is currently OPEN, send a CLOSE command.
     if (triggeringParameters.length > 0 && currentValveState === 'OPEN') {
       
-      device.commands.setValve = 'CLOSED';
+      // Set the pending command on the device model
+      device.commands.setValve = 'CLOSED'; //
 
-      const commandPayload = { type: "setValve", value: "CLOSED" };
+      // Create the command payload to send to the ESP32
+      const commandPayload = { type: "setValve", value: "CLOSED" }; //
 
+      // Emit the 'command' event *only* to the room for this specific deviceId
       if (io) {
         io.to(deviceId).emit("command", commandPayload);
       }
@@ -61,24 +87,26 @@ exports.processReading = async (req, res) => {
       const logMessage = `Auto-shutoff: Valve command sent due to critical ${triggeringParameters.join(" & ")} reading(s).`;
       actionsTaken.push(logMessage);
 
+      // Create a system log for this critical automation event
       await createSystemLogs(
-        null,                                     // readingsID
-        deviceId,                                 // deviceId
-        "Valve Actuator",                         // component
-        logMessage,                               // The new dynamic message
-        "error"                                   // stats
+        null,
+        deviceId,
+        "Valve Actuator",
+        logMessage,
+        "error" // 'error' status for critical shutdowns
       );
     } 
     
-    // --- ⬇️ ADD THIS NEW LOGIC BLOCK ⬇️ ---
     // --- LOGIC 2: AUTO OPEN-ON-NORMAL ---
-    // ELSE IF the feature is enabled, AND no parameters are critical, AND the valve is CLOSED, send OPEN command.
+    // ELSE IF the feature is enabled, AND no parameters are critical, AND the valve is CLOSED, send OPEN.
     else if (openOnNormalEnabled && triggeringParameters.length === 0 && currentValveState === 'CLOSED') {
       
-      device.commands.setValve = 'OPEN';
+      // Set the pending command on the device model
+      device.commands.setValve = 'OPEN'; //
 
-      const commandPayload = { type: "setValve", value: "OPEN" };
+      const commandPayload = { type: "setValve", value: "OPEN" }; //
 
+      // Emit the 'command' event *only* to this device
       if (io) {
         io.to(deviceId).emit("command", commandPayload);
       }
@@ -86,36 +114,33 @@ exports.processReading = async (req, res) => {
       const logMessage = "Auto-open: Valve command sent as readings returned to normal.";
       actionsTaken.push(logMessage);
 
-      // We use "success" as the status to indicate a return to a good state
+      // Create a system log for this "return to normal" event
       await createSystemLogs(
-        null,                                     // readingsID
-        deviceId,                                 // deviceId
-        "Valve Actuator",                         // component
-        logMessage,                               // details
-        "success"                                 // stats
+        null,
+        deviceId,
+        "Valve Actuator",
+        logMessage,
+        "success" // 'success' status for returning to a good state
       );
     }
-    // --- ⬆️ END OF NEW LOGIC BLOCK ⬆️ ---
     
     // =================================================================
-    // --- ⬆️ END OF AUTOMATION LOGIC ⬆️ ---
+    // --- 4. ALERT DOCUMENT CREATION LOGIC ---
     // =================================================================
 
-
-    // This loop handles creating/updating Alert *documents*
+    // This loop handles creating/updating Alert *documents* in the 'alerts' collection
     for (const alertData of evaluatedAlerts) {
-      // ... (rest of the existing loop for creating alerts)
       const { parameter, severity } = alertData;
-      const originator = device.label;
+      const originator = device.label; // Use the device's human-readable label
 
-      // Get the latest active alert for this parameter
+      // Find the most recent 'Active' alert for this specific sensor
       const existingAlert = await Alert.findOne({
         originator,
         parameter,
         lifecycle: 'Active',
       }).sort({ createdAt: -1 });
 
-      // --- CASE 1: No existing alert, and severity is abnormal → create new alert ---
+      // --- CASE 1: No active alert, and the new reading is abnormal (Warning/Critical) -> Create a new alert.
       if (!existingAlert && severity !== 'Normal') {
         await Alert.create({
           ...alertData,
@@ -125,12 +150,14 @@ exports.processReading = async (req, res) => {
         actionsTaken.push(`Created new '${parameter}' ${severity} alert.`);
       }
 
-      // --- CASE 2: Existing abnormal alert changes severity (e.g. Warning → Critical) ---
+      // --- CASE 2: An active alert exists, and the severity has changed (e.g., Warning -> Critical) -> Escalate.
       else if (existingAlert && severity !== 'Normal' && severity !== existingAlert.severity) {
+        // 1. Move the old alert to 'Recent' history
         existingAlert.status = 'Escalated';
         existingAlert.lifecycle = 'Recent';
         await existingAlert.save();
 
+        // 2. Create a new 'Active' alert with the new severity
         await Alert.create({
           ...alertData,
           originator,
@@ -139,14 +166,14 @@ exports.processReading = async (req, res) => {
         actionsTaken.push(`Escalated '${parameter}' alert to ${severity}.`);
       }
 
-      // --- CASE 3: Alert resolves (Critical/Warning → Normal) ---
+      // --- CASE 3: An active alert exists, and the reading is now 'Normal' -> Resolve.
       else if (existingAlert && existingAlert.severity !== 'Normal' && severity === 'Normal') {
-        // Close the old one
+        // 1. Mark the old alert as 'Resolved' and move to 'Recent'
         existingAlert.status = 'Resolved';
         existingAlert.lifecycle = 'Recent';
         await existingAlert.save();
 
-        // Create only ONE "back to normal"
+        // 2. Create a "Back to Normal" notification, but only one.
         const recentNormal = await Alert.findOne({
           originator,
           parameter,
@@ -166,41 +193,77 @@ exports.processReading = async (req, res) => {
         }
       }
 
-      // --- CASE 4: No severity change (still Normal, or same as last) → skip ---
+      // --- CASE 4: No change (still Normal, or same Warning/Critical) -> Do nothing.
       else {
-        actionsTaken.push(`No new alert for ${parameter}, same state.`);
+        // This case is implicitly handled (no action taken)
       }
     }
 
-    // ... (rest of the function: update readings, save device, emit to UI)
+    // =================================================================
+    // --- 5. 6. 7. UPDATE DEVICE STATE & HEARTBEATS ---
+    // =================================================================
+
+    const currentTimestamp = reading.timestamp ? new Date(reading.timestamp) : new Date();
+
+    // Update latestReading with new values
     device.latestReading = {
-      timestamp: reading.timestamp ? new Date(reading.timestamp) : new Date(),
-      PH: reading.pH ?? device.latestReading.PH,
-      TDS: reading.tds ?? device.latestReading.TDS,
-      TEMP: reading.temp ?? device.latestReading.TEMP,
-      TURBIDITY: reading.turbidity ?? device.latestReading.TURBIDITY,
+      timestamp: currentTimestamp,
+      // Your existing controller already correctly looks for 'reading.pH'
+      PH: reading.pH ?? device.latestReading.PH, //
+      TDS: reading.tds ?? device.latestReading.TDS, //
+      TEMP: reading.temp ?? device.latestReading.TEMP, //
+      TURBIDITY: reading.turbidity ?? device.latestReading.TURBIDITY, //
     };
-    device.currentState.lastContact = new Date();
+    
+    // Update the main device heartbeat
+    device.currentState.lastContact = currentTimestamp;
 
-    await device.save();
+    // ✅ UPDATE: Individual sensor statuses and timestamps
+    if (reading.temp !== null && reading.temp !== undefined) {
+      device.currentState.sensorStatus.TEMP.status = 'Online'; //
+      device.currentState.sensorStatus.TEMP.lastReadingTimestamp = currentTimestamp; //
+    }
+    if (reading.tds !== null && reading.tds !== undefined) {
+      device.currentState.sensorStatus.TDS.status = 'Online'; //
+      device.currentState.sensorStatus.TDS.lastReadingTimestamp = currentTimestamp; //
+    }
+    if (reading.turbidity !== null && reading.turbidity !== undefined) {
+      device.currentState.sensorStatus.TURBIDITY.status = 'Online'; //
+      device.currentState.sensorStatus.TURBIDITY.lastReadingTimestamp = currentTimestamp; //
+    }
+    
+    // ✅ NEW: Add the same check for PH
+    if (reading.pH !== null && reading.pH !== undefined) {
+      device.currentState.sensorStatus.PH.status = 'Online'; //
+      device.currentState.sensorStatus.PH.lastReadingTimestamp = currentTimestamp; //
+    }
 
-    // Emit updates to UI
+    await device.save(); //
+
+    // 9. Emit updates to all connected frontend clients
     if (io) {
+      // 'newReading' is a specific event for charts or lists
       io.emit("newReading", {
         deviceId: device._id,
         label: device.label,
         latestReading: device.latestReading,
       });
-      io.emit("deviceUpdated", device);
+      // 'deviceUpdate' sends the *entire* updated device object
+      // This is used by server.js and is good practice for a full state update.
+      io.emit("deviceUpdate", device);
     }
 
+    // Send a 200 OK response back to the 'esp32_data' handler in server.js
     return res.status(200).json({
       message: "Sensor reading processed successfully.",
       actionsTaken,
       reading: device.latestReading,
     });
+
   } catch (error) {
+    // Catch any unexpected errors during the process
     console.error("❌ Error processing sensor reading:", error);
+    // Send a 500 Internal Server Error response
     return res.status(500).json({ message: "Server error while processing reading." });
   }
 };

@@ -44,7 +44,19 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, onToggle, addToast }) {
             const duration = newState ? COOLDOWN_ON : COOLDOWN_OFF;
             setCooldown(duration);
         }
+        const duration = newState ? COOLDOWN_ON : COOLDOWN_OFF;
+        const endTime = Date.now() + duration * 1000;
+        localStorage.setItem('pumpcooldownEnd', endTime);
+        setCooldown(duration)
     };
+
+    useEffect(() => {
+    const savedEndTime = localStorage.getItem('pumpcooldownEnd');
+    if (savedEndTime) {
+        const remaining = Math.floor((savedEndTime - Date.now()) / 1000);
+        if (remaining > 0) setCooldown(remaining);
+    }
+    }, []);
 
     return (
         <div className={Style['valve-container']}>

@@ -7,7 +7,7 @@ const { createUserlog } = require('../helpers/createUserlog');
 // @access  Public
 exports.getStations = async (req, res) => {
     try {
-        const stations = await Station.find({});
+        const stations = await Station.find({}).populate('deviceId', '_id label');
         res.status(200).json(stations);
     } catch (error) {
         console.error('Error fetching stations:', error);

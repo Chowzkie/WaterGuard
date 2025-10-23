@@ -245,7 +245,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     </div>
                                 </div>
                                 <div className={styles['filter-row']}>
-                                    <label className={styles['filter-label']}>Alarm status list</label>
+                                    <label className={styles['filter-label']}>Alert status list</label>
                                     <div className={styles['filter-control']}>
                                         <div className={styles['pill-group']}>
                                             {['Resolved', 'Escalated', 'Cleared'].map(status => (
@@ -258,7 +258,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     </div>
                                 </div>
                                 <div className={styles['filter-row']}>
-                                    <label className={styles['filter-label']}>Alarm action list</label>
+                                    <label className={styles['filter-label']}>Alert action list</label>
                                     <div className={styles['filter-control']}>
                                         <div className={styles['pill-group']}>
                                             {['Acknowledged', 'Unacknowledged'].map(action => (
@@ -271,7 +271,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     </div>
                                 </div>
                                 <div className={styles['filter-row']}>
-                                    <label className={styles['filter-label']}>Alarm severity list</label>
+                                    <label className={styles['filter-label']}>Alert severity list</label>
                                     <div className={styles['filter-control']}>
                                         <div className={styles['pill-group']}>
                                             {['Critical', 'Warning', 'Normal'].map(severity => (
@@ -284,7 +284,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     </div>
                                 </div>
                                 <div className={styles['filter-row']} ref={typeDropdownRef}>
-                                    <label className={styles['filter-label']}>Alarm type list</label>
+                                    <label className={styles['filter-label']}>Alert type list</label>
                                     <div className={styles['filter-control']}>
                                         <div className={styles['type-input-container']} onClick={() => document.getElementById('type-input-field').focus()}>
                                             {draftFilters.type.length === 0 && !typeSearchTerm && <span className={styles['type-placeholder']}>Any type</span>}

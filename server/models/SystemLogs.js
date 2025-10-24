@@ -7,6 +7,7 @@ const SystemLogsSchema = new mongoose.Schema({
     component: String,
     details: String,
     stats: String,
+    read: { type: Boolean, default: false, index: true },
 }, {timestamps: true});
 
 module.exports = mongoose.model("SystemLog", SystemLogsSchema);

@@ -7,6 +7,7 @@ import styles from '../../Styles/Nav-Head-Style/Notifications.module.css';
 const formatTimeAgo = (timestamp) => {
     if (!timestamp) return '';
     const now = new Date();
+    // --- MODIFIED: Use createdAt from the database ---
     const seconds = Math.floor((now - new Date(timestamp)) / 1000);
 
     if (seconds < 60) return `${seconds}s ago`;
@@ -51,15 +52,24 @@ const Notifications = ({
                 return '';
         }
     };
+    
+    // --- NEW: Calculate unread count directly from props ---
+    const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
         <div className={`${styles.notifDropdown} ${show ? styles.show : ''}`}>
             <div className={styles.dropdownHeader}>
                 <span className={styles.dropdownTitle}>Notifications</span>
                 {/* The badge now correctly counts unread items from the live data. */}
-                <span className={styles.notificationHeaderBadge}>{notifications.filter(n => !n.read).length}</span>
+                {unreadCount > 0 && (
+                    <span className={styles.notificationHeaderBadge}>{unreadCount}</span>
+                )}
                 {/* The onClick handler now calls the function passed via props. */}
-                <button className={styles.markAllBtn} onClick={onMarkAllAsRead} disabled={notifications.every(n => n.read)}>
+                <button 
+                    className={styles.markAllBtn} 
+                    onClick={onMarkAllAsRead} 
+                    disabled={unreadCount === 0}
+                >
                     Mark all as read
                 </button>
             </div>
@@ -69,15 +79,24 @@ const Notifications = ({
                 ) : (
                     // The component now maps over the 'notifications' prop.
                     notifications.map((notif) => (
-                        <div className={`${styles.dropdownItemN} ${getItemClass(notif.type)} ${notif.read ? styles.read : ''}`} key={notif.id}>
+                        <div 
+                            // --- MODIFIED: Use MongoDB _id ---
+                            className={`${styles.dropdownItemN} ${getItemClass(notif.type)} ${notif.read ? styles.read : ''}`} 
+                            key={notif._id} 
+                        >
                             <div className={styles.itemLeft}>{getIcon(notif.type)}</div>
                             <div className={styles.itemRight}>
                                 <span>{notif.message}</span>
                                 <div className={styles.meta}>
-                                    {/* The timestamp is now formatted using the utility function. */}
-                                    <small>{formatTimeAgo(notif.timestamp)}</small>
+                                    {/* --- MODIFIED: Use createdAt from DB --- */}
+                                    <small>{formatTimeAgo(notif.createdAt)}</small>
                                     {/* The onClick handler calls the prop function with the notification's unique ID. */}
-                                    {!notif.read && (<button onClick={() => onMarkAsRead(notif.id)}><i>Mark as read</i></button>)}
+                                    {/* --- MODIFIED: Use MongoDB _id --- */}
+                                    {!notif.read && (
+                                        <button onClick={() => onMarkAsRead(notif._id)}>
+                                            <i>Mark as read</i>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

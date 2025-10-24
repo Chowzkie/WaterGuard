@@ -175,7 +175,7 @@ function App() {
         }finally{
             localStorage.removeItem("token");
             setLoggedInUser(null);
-            setNotifications([]);
+            setNotifications([]); // Clear notifications on logout
             navigate('/login');
         }
     };
@@ -211,35 +211,43 @@ function App() {
     const previousDevicesRef = useRef([]);
 
     // --- NEW: STATE MANAGEMENT FOR NOTIFICATIONS ---
-    // This state holds all notifications that will be displayed in the dropdown.
-    const [notifications, setNotifications] = useState([]);
-    // A counter to ensure each notification has a unique ID.
-    const notificationIdCounter = useRef(0);
-    // A derived state that calculates the number of unread notifications for the badge.
-    const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+    const [notifications, setNotifications] = useState([]); // Now holds logs from DB
+    const [unreadCount, setUnreadCount] = useState(0); // For the badge
+    const processedLogIds = useRef(new Set()); // To track seen logs and prevent duplicates
 
     // --- CORE DATA STATE (Fetched from Backend) ---
     const [activeAlerts, setActiveAlerts] = useState([]);
     const [recentAlerts, setRecentAlerts] = useState([]);
     const [alertsHistory, setAlertsHistory] = useState([]);
 
-    // --- NEW: Function to play notification sound ---
-    // This function is wrapped in useCallback to prevent it from being recreated on every render.
-    const playNotificationSound = useCallback(() => {
-        // Ensure the audio file is in the /public folder of your project.
+    // =================================================================================
+    // --- NEW: SEPARATE SOUND FUNCTIONS ---
+    // =================================================================================
+
+    // Sound for the ACTIVE ALERTS UI
+    const playAlertSound = useCallback(() => {
         const audio = new Audio('/Notification.mp3');
         const playPromise = audio.play();
-        // The play() method returns a promise. We handle potential errors,
-        // which often occur if the user hasn't interacted with the page yet.
         if (playPromise !== undefined) {
             playPromise.catch(error => {
-                console.warn("Could not play notification sound automatically. User interaction may be required.", error);
+                console.warn("Could not play alert sound automatically.", error);
             });
         }
-    }, []); // Empty dependency array means this function is created only once.
+    }, []);
+
+    // Sound for the NOTIFICATION COMPONENT (dropdown)
+    const playNotificationSound = useCallback(() => {
+        const audio = new Audio('/Notification-2.mp3'); // Your new sound file
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.warn("Could not play notification component sound automatically.", error);
+            });
+        }
+    }, []);
 
     // =================================================================================
-    // NEW: LIVE ALERT POLLING FROM BACKEND
+    // MODIFIED: LIVE ALERT POLLING (Sound only)
     // =================================================================================
     useEffect(() => {
         const fetchAlerts = async () => {
@@ -254,32 +262,24 @@ function App() {
 
                 setActiveAlerts(prevAlerts => {
                     const oldAlertsMap = new Map(prevAlerts.map(a => [a._id, a]));
-
-                    // 1. Find alerts with a completely new ID
                     const trulyNewAlerts = newActiveAlerts.filter(a => !oldAlertsMap.has(a._id));
-
-                    // 2. Find alerts that were UPDATED (same ID, different severity)
                     const updatedAlerts = newActiveAlerts.filter(a => {
                         const oldAlert = oldAlertsMap.get(a._id);
                         return oldAlert && oldAlert.severity !== a.severity;
                     });
-
-                    // 3. Combine them into a single list of "triggering events"
                     const allTriggeringEvents = [...trulyNewAlerts, ...updatedAlerts];
 
                     if (allTriggeringEvents.length > 0) {
-                        // Sort all events by date to find the absolute newest one
                         allTriggeringEvents.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
                         const newestEvent = allTriggeringEvents[0];
-
-                        // Use the newest event for animation and sound
                         setNewlyAddedId(newestEvent._id);
+                        
                         if (newestEvent._id !== lastPlayedSoundId.current) {
-                            playNotificationSound();
+                            // --- MODIFIED: Plays sound for ALERTS only ---
+                            playAlertSound(); 
                             lastPlayedSoundId.current = newestEvent._id;
                         }
                     }
-
                     return newActiveAlerts;
                 });
 
@@ -294,35 +294,100 @@ function App() {
         fetchAlerts();
         const intervalId = setInterval(fetchAlerts, 5000);
         return () => clearInterval(intervalId);
-    }, [playNotificationSound]);
+    }, [playAlertSound]); // --- MODIFIED: Dependency updated
 
-    // --- NEW: Centralized function to add a new notification ---
-    // This function handles the creation of a new notification object and adds it to the state.
-    const addNotification = useCallback((notificationData) => {
-        notificationIdCounter.current += 1; // Increment the unique ID counter.
-        const newNotification = {
-            id: notificationIdCounter.current,
-            timestamp: new Date(), // Set the current time for the notification.
-            read: false, // All new notifications are initially unread.
-            ...notificationData, // Merge the specific data (e.g., { type: 'DeviceOffline', message: '...' })
-        };
-        // Use the functional form of setState to ensure we have the latest state.
-        // Add the new notification to the beginning of the array.
-        setNotifications(prev => [newNotification, ...prev]);
-    }, []); 
-
-    // --- Utility function for creating System Logs ---
+    // --- REMOVED: old addNotification function ---
+    
+    // --- Utility function for creating System Logs (from original file) ---
+    // --- MODIFIED: Removed call to setSystemLogs which is not defined ---
     const logSystemEvent = useCallback((logData) => {
         const newLog = {
             id: Date.now() + Math.random(),
             dateTime: new Date().toISOString(),
             ...logData,
         };
-        setSystemLogs(prevLogs => [newLog, ...prevLogs]);
+        // setSystemLogs(prevLogs => [newLog, ...prevLogs]); // This state does not exist
         console.log("System event logged:", newLog);
     }, []);
 
+    // =================================================================================
+    // --- NEW: NOTIFICATION POLLING FROM DATABASE ---
+    // =================================================================================
+    useEffect(() => {
+        // This function maps a system log from the DB to a notification object
+        const mapLogToNotification = (log) => {
+            const device = deviceLocations.find(d => d._id === log.deviceId);
+            const deviceLabel = device ? device.label : 'System';
 
+            let notifType = 'Info';
+            const detailsLower = log.details ? log.details.toLowerCase() : '';
+            
+            if (detailsLower.includes('offline') || detailsLower.includes('heartbeat missed')) {
+                notifType = 'DeviceOffline';
+            } else if (detailsLower.includes('online')) {
+                notifType = 'DeviceOnline';
+            } else if (log.component === 'alert' || detailsLower.includes('critical')) {
+                notifType = 'CriticalAlert';
+            } else if (log.component === 'valve') {
+                notifType = 'ValveShutOff';
+            }
+            
+            return {
+                ...log, // Includes _id, createdAt, read, etc. from the DB
+                message: `${deviceLabel}: ${log.details}`, // Add the mapped message
+                type: notifType, // Add the mapped type
+            };
+        };
+
+        const fetchNotifications = async () => {
+            if (deviceLocations.length === 0) return; // Wait for devices to load
+
+            try {
+                // Fetch all logs from the last 24 hours
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+                const response = await axios.get(`${API_BASE_URL}/api/logs/systemlogs?since=${twentyFourHoursAgo}`);
+                
+                const dbLogs = response.data;
+                let hasNewUnreadLogs = false;
+                let currentUnreadCount = 0;
+
+                const newNotifications = dbLogs.map(log => {
+                    // Count unread logs
+                    if (!log.read) {
+                        currentUnreadCount++;
+                    }
+                    
+                    // Check if this is a new unread log
+                    if (!log.read && !processedLogIds.current.has(log._id)) {
+                        hasNewUnreadLogs = true;
+                    }
+                    
+                    // Add all fetched logs to the processed set
+                    processedLogIds.current.add(log._id);
+                    
+                    // Map the log to the notification structure
+                    return mapLogToNotification(log);
+                });
+
+                // Set the state
+                setNotifications(newNotifications);
+                setUnreadCount(currentUnreadCount);
+
+                // Play sound *once* if new unread logs were found
+                if (hasNewUnreadLogs) {
+                    playNotificationSound();
+                }
+
+            } catch (error) {
+                console.error("Error fetching notifications:", error);
+            }
+        };
+        
+        fetchNotifications(); // Initial fetch
+        const intervalId = setInterval(fetchNotifications, 7000); // Poll every 7 seconds
+        return () => clearInterval(intervalId);
+
+    }, [deviceLocations, playNotificationSound]); // Re-run if devices load
 
 
     // --- ADDED --- A handler to allow child components to signal animation completion
@@ -354,7 +419,7 @@ function App() {
                     axios.get(`${API_BASE_URL}/api/stations`)
                 ]);
                 setDeviceLocations(devicesRes.data);
-                setPumpingStations(stationsRes.data);
+setPumpingStations(stationsRes.data);
                 // --- FIX: Prime the ref with the initial device state ---
                 previousDevicesRef.current = devicesRes.data;
             } catch (error) {
@@ -364,8 +429,7 @@ function App() {
         fetchInitialData();
     }, []);
 
-   // --- FIX: This useEffect is now dedicated ONLY to polling for device status ---
-    // --- UPDATED: This useEffect now also creates notifications for device status changes ---
+   // --- MODIFIED: This useEffect ONLY logs events. It no longer adds notifications. ---
     useEffect(() => {
         const pollDeviceStatus = async () => {
             try {
@@ -386,18 +450,8 @@ function App() {
                             status: latestDevice.status === 'Online' ? 'Success' : 'Error',
                         });
 
-                        // --- NEW: Generate Notification based on status change ---
-                        if (latestDevice.status === 'Offline') {
-                            addNotification({
-                                type: 'DeviceOffline',
-                                message: `Device '${latestDevice.label}' is now Offline`,
-                            });
-                        } else {
-                            addNotification({
-                                type: 'DeviceOnline',
-                                message: `Device '${latestDevice.label}' is now Online`,
-                            });
-                        }
+                        // --- REMOVED addNotification call ---
+                        // The polling hook will pick up the new log from the DB
                     }
                 });
 
@@ -412,7 +466,7 @@ function App() {
 
         const pollInterval = setInterval(pollDeviceStatus, 10000);
         return () => clearInterval(pollInterval);
-    }, [logSystemEvent, addNotification]); // This effect now depends on addNotification.
+    }, [logSystemEvent]); // --- MODIFIED: Dependency updated
 
     // =================================================================================
     // NEW & UPDATED EVENT HANDLERS (API-DRIVEN with Full Logging)
@@ -557,16 +611,58 @@ function App() {
         }
     }, [alertsHistory]);
 
+    // =================================================================================
     // --- NEW: Handlers for managing notification read status ---
-    const handleMarkNotificationAsRead = (notificationId) => {
+    // =================================================================================
+    const handleMarkNotificationAsRead = useCallback(async (notificationId) => {
+        // Optimistic UI update: Mark as read immediately
         setNotifications(prev =>
-            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+            prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
         );
-    };
+        // Also update the unread count immediately
+        setUnreadCount(prev => prev - 1);
 
-    const handleMarkAllNotificationsAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    };
+        // Send request to backend
+        try {
+            await axios.put(`${API_BASE_URL}/api/logs/systemlogs/read/${notificationId}`);
+            // No need to refetch, UI is already updated
+        } catch (error) {
+            console.error("Failed to mark as read:", error);
+            // If API fails, roll back the UI change (optional)
+            setNotifications(prev =>
+                prev.map(n => n._id === notificationId ? { ...n, read: false } : n)
+            );
+            setUnreadCount(prev => prev + 1);
+        }
+    }, []); // Empty dependency array
+
+    const handleMarkAllNotificationsAsRead = useCallback(async () => {
+        // Find all unread IDs currently visible
+        const unreadIds = notifications
+            .filter(n => !n.read)
+            .map(n => n._id);
+        
+        if (unreadIds.length === 0) return;
+
+        // Optimistic UI update
+        setNotifications(prev =>
+            prev.map(n => ({ ...n, read: true }))
+        );
+        setUnreadCount(0);
+        
+        // Send request to backend
+        try {
+            await axios.put(`${API_BASE_URL}/api/logs/systemlogs/read/all`, { ids: unreadIds });
+            // No need to refetch
+        } catch (error) {
+            console.error("Failed to mark all as read:", error);
+            // Roll back UI on failure (optional)
+            setNotifications(prev =>
+                prev.map(n => unreadIds.includes(n._id) ? { ...n, read: false } : n)
+            );
+            setUnreadCount(unreadIds.length);
+        }
+    }, [notifications]); // Depends on the current list of notifications
 
     const contextValue = {
         activeAlerts,
@@ -604,7 +700,7 @@ function App() {
                     username={loggedInUser?.username}
                     // --- Pass notification state and handlers to Header ---
                     notifications={notifications}
-                    unreadCount={unreadNotificationsCount}
+                    unreadCount={unreadCount} // Pass the new unreadCount state
                     onMarkNotificationAsRead={handleMarkNotificationAsRead}
                     onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
                 />

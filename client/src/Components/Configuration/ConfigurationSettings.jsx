@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../Styles/ConfigurationSettings.module.css';
 import GuidelinesModal from './GuidelinesModal';
-import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff, HelpCircle } from 'lucide-react';
+import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff, HelpCircle, X, Link } from 'lucide-react';
 
 /**
  * A reusable component to display a message when a setting is not configured.
@@ -54,6 +54,16 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         shutoff: false,
     });
 
+    /**
+     * @state {boolean} showSyncPrompt - NEW: Controls the visibility of the "Threshold Sync" modal.
+     */
+    const [showSyncPrompt, setShowSyncPrompt] = useState(false);
+
+    /**
+     * @state {object} mismatchData - NEW: Stores which parameters are mismatched.
+     */
+    const [mismatchData, setMismatchData] = useState(null);
+
     const initializedDeviceIdRef = useRef(null);
     const [showGuidelines, setShowGuidelines] = useState(false);
 
@@ -67,9 +77,28 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
      useEffect(() => {
         // Only reset the form if the actual device ID has changed.
         if (device && device._id !== initializedDeviceIdRef.current) {
-            const initialConfigs = device.configurations
+            
+            // --- MODIFICATION: Ensure nested objects exist ---
+            // Create a deep copy
+            let initialConfigs = device.configurations
                 ? JSON.parse(JSON.stringify(device.configurations))
                 : {};
+
+            // Ensure all nested paths we access exist to prevent errors
+            initialConfigs.thresholds = initialConfigs.thresholds || {};
+            initialConfigs.thresholds.ph = initialConfigs.thresholds.ph || {};
+            initialConfigs.thresholds.turbidity = initialConfigs.thresholds.turbidity || {};
+            initialConfigs.thresholds.tds = initialConfigs.thresholds.tds || {};
+            initialConfigs.thresholds.temp = initialConfigs.thresholds.temp || {};
+
+            initialConfigs.controls = initialConfigs.controls || {};
+            initialConfigs.controls.valveShutOff = initialConfigs.controls.valveShutOff || {};
+            initialConfigs.controls.pumpCycleIntervals = initialConfigs.controls.pumpCycleIntervals || {};
+            initialConfigs.controls.valveOpenOnNormal = initialConfigs.controls.valveOpenOnNormal || {};
+            
+            initialConfigs.logging = initialConfigs.logging || {};
+            initialConfigs.logging.alertIntervals = initialConfigs.logging.alertIntervals || {};
+            // --- End Modification ---
             
             setOriginalConfigs(initialConfigs);
             setDraftConfigs(initialConfigs);
@@ -140,17 +169,42 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         }));
     };
 
+
+    // --- NEW: SYNC HANDLER ---
+
     /**
-     * @function handleSaveClick - Handles the main "Save Configurations" button click.
-     * It calls the `onSave` prop passed from the parent and, upon success,
-     * updates the `originalConfigs` baseline to match the newly saved `draftConfigs`.
+     * @function handleSyncAllFromAlerts
+     * @description NEW: Copies all critical alert thresholds TO the valve shut-off thresholds.
      */
-    const handleSaveClick = async () => {
+    const handleSyncAllFromAlerts = () => {
+        setDraftConfigs(prev => {
+            const newConfigs = JSON.parse(JSON.stringify(prev));
+
+            // Copy values FROM Alerts TO Shutoff
+            newConfigs.controls.valveShutOff.phLow = newConfigs.thresholds.ph.critLow;
+            newConfigs.controls.valveShutOff.phHigh = newConfigs.thresholds.ph.critHigh;
+            newConfigs.controls.valveShutOff.turbidityCrit = newConfigs.thresholds.turbidity.crit;
+            newConfigs.controls.valveShutOff.tdsCrit = newConfigs.thresholds.tds.crit;
+
+            return newConfigs;
+        });
+    };
+
+    // --- MODIFIED SAVE LOGIC ---
+
+    /**
+     * @function proceedWithSave
+     * @description The actual save operation, now separated to be called from multiple places.
+     * @param {object} configsToSave - The configuration object to be saved.
+     */
+    const proceedWithSave = async (configsToSave) => {
         setIsSaving(true);
         setSaveSuccess(false);
         try {
-            await onSave(device._id, draftConfigs);
-            setOriginalConfigs(JSON.parse(JSON.stringify(draftConfigs)));
+            await onSave(device._id, configsToSave);
+            // Update the baseline "original" configs to this new saved state
+            setOriginalConfigs(JSON.parse(JSON.stringify(configsToSave)));
+            setDraftConfigs(JSON.parse(JSON.stringify(configsToSave))); // Ensure draft is also in sync
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch (error) {
@@ -160,6 +214,104 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
             setIsSaving(false);
         }
     };
+
+    /**
+     * @function handleSaveClick - Handles the main "Save Configurations" button click.
+     * This now *checks for mismatches* before deciding to save or show the sync prompt.
+     */
+    const handleSaveClick = () => {
+        if (isSaving) return;
+
+        const alerts = draftConfigs.thresholds;
+        const shutoff = draftConfigs.controls.valveShutOff;
+
+        // Define the values to compare
+        const values = {
+            phLow: {
+                alert: alerts.ph.critLow,
+                shutoff: shutoff.phLow,
+                isMismatched: alerts.ph.critLow !== shutoff.phLow
+            },
+            phHigh: {
+                alert: alerts.ph.critHigh,
+                shutoff: shutoff.phHigh,
+                isMismatched: alerts.ph.critHigh !== shutoff.phHigh
+            },
+            turbidity: {
+                alert: alerts.turbidity.crit,
+                shutoff: shutoff.turbidityCrit,
+                isMismatched: alerts.turbidity.crit !== shutoff.turbidityCrit
+            },
+            tds: {
+                alert: alerts.tds.crit,
+                shutoff: shutoff.tdsCrit,
+                isMismatched: alerts.tds.crit !== shutoff.tdsCrit
+            }
+        };
+
+        const hasMismatch = Object.values(values).some(v => v.isMismatched);
+
+        if (hasMismatch) {
+            setMismatchData(values); // Store the detailed mismatch data
+            setShowSyncPrompt(true); // Show the sync modal
+        } else {
+            // No mismatch, proceed with save as normal
+            proceedWithSave(draftConfigs);
+        }
+    };
+
+    /**
+     * @function handleSaveWithoutSyncing - Modal Action: Save the mismatched values as-is.
+     */
+    const handleSaveWithoutSyncing = () => {
+        setShowSyncPrompt(false);
+        proceedWithSave(draftConfigs); // Save the draft configs, mismatches and all
+    };
+
+    /**
+     * @function handleSyncAlertsToShutoff - Modal Action: Copy Alert values TO Shutoff values, then save.
+     */
+    const handleSyncAlertsToShutoff = () => {
+        const newConfigs = JSON.parse(JSON.stringify(draftConfigs));
+        
+        // Copy values FROM Alerts TO Shutoff
+        newConfigs.controls.valveShutOff.phLow = newConfigs.thresholds.ph.critLow;
+        newConfigs.controls.valveShutOff.phHigh = newConfigs.thresholds.ph.critHigh;
+        newConfigs.controls.valveShutOff.turbidityCrit = newConfigs.thresholds.turbidity.crit;
+        newConfigs.controls.valveShutOff.tdsCrit = newConfigs.thresholds.tds.crit;
+
+        setDraftConfigs(newConfigs); // Update state
+        setShowSyncPrompt(false);
+        proceedWithSave(newConfigs); // Save the newly synced configs
+    };
+
+    /**
+     * @function handleSyncShutoffToAlerts - Modal Action: Copy Shutoff values TO Alert values, then save.
+     */
+    const handleSyncShutoffToAlerts = () => {
+        const newConfigs = JSON.parse(JSON.stringify(draftConfigs));
+
+        // Copy values FROM Shutoff TO Alerts
+        newConfigs.thresholds.ph.critLow = newConfigs.controls.valveShutOff.phLow;
+        newConfigs.thresholds.ph.critHigh = newConfigs.controls.valveShutOff.phHigh;
+        newConfigs.thresholds.turbidity.crit = newConfigs.controls.valveShutOff.turbidityCrit;
+        newConfigs.thresholds.tds.crit = newConfigs.controls.valveShutOff.tdsCrit;
+
+        setDraftConfigs(newConfigs); // Update state
+        setShowSyncPrompt(false);
+        proceedWithSave(newConfigs); // Save the newly synced configs
+    };
+
+    /**
+     * @function handleCancelSync - Modal Action: Close the modal, do nothing.
+     */
+    const handleCancelSync = () => {
+        setShowSyncPrompt(false);
+        setMismatchData(null);
+    };
+
+    // --- End Modified Save Logic ---
+
     
     /**
      * @function handleAttemptBack - Handles the "Back" button click.
@@ -185,14 +337,38 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
      * @function handleSaveAndExit - Handles the "Save & Exit" action from the modal.
      */
     const handleSaveAndExit = async () => {
-        setIsSaving(true);
-        try {
-            await onSave(device.id, draftConfigs);
-            onBack();
-        } catch (error) {
-            console.error("Failed to save configurations:", error);
-            alert("Error: Could not save settings.");
-            setIsSaving(false);
+        // We must run the same mismatch check here!
+        setIsSaving(true); // Show loading state on modal button
+
+        const alerts = draftConfigs.thresholds;
+        const shutoff = draftConfigs.controls.valveShutOff;
+
+        const values = {
+            phLow: { alert: alerts.ph.critLow, shutoff: shutoff.phLow, isMismatched: alerts.ph.critLow !== shutoff.phLow },
+            phHigh: { alert: alerts.ph.critHigh, shutoff: shutoff.phHigh, isMismatched: alerts.ph.critHigh !== shutoff.phHigh },
+            turbidity: { alert: alerts.turbidity.crit, shutoff: shutoff.turbidityCrit, isMismatched: alerts.turbidity.crit !== shutoff.turbidityCrit },
+            tds: { alert: alerts.tds.crit, shutoff: shutoff.tdsCrit, isMismatched: alerts.tds.crit !== shutoff.tdsCrit }
+        };
+
+        const hasMismatch = Object.values(values).some(v => v.isMismatched);
+
+        if (hasMismatch) {
+            setIsSaving(false); // Hide loading
+            setShowUnsavedPrompt(false); // Hide this modal
+            setMismatchData(values); // Store data
+            setShowSyncPrompt(true); // Show the *other* modal
+        } else {
+            // No mismatch, proceed with save and exit
+            try {
+                await onSave(device._id, draftConfigs);
+                setShowUnsavedPrompt(false);
+                onBack();
+            } catch (error) {
+                console.error("Failed to save configurations:", error);
+                alert("Error: Could not save settings.");
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
     
@@ -236,7 +412,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                         <span>Back to Device Selection</span>
                     </button>
                     <button 
-                        onClick={handleSaveClick} 
+                        onClick={handleSaveClick} // This now triggers the check
                         className={`${styles['save-button']} ${saveSuccess ? styles['save-success'] : ''}`}
                         disabled={isSaving || !hasUnsavedChanges()}
                     >
@@ -244,7 +420,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     </button>
                 </div>
 
-                {deviceStatus === 'Online' ? (
+                {deviceStatus === 'Offline' ? (
                     <div className={styles['settings-container']}>
                         {/* --- Alert Thresholds Panel --- */}
                         <CollapsiblePanel
@@ -373,6 +549,15 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                         >
                             {draftConfigs?.controls?.valveShutOff ? (
                                 <>
+                                    {/* --- NEW SYNC BUTTON --- */}
+                                    <div className={styles['sync-button-wrapper']}>
+                                        <button onClick={handleSyncAllFromAlerts} className={styles['sync-button']}>
+                                            <Link size={14} />
+                                            <span>Sync from Alert Thresholds</span>
+                                        </button>
+                                    </div>
+                                    {/* --- END NEW SYNC BUTTON --- */}
+
                                     <ThresholdGroup label="Shut-Off on pH">
                                         <div className={styles['input-row-2-col']}>
                                             <InputField label="Critical Low" value={draftConfigs.controls.valveShutOff.phLow} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phLow'], parseFloat(e.target.value) || 0)} />
@@ -389,21 +574,21 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                                             <InputField label="Critical Threshold" value={draftConfigs.controls.valveShutOff.tdsCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'tdsCrit'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
+                                    
                                     <div className={styles['global-rule-divider']}></div>
-                                    <ThresholdGroup label="Valve Rule">
-
+                                    
+                                    {/* --- THIS GROUP CONTAINS THE NEW/MODIFIED RULES --- */}
+                                    <ThresholdGroup label="Valve Rules">
                                         <YesNoSelect
                                             label="Enable Automatic Valve Shut-off?"
                                             value={draftConfigs.controls.valveShutOff?.enabled ? 'yes' : 'no'}
                                             onChange={e => handleDeepChange(['controls', 'valveShutOff', 'enabled'], e.target.value === 'yes')}
                                         />
-
                                         <YesNoSelect
                                             label="Auto Re-open Valve once the alert is cleared?"
                                             value={draftConfigs.controls.valveOpenOnNormal?.enabled ? 'yes' : 'no'}
                                             onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'enabled'], e.target.value === 'yes')}
                                         />
-
                                     </ThresholdGroup>
                                 </>
                             ) : <NotConfiguredMessage />}
@@ -435,6 +620,63 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     </div>
                 </div>
             )}
+
+            {/* --- NEW: THRESHOLD SYNC MODAL --- */}
+            {showSyncPrompt && mismatchData && (
+                <div className={`${styles.modalBackdrop} ${styles.confirmationModalBackdrop}`}>
+                    <div className={`${styles.confirmationModalContent} ${styles.syncModalContent}`}>
+                        <div className={styles.icon}><AlertTriangle size={48} /></div>
+                        <h4>Threshold Mismatch</h4>
+                        <p>Your 'Critical Alert' and 'Valve Shut-off' thresholds do not match. For best accuracy, they should be synchronized.</p>
+                        
+                        <div className={styles['mismatch-details']}>
+                            <p>Current Mismatched Values:</p>
+                            <table className={styles['mismatch-table']}>
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Alert Value</th>
+                                        <th>Shut-off Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Object.entries(mismatchData).map(([key, data]) => (
+                                        <tr key={key}>
+                                            <td>{key.replace('phLow', 'pH Low').replace('phHigh', 'pH High').replace('turbidity', 'Turbidity').replace('tds', 'TDS')}</td>
+                                            <td>
+                                                <span className={`${styles['mismatch-value']} ${data.isMismatched ? styles.mismatched : styles.matched}`}>
+                                                    {data.alert}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className={`${styles['mismatch-value']} ${data.isMismatched ? styles.mismatched : styles.matched}`}>
+                                                    {data.shutoff}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className={styles.syncModalFooter}>
+                            <button onClick={handleSyncAlertsToShutoff} className={styles.buttonPrimary} disabled={isSaving}>
+                                {isSaving ? 'Syncing...' : 'Sync: Use Critical Alert Values for Both'}
+                            </button>
+                            <button onClick={handleSyncShutoffToAlerts} className={styles.buttonPrimary} disabled={isSaving}>
+                                {isSaving ? 'Syncing...' : 'Sync: Use Valve Shut-off Values for Both'}
+                            </button>
+                            <button onClick={handleSaveWithoutSyncing} className={styles.buttonSecondary} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Mismatched Values (Ignore)'}
+                            </button>
+                            <button onClick={handleCancelSync} className={styles.buttonTertiary} disabled={isSaving}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* --- GUIDELINES MODAL --- */}
             {showGuidelines && <GuidelinesModal onClose={() => setShowGuidelines(false)} />}

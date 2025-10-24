@@ -490,8 +490,8 @@ const YesNoSelect = ({ label, value, onChange }) => (
     <div className={styles['input-field']}>
         <label>{label}</label>
         <select value={value} onChange={onChange} className={styles['select-field']}>
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
+            <option value="no">Disabled</option>
+            <option value="yes">Enabled</option>
         </select>
     </div>
 );

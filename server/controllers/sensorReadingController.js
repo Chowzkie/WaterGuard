@@ -75,6 +75,7 @@ exports.processReading = async (req, res) => {
       
       // Set the pending command on the device model
       device.commands.setValve = 'CLOSED'; //
+      device.currentState.valve = 'CLOSED';
 
       // Create the command payload to send to the ESP32
       const commandPayload = { type: "setValve", value: "CLOSED" }; //
@@ -103,6 +104,7 @@ exports.processReading = async (req, res) => {
       
       // Set the pending command on the device model
       device.commands.setValve = 'OPEN'; //
+      device.currentState.valve = 'OPEN'
 
       const commandPayload = { type: "setValve", value: "OPEN" }; //
 
@@ -203,41 +205,60 @@ exports.processReading = async (req, res) => {
     // --- 5. 6. 7. UPDATE DEVICE STATE & HEARTBEATS ---
     // =================================================================
 
-    const currentTimestamp = reading.timestamp ? new Date(reading.timestamp) : new Date();
+   const currentTimestamp = reading.timestamp ? new Date(reading.timestamp) : new Date();
 
-    // Update latestReading with new values
-    device.latestReading = {
+    device.latestReading = { //
       timestamp: currentTimestamp,
-      // Your existing controller already correctly looks for 'reading.pH'
-      PH: reading.pH ?? device.latestReading.PH, //
-      TDS: reading.tds ?? device.latestReading.TDS, //
-      TEMP: reading.temp ?? device.latestReading.TEMP, //
-      TURBIDITY: reading.turbidity ?? device.latestReading.TURBIDITY, //
+      PH: reading.pH ?? device.latestReading.PH,
+      TDS: reading.tds ?? device.latestReading.TDS,
+      TEMP: reading.temp ?? device.latestReading.TEMP,
+      TURBIDITY: reading.turbidity ?? device.latestReading.TURBIDITY,
     };
     
-    // Update the main device heartbeat
-    device.currentState.lastContact = currentTimestamp;
+    device.currentState.lastContact = currentTimestamp; //
 
-    // ✅ UPDATE: Individual sensor statuses and timestamps
+    // ✅ UPDATE: Individual sensor statuses, timestamps, and "Online" logging
+    
+    // --- PH Sensor ---
+    if (reading.pH !== null && reading.pH !== undefined) {
+      if (device.currentState.sensorStatus.PH.status === 'Offline') { //
+        // ✅ Changed component label
+        createSystemLogs(null, deviceId, "pH Sensor", "Sensor PH is online", "success"); //
+      }
+      device.currentState.sensorStatus.PH.status = 'Online'; //
+      device.currentState.sensorStatus.PH.lastReadingTimestamp = currentTimestamp; //
+    }
+    
+    // --- TEMP Sensor ---
     if (reading.temp !== null && reading.temp !== undefined) {
+      if (device.currentState.sensorStatus.TEMP.status === 'Offline') { //
+        // ✅ Changed component label
+        createSystemLogs(null, deviceId, "Temp Sensor", "Sensor TEMP is online", "success"); //
+      }
       device.currentState.sensorStatus.TEMP.status = 'Online'; //
       device.currentState.sensorStatus.TEMP.lastReadingTimestamp = currentTimestamp; //
     }
+
+    // --- TDS Sensor ---
     if (reading.tds !== null && reading.tds !== undefined) {
+      if (device.currentState.sensorStatus.TDS.status === 'Offline') { //
+        // ✅ Changed component label
+        createSystemLogs(null, deviceId, "TDS Sensor", "Sensor TDS is online", "success"); //
+      }
       device.currentState.sensorStatus.TDS.status = 'Online'; //
       device.currentState.sensorStatus.TDS.lastReadingTimestamp = currentTimestamp; //
     }
+
+    // --- TURBIDITY Sensor ---
     if (reading.turbidity !== null && reading.turbidity !== undefined) {
+      if (device.currentState.sensorStatus.TURBIDITY.status === 'Offline') { //
+        // ✅ Changed component label
+        createSystemLogs(null, deviceId, "Turbidity Sensor", "Sensor TURBIDITY is online", "success"); //
+      }
       device.currentState.sensorStatus.TURBIDITY.status = 'Online'; //
       device.currentState.sensorStatus.TURBIDITY.lastReadingTimestamp = currentTimestamp; //
     }
     
-    // ✅ NEW: Add the same check for PH
-    if (reading.pH !== null && reading.pH !== undefined) {
-      device.currentState.sensorStatus.PH.status = 'Online'; //
-      device.currentState.sensorStatus.PH.lastReadingTimestamp = currentTimestamp; //
-    }
-
     await device.save(); //
 
     // 9. Emit updates to all connected frontend clients

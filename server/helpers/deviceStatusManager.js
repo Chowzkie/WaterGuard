@@ -47,7 +47,7 @@ const initializeDeviceStatusCheck = (io) => {
         createSystemLogs(
           null,
           deviceId,
-          "System",
+          "Microcontroller",
           "Device went offline (heartbeat missed)",
           "error"
         );

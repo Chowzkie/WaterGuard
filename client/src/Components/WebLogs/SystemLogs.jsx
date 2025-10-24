@@ -120,7 +120,7 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         return Array.from(deviceIds).sort();
     }, [logs]);
 
-    const componentTypes = ['Device', 'Valve Actuator', 'pH Sensor', 'TDS Sensor', 'Temp Sensor', 'Turbidity Sensor'];
+    const componentTypes = ['Microcontroller', 'Valve Actuator', 'pH Sensor', 'TDS Sensor', 'Temp Sensor', 'Turbidity Sensor'];
 
     // Filters the logs based on the applied filter state.
     const filteredDisplayLogs = useMemo(() => {

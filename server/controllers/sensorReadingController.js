@@ -53,6 +53,7 @@ exports.processReading = async (req, res) => {
 
     // Get automation rules and current state from the device model
     const shutOffRules = device.configurations.controls.valveShutOff;
+    const shutOffEnabled = device.configurations.controls.valveShutOff.enabled;
     const openOnNormalEnabled = device.configurations.controls.valveOpenOnNormal.enabled;
     const currentValveState = device.currentState.valve;
     
@@ -71,7 +72,7 @@ exports.processReading = async (req, res) => {
 
     // --- LOGIC 1: AUTO SHUT-OFF ---
     // If any parameter is critical AND the valve is currently OPEN, send a CLOSE command.
-    if (triggeringParameters.length > 0 && currentValveState === 'OPEN') {
+    if (shutOffEnabled && triggeringParameters.length > 0 && currentValveState === 'OPEN') {
       
       // Set the pending command on the device model
       device.commands.setValve = 'CLOSED'; //

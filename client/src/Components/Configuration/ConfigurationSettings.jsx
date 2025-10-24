@@ -391,11 +391,19 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                                     </ThresholdGroup>
                                     <div className={styles['global-rule-divider']}></div>
                                     <ThresholdGroup label="Valve Rule">
+
+                                        <YesNoSelect
+                                            label="Enable Automatic Valve Shut-off?"
+                                            value={draftConfigs.controls.valveShutOff?.enabled ? 'yes' : 'no'}
+                                            onChange={e => handleDeepChange(['controls', 'valveShutOff', 'enabled'], e.target.value === 'yes')}
+                                        />
+
                                         <YesNoSelect
                                             label="Auto Re-open Valve once the alert is cleared?"
                                             value={draftConfigs.controls.valveOpenOnNormal?.enabled ? 'yes' : 'no'}
                                             onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'enabled'], e.target.value === 'yes')}
                                         />
+
                                     </ThresholdGroup>
                                 </>
                             ) : <NotConfiguredMessage />}

@@ -53,10 +53,10 @@ const deviceSchema = new mongoose.Schema({
   },
   latestReading: {
     timestamp: { type: Date, default: () => new Date() },
-    PH: { type: Number, default: 7.0 },
-    TDS: { type: Number, default: 300.0 },
-    TEMP: { type: Number, default: 25.0 },
-    TURBIDITY: { type: Number, default: 3.0 },
+    PH: { type: Number, default:0},
+    TDS: { type: Number, default: 0 },
+    TEMP: { type: Number, default: 0 },
+    TURBIDITY: { type: Number, default: 0 },
   },
   commands: {
     setValve: { type: String, enum: ['OPEN', 'CLOSED', 'NONE'], default: 'NONE' },

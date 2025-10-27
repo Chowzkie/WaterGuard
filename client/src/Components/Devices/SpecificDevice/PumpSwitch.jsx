@@ -86,7 +86,7 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, onToggle, addToast }) {
                 </label>
             </div>
 
-            {/* Optional: visual countdown */}
+            {/* visual countdown */}
             {cooldown > 0 && (
                 <div className={Style['cooldown-text']}>
                      Please wait {cooldown}s before next toggle

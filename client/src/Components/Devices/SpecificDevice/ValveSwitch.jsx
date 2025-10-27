@@ -51,7 +51,7 @@ function ValveSwitch({ deviceId, deviceStatus, valveState, onToggle, addToast })
                         checked={isValveOpen}
                         onChange={toggleValve}
                         // The switch is disabled if the device is offline.
-                        disabled={deviceStatus === 'Offline'}
+                        className={deviceStatus === 'Offline' ? Style['switch-disabled'] : ''}
                     />
                     <span className={Style["slider"]}></span>
                 </label>

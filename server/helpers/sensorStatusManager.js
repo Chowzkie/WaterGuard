@@ -3,8 +3,9 @@ const cron = require("node-cron");
 const Device = require("../models/Device");
 const { createSystemLogs } = require("./createSystemLogs");
 
-// Define how long a sensor can be silent before being marked offline
-const SENSOR_OFFLINE_THRESHOLD_MS = 10 * 1000;
+// ✅ FIX #2: Changed threshold to 5 minutes (300,000 ms)
+// This job now only catches individual sensor failures, not whole-device disconnects.
+const SENSOR_OFFLINE_THRESHOLD_MS = 2 * 60 * 1000;
 
 const initializeSensorStatusCheck = (io) => {
   console.log("✅ Initializing sensor status (offline) check...");
@@ -21,27 +22,49 @@ const initializeSensorStatusCheck = (io) => {
         let sensorStatusChanged = false;
         const deviceId = device._id.toString();
 
-        // Get the sensor status object
         const sensors = device.currentState.sensorStatus;
         
-        // Loop over each sensor defined in the model
+        // ✅ FIX #1: Add safety check for old device documents
+        if (!sensors) {
+          console.warn(`[SensorCheck] Device ${deviceId} is missing 'currentState.sensorStatus' object. Skipping.`);
+          continue; // Go to the next device
+        }
+
         for (const sensorKey of ['PH', 'TEMP', 'TDS', 'TURBIDITY']) {
           const sensor = sensors[sensorKey];
 
+          // ✅ FIX #1: Add safety check for 'sensor' object
           // If sensor is 'Online' but its last reading is older than the cutoff...
-          if (sensor.status === 'Online' && sensor.lastReadingTimestamp < cutoff) {
+          if (sensor && sensor.status === 'Online' && sensor.lastReadingTimestamp < cutoff) {
             
             // Mark it 'Offline'
             sensor.status = 'Offline';
             sensorStatusChanged = true;
             
             console.warn(`[SensorCheck] Marking ${sensorKey} sensor for device ${deviceId} as Offline.`);
-            
-            // Log this specific event
+
+            // Determine the correct component label
+            let componentLabel = "Sensor"; // Default
+            switch (sensorKey) {
+              case 'PH':
+                componentLabel = "Ph Sensor";
+                break;
+              case 'TEMP':
+                componentLabel = "Temp Sensor";
+                break;
+              case 'TDS':
+                componentLabel = "TDS Sensor";
+                break;
+              case 'TURBIDITY':
+                componentLabel = "Turbidity Sensor";
+                break;
+            }
+
+            // Use the new componentLabel
             createSystemLogs(
               null,
               deviceId,
-              "Sensor",
+              componentLabel,
               `Sensor ${sensorKey} went offline (heartbeat missed)`,
               "error"
             );

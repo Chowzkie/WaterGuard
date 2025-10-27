@@ -8,7 +8,7 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, onToggle, addToast }) {
 
     // Customize cooldown duration
     const COOLDOWN_ON = 60;   // seconds when turning pump ON
-    const COOLDOWN_OFF = 10; // seconds when turning pump OFF
+    const COOLDOWN_OFF = 30; // seconds when turning pump OFF
 
     useEffect(() => {
         // Treat FILLING, DRAINING, DELAY as "ON" states for UI purposes

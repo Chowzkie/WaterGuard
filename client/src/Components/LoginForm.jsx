@@ -35,6 +35,7 @@ function LoginForm({ onLogin }) {
                 onLogin(response.data.token, response.data.user);
                 navigate('/overview'); // Navigate to the overview page
                 setMessage(response.data.message); // display success message coming from backend
+                window.location.reload();
             } else {
                 //Handle cases where the backend returns a successful response but with an unexpected format
                 setMessage(response.data.message); // get the error message from the backend

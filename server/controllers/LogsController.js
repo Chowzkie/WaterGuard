@@ -58,17 +58,42 @@ exports.restoreUserLogs = async (req, res) => {
     }
 }
 
-//System Logs Controller
+// =================================================================================
+// SYSTEM LOGS (MODIFIED & NEW)
+// =================================================================================
 
 exports.getSystemLogs = async (req, res) => {
-    try{
-        const SystemLogs = await SystemLogModel.find({})
-        res.json(SystemLogs)
-    }catch(error){
-        console.error(errpr);
-        res.status(500).json({message: "Server Error"})
+    try {
+        // --- MODIFIED: Add filter logic ---
+        const { since, read } = req.query;
+        let filter = {};
+
+        // Filter by date (e.g., all logs since 24 hours ago)
+        if (since) {
+            const sinceDate = new Date(since);
+            if (!isNaN(sinceDate)) {
+                filter.createdAt = { $gte: sinceDate };
+            } else {
+                return res.status(400).json({ message: "Invalid 'since' date format." });
+            }
+        }
+        
+        // Filter by read status (e.g., ?read=false)
+        if (read === 'true' || read === 'false') {
+            filter.read = read === 'true';
+        }
+        
+        // Fetch logs with the applied filter, sort by newest first, limit to 50
+        const SystemLogs = await SystemLogModel.find(filter)
+            .sort({ createdAt: -1 })
+            .limit(50); 
+            
+        res.json(SystemLogs);
+    } catch (error) {
+        console.error(error); // Corrected typo from 'errpr'
+        res.status(500).json({ message: "Server Error" });
     }
-}
+};
 
 exports.deleteSystemLogs = async (req,res) => {
     try{
@@ -117,3 +142,48 @@ exports.restoreSystemLogs = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 }
+
+// --- NEW CONTROLLER: Mark a single log as read ---
+exports.markLogAsRead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedLog = await SystemLogModel.findByIdAndUpdate(
+            id,
+            { read: true },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedLog) {
+            return res.status(404).json({ message: "Log not found." });
+        }
+        res.json(updatedLog);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// --- NEW CONTROLLER: Mark multiple logs as read ---
+exports.markAllLogsAsRead = async (req, res) => {
+    try {
+        const { ids } = req.body; // Expect an array of log IDs
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ message: "No log IDs provided." });
+        }
+
+        const result = await SystemLogModel.updateMany(
+            { _id: { $in: ids } }, // Find all logs with an ID in the provided array
+            { read: true }
+        );
+
+        // --- FIX: Changed result.nModified to result.modifiedCount ---
+        res.status(200).json({ 
+            message: `Successfully marked ${result.modifiedCount} logs as read.`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+};

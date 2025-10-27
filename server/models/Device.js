@@ -96,6 +96,7 @@ const deviceSchema = new mongoose.Schema({
     },
     controls: {
       valveShutOff: {
+        enabled: { type: Boolean, default: true },
         phLow: { type: Number, default: 5.9 },
         phHigh: { type: Number, default: 9.1 },
         turbidityCrit: { type: Number, default: 13 },

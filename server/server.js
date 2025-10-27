@@ -122,7 +122,7 @@ const startServer = async () => {
             createSystemLogs(
               null,
               deviceId,
-              "Micro controller",
+              "Microcontroller",
               "Device is online",
               "success"
             );

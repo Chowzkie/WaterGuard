@@ -420,7 +420,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     </button>
                 </div>
 
-                {deviceStatus === 'offline' ? (
+                {deviceStatus === 'Online' ? (
                     <div className={styles['settings-container']}>
                         {/* --- Alert Thresholds Panel --- */}
                         <CollapsiblePanel

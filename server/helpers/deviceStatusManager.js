@@ -40,6 +40,11 @@ const initializeDeviceStatusCheck = (io) => {
         device.currentState.sensorStatus.TDS.status = "Offline";
         device.currentState.sensorStatus.TURBIDITY.status = "Offline";
 
+        device.latestReading.PH = 0;
+        device.latestReading.TDS = 0;
+        device.latestReading.TEMP = 0;
+        device.latestReading.TURBIDITY = 0;
+
         // 3. Save the changes
         await device.save();
 

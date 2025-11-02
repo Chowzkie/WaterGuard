@@ -218,7 +218,7 @@ const startServer = async () => {
            * and converts other invalid values (like NaN) to 0.
            */
           const sanitize = (val) => {
-            if (val === null || val === undefined) return null; // Preserve null
+            if (val === null || val === undefined) return 0; // Preserve null
             const num = Number(val);
             return isNaN(num) ? 0 : Math.round(num * 10) / 10;
           };

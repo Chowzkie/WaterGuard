@@ -5,7 +5,7 @@ const { createSystemLogs } = require("./createSystemLogs");
 
 // ✅ FIX #2: Changed threshold to 5 minutes (300,000 ms)
 // This job now only catches individual sensor failures, not whole-device disconnects.
-const SENSOR_OFFLINE_THRESHOLD_MS = 2 * 60 * 1000;
+const SENSOR_OFFLINE_THRESHOLD_MS = 1 * 60 * 1000;
 
 const initializeSensorStatusCheck = (io) => {
   console.log("✅ Initializing sensor status (offline) check...");
@@ -23,7 +23,7 @@ const initializeSensorStatusCheck = (io) => {
         const deviceId = device._id.toString();
 
         const sensors = device.currentState.sensorStatus;
-        const sensorVals = device.latestReading;
+
         
         // ✅ FIX #1: Add safety check for old device documents
         if (!sensors) {
@@ -33,7 +33,7 @@ const initializeSensorStatusCheck = (io) => {
 
         for (const sensorKey of ['PH', 'TEMP', 'TDS', 'TURBIDITY']) {
           const sensor = sensors[sensorKey];
-          const sensorVal = sensorVals[sensorKey];
+    
 
           // ✅ FIX #1: Add safety check for 'sensor' object
           // If sensor is 'Online' but its last reading is older than the cutoff...
@@ -42,7 +42,8 @@ const initializeSensorStatusCheck = (io) => {
             // Mark it 'Offline'
             sensor.status = 'Offline';
             sensorStatusChanged = true;
-            sensorVal = 0; 
+            device.latestReading[sensorKey] = 0;
+     
             
             console.warn(`[SensorCheck] Marking ${sensorKey} sensor for device ${deviceId} as Offline.`);
 

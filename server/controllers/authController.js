@@ -1,4 +1,3 @@
-// server/controllers/authController.js
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User");
 const jwt = require("jsonwebtoken"); 
@@ -8,7 +7,7 @@ const fs = require("fs")
 const {createUserlog} = require('../helpers/createUserlog')
 
 
-// store this in .env file. Temporary key only
+// call the .env file 
 const JWT_SECRET = process.env.JWT_SECRET || 'Waterguard@2025';
 
 
@@ -66,10 +65,10 @@ exports.loginUser = async (req, res) => {
         res.status(500).json({ message: "An error occurred during login. Please try again." });
     }
 };
-
+// Logout user
 exports.logoutUser = async (req, res) => {
   try {
-    const userId = req.userID; // or from token if you decode it
+    const userId = req.userID;
 
     if (!userId) return res.status(400).json({ msg: "User ID required" });
 
@@ -100,32 +99,32 @@ exports.getUser = async (req, res) => {
     }
     res.json(user);
 };
-
+// Update the name of user
 exports.updateName = async (req, res) => {
     const { name } = req.body;
     const userID = req.userID;
-
+    // check if there is a name
     if (!name) {
         return res.status(400).json({ message: "No name provided for the update." });
     }
-
+    // validate name using the helper
     const nameValidation = validateName(name);
     if (!nameValidation.isValid) {
         return res.status(400).json({ message: nameValidation.message });
     }
-
     try {
+        //find the id(name to the database)
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-
+        // check if the inputted name is equal to the name in the db
         if (name === user.name) {
             return res.status(200).json({ message: "Name is already up to date." });
         }
-        
-        const oldname = user.name
-        user.name = name;
+
+        const oldname = user.name; // use to store the old name
+        user.name = name; // update the name in the db to the new name
 
         //Saving data to the DB
         await user.save();
@@ -133,33 +132,35 @@ exports.updateName = async (req, res) => {
         await createUserlog(userID, `Changed name fron ${oldname} to ${name}`)
 
         const updatedUser = await UserModel.findById(userID).select("-password");
-        return res.status(200).json(updatedUser);
+        return res.status(200).json(updatedUser); 
 
     } catch (error) {
         console.error("Error updating name:", error);
         res.status(500).json({ message: "Server error during name update." });
     }
 };
-
+// update the username
 exports.updateUsername = async (req, res) => {
     const { username } = req.body;
     const userID = req.userID;
 
+    // check if there is a username provided
     if (!username) {
         return res.status(400).json({ message: "No username provided for the update." });
     }
-
+    // validate the username using the helper
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.isValid) {
         return res.status(400).json({ message: usernameValidation.message });
     }
 
     try {
+        // find the user in db
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-        
+        //check if the updated username is equal to the db username
         if (username === user.username) {
             return res.status(200).json({ message: "Username is already up to date." });
         }
@@ -169,8 +170,8 @@ exports.updateUsername = async (req, res) => {
             return res.status(409).json({ message: "Username is already taken." });
         }
 
-        const oldUsername = user.username
-        user.username = username;
+        const oldUsername = user.username; //store the oldusername
+        user.username = username; // update the old username to new username
          // Saving the data to the DB
         await user.save();
         // call the helper for changing
@@ -184,26 +185,27 @@ exports.updateUsername = async (req, res) => {
         res.status(500).json({ message: "Server error during username update." });
     }
 };
-
+// update contact
 exports.updateContact = async (req, res) => {
     const { contact } = req.body;
     const userID = req.userID;
-
+    // find if there is a contact in body
     if (!contact) {
         return res.status(400).json({ message: "No contact provided for the update." });
     }
-
+    // validate the contact using the helper
     const contactValidation = validateContact(contact);
     if (!contactValidation.isValid) {
         return res.status(400).json({ message: contactValidation.message });
     }
 
     try {
+        //find the user in db
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-
+        //check if the contact in db is equal to the inputted contact
         if (contact === user.contact) {
             return res.status(200).json({ message: "Contact is already up to date." });
         }
@@ -213,8 +215,8 @@ exports.updateContact = async (req, res) => {
             return res.status(409).json({ message: "Contact number is already taken." });
         }
 
-        const oldContact = user.contact;
-        user.contact = contact;
+        const oldContact = user.contact; //store the old contact in db
+        user.contact = contact; // update the old contact to the new in db
         //call the helper for changing
         await user.save();
         await createUserlog(userID, `Changed contact from ${oldContact} to ${contact}`);
@@ -227,20 +229,21 @@ exports.updateContact = async (req, res) => {
         res.status(500).json({ message: "Server error during contact update." });
     }
 };
-
+// update password
 exports.updatePassword = async(req,res) => {
     const {currentPassword, newPassword, confirmPassword} = req.body
     const userID = req.userID
-
+    //check if there is a new password
     if(newPassword !== confirmPassword){
         return res.status(400).json({message: "New password does not match in Confirmation"})
     }
-
+    //validate the password using the helper
     const passwordValidation = validatePassword(newPassword);
     if(!passwordValidation.isValid){
         return res.status(400).json({message: passwordValidation.message})
     }
     try{
+        // fint the user in db
         const user = await UserModel.findById(userID);
         //Check if new password is the same as the current password
         if(newPassword === currentPassword){
@@ -252,7 +255,7 @@ exports.updatePassword = async(req,res) => {
             return res.status(401).json({ message: "Invalid current password." });
         }
 
-        //hast the new password to be update in database
+        //hash the new password to be update in database
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt)
         await user.save()
@@ -267,7 +270,7 @@ exports.updatePassword = async(req,res) => {
         res.status(500).json({message :"server error during password update"})
     }
 }
-
+//update the user profile
 exports.uploadProfileImage = async (req, res) => {
     try {
         console.log("Starting image upload process...");

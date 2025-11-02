@@ -1,9 +1,7 @@
-// server/controllers/alertController.js
-
-const Alert = require('../models/Alert'); // Import the Alert model
+const Alert = require('../models/Alert'); 
 const User = require('../models/User');
 const {createUserlog} = require('../helpers/createUserlog');
-// 1. Get Alerts (with filtering)
+//  Get Alerts with filtering
 exports.getAlerts = async (req, res) => {
     try {
         // Build a filter object from the query parameters in the URL
@@ -45,13 +43,10 @@ exports.acknowledgeAlert = async (req, res) => {
         if (!alert) {
             return res.status(404).json({ message: "Alert not found." });
         }
-        
-        // --- THIS IS THE FIX ---
-        // We ONLY update the acknowledged status. We do NOT change the
-        // lifecycle or status, so the alert remains in the Active panel.
+        // only update the acknowledged status. did not change the lifecycle or status, so the alert remains in the Active panel.
         alert.acknowledged = true;
         alert.acknowledgedBy = {
-            username: user.username, // or req.user.username
+            username: user.username, 
             timestamp: new Date()
         };
         
@@ -66,7 +61,7 @@ exports.acknowledgeAlert = async (req, res) => {
     }
 };
 
-// 3. Delete History Alerts (Soft Delete)
+// Delete History Alerts (Soft Delete)
 exports.deleteHistoryAlerts = async (req, res) => {
     try {
         const { idsToDelete, userID } = req.body; // Expect an array of IDs
@@ -99,7 +94,7 @@ exports.deleteHistoryAlerts = async (req, res) => {
     }
 };
 
-// 4. Restore History Alerts
+// Restore History Alerts
 exports.restoreHistoryAlerts = async (req, res) => {
     try {
         const { idsToRestore, userID } = req.body; // Expect an array of IDs

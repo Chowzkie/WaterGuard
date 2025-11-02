@@ -59,16 +59,16 @@ exports.restoreUserLogs = async (req, res) => {
 }
 
 // =================================================================================
-// SYSTEM LOGS (MODIFIED & NEW)
+// SYSTEM LOGS
 // =================================================================================
 
 exports.getSystemLogs = async (req, res) => {
     try {
-        // --- MODIFIED: Add filter logic ---
+        // Add filter logic 
         const { since, read } = req.query;
         let filter = {};
 
-        // Filter by date (e.g., all logs since 24 hours ago)
+        // Filter by date 
         if (since) {
             const sinceDate = new Date(since);
             if (!isNaN(sinceDate)) {
@@ -78,7 +78,7 @@ exports.getSystemLogs = async (req, res) => {
             }
         }
         
-        // Filter by read status (e.g., ?read=false)
+        // Filter by read status
         if (read === 'true' || read === 'false') {
             filter.read = read === 'true';
         }
@@ -97,7 +97,7 @@ exports.getSystemLogs = async (req, res) => {
 
 exports.deleteSystemLogs = async (req,res) => {
     try{
-        const { ids } = req.body;
+        const { ids } = req.body; //expect array of ids 
 
         if(!ids || !Array.isArray(ids) || ids.length === 0){
             res.status(400).json({message: "no IDS provided"});
@@ -143,7 +143,7 @@ exports.restoreSystemLogs = async (req, res) => {
     }
 }
 
-// --- NEW CONTROLLER: Mark a single log as read ---
+//  Mark a single log as read 
 exports.markLogAsRead = async (req, res) => {
     try {
         const { id } = req.params;
@@ -163,7 +163,7 @@ exports.markLogAsRead = async (req, res) => {
     }
 };
 
-// --- NEW CONTROLLER: Mark multiple logs as read ---
+//  Mark multiple logs as read 
 exports.markAllLogsAsRead = async (req, res) => {
     try {
         const { ids } = req.body; // Expect an array of log IDs
@@ -177,7 +177,7 @@ exports.markAllLogsAsRead = async (req, res) => {
             { read: true }
         );
 
-        // --- FIX: Changed result.nModified to result.modifiedCount ---
+        //  Changed result.nModified to result.modifiedCount 
         res.status(200).json({ 
             message: `Successfully marked ${result.modifiedCount} logs as read.`,
             modifiedCount: result.modifiedCount

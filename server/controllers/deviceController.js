@@ -52,7 +52,7 @@ const deleteDevice = async (req, res) => {
     const deviceId = req.params.id;
     const { userID } = req.body;
 
-    // --- Validation: Check if the device exists before trying to delete ---
+    // Check if the device exists before trying to delete 
     const device = await Device.findById(deviceId);
     if (!device) {
       return res.status(404).json({ message: 'Device not found.' });
@@ -80,7 +80,7 @@ const updateDeviceConfiguration = async (req, res) => {
     const { deviceId } = req.params;
     const { newConfigs, userID } = req.body;
 
-    // 1. Find the device before updating to compare old configs
+    // Find the device before updating to compare old configs
     const oldDevice = await Device.findById(deviceId);
     if (!oldDevice) {
       return res.status(404).json({ message: "Device not found." });
@@ -89,7 +89,7 @@ const updateDeviceConfiguration = async (req, res) => {
     const oldConfigs = oldDevice.configurations;
     const changes =  compareConfigs(oldConfigs, newConfigs); // call the helper
 
-    // 2. Update the device with the new configurations
+    // Update the device with the new configurations
     const updatedDevice = await Device.findByIdAndUpdate(
       deviceId,
       { $set: { configurations: newConfigs } },
@@ -100,14 +100,14 @@ const updateDeviceConfiguration = async (req, res) => {
       return res.status(404).json({ message: "Device not found." });
     }
 
-    // 3. Log the changes in user logs if there are differences
+    // Log the changes in user logs if there are differences
     if (changes.length > 0) {
       const logAction = `Device ${updatedDevice.label} configuration updated.`;
       const logDetails = `Changes: ${changes.join(", ")}`;
       createUserlog(userID, `${logAction} ${logDetails}`, "Configuration");
     }
 
-    // 4. Send success response
+    // Send success response
     res.status(200).json({
       message: "Configuration updated successfully",
       updatedDevice: updatedDevice,
@@ -136,21 +136,21 @@ const sendValveCommand = async (req, res) => {
       return res.status(400).json({ message: 'Invalid command value.' });
     }
 
-    // 1. Update the database with the desired command
+    // Update the database with the desired command
     await Device.findByIdAndUpdate(deviceId, {
       $set: { 'commands.setValve': commandValue }
     });
 
-    // 2. Get the Socket.IO instance from the app object
+    // Get the Socket.IO instance from the app object
     const io = req.app.get('io');
 
-    // 3. Emit the command directly to the device's private room
+    //  Emit the command directly to the device's private room
     io.to(deviceId).emit('command', { type: 'setValve', value: commandValue });
     console.log(`📢 Emitted command to ${deviceId}: setValve to ${commandValue}`);
 
     await createUserlog(userID, `sent command to set valve to ${commandValue} for device ${deviceId}`, "Valve");
 
-    // 4. Respond to the web client that the command was successfully sent
+    // Respond to the web client that the command was successfully sent
     res.status(202).json({ message: `Command to set valve to ${commandValue} has been sent.` });
 
   } catch (error) {

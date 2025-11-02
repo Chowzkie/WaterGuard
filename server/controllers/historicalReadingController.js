@@ -1,4 +1,3 @@
-// server/controllers/readingController.js
 const Reading = require('../models/HistoricalReading');
 
 /**
@@ -11,7 +10,7 @@ exports.getReadingsByDevice = async (req, res) => {
         const { deviceId } = req.params;
         const { range = '7d' } = req.query; // Default to '7d' if no range is provided
 
-        // --- 1. Calculate the Date Range ---
+        // Calculate the Date Range 
         const endDate = new Date();
         let startDate = new Date();
         let groupByFormat;
@@ -35,7 +34,7 @@ exports.getReadingsByDevice = async (req, res) => {
                 break;
         }
 
-        // --- 2. Build the MongoDB Aggregation Pipeline ---
+        // Build the MongoDB Aggregation Pipeline
         const pipeline = [
             // Stage 1: Filter documents to match the device and time range.
             // This is the most important step for performance.

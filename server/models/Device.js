@@ -31,7 +31,14 @@ const deviceSchema = new mongoose.Schema({
     pump: { type: String, enum: ['IDLE', 'FILLING', 'DRAINING', 'DELAY', 'OFF'], default: 'IDLE' },
     valve: { type: String, enum: ['OPEN', 'CLOSED'], default: 'CLOSED' },
     lastContact: { type: Date, default: () => new Date() }, // Sets current time on creation
-
+    pumpCycle: {
+      pausedPhase: { 
+        type: String, 
+        enum: ['FILLING', 'DRAINING', 'DELAY_AFTER_FILL', 'DELAY_AFTER_DRAIN', 'NONE'], 
+        default: 'NONE' 
+      },
+      remainingTime_sec: { type: Number, default: 0 }
+    },
     sensorStatus: {
       PH: {
         status: { type: String, default: 'Online' },

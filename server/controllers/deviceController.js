@@ -167,22 +167,54 @@ const sendValveCommand = async (req, res) => {
 const sendPumpCommand = async (req, res) => {
   try {
     const { deviceId } = req.params;
-    const { commandValue, userID } = req.body;
+    const { commandValue, userID } = req.body; // 'FILL', 'DRAIN', 'IDLE'
 
-    // Acceptable commands for pump (match schema enum): 'FILL', 'DRAIN', 'IDLE'
     if (!['FILL', 'DRAIN', 'IDLE'].includes(commandValue)) {
       return res.status(400).json({ message: 'Invalid pump command value.' });
     }
 
-    // Update DB to reflect desired command
+    // Default payload
+    let commandPayload = {
+      type: 'setPump',
+      value: commandValue, // e.g., 'IDLE'
+      phase: 'NONE',
+      resumeTime: 0
+    };
+
+    if (commandValue === 'FILL' || commandValue === 'DRAIN') {
+      // User wants to START or RESUME the cycle
+      const device = await Device.findById(deviceId).lean();
+      
+      if (device) {
+        const { pausedPhase, remainingTime_sec } = device.currentState.pumpCycle;
+
+        if (remainingTime_sec > 0 && pausedPhase !== 'NONE') {
+          // --- THIS IS A RESUME ---
+          // The device is paused. Tell the ESP32 to resume from that exact phase.
+          console.log(`🔄 Issuing RESUME for ${deviceId}. Phase: ${pausedPhase}, Time: ${remainingTime_sec}s`);
+          commandPayload.value = 'RESUME';
+          commandPayload.phase = pausedPhase; // e.g., "DRAINING" or "DELAY_AFTER_FILL"
+          commandPayload.resumeTime = remainingTime_sec;
+        } else {
+          // --- THIS IS A FRESH START ---
+          // Device is idle, so start a new cycle.
+          commandPayload.value = commandValue; // 'FILL' or 'DRAIN'
+          commandPayload.phase = (commandValue === 'FILL') ? 'FILLING' : 'DRAINING';
+          commandPayload.resumeTime = 0;
+        }
+      }
+    }
+    // Note: If commandValue is 'IDLE', the default payload is sent, which is correct.
+
+    // Update DB to reflect desired command (e.g., 'commands.setPump': 'FILL')
     await Device.findByIdAndUpdate(deviceId, {
       $set: { 'commands.setPump': commandValue }
     });
 
-    // Emit to device room via socket
+    // Emit the detailed payload to the device
     const io = req.app.get('io');
-    io.to(deviceId).emit('command', { type: 'setPump', value: commandValue });
-    console.log(`📢 Emitted pump command to ${deviceId}: setPump to ${commandValue}`);
+    io.to(deviceId).emit('command', commandPayload);
+    console.log(`📢 Emitted pump command to ${deviceId}:`, JSON.stringify(commandPayload));
 
     // Create user log
     await createUserlog(userID, `sent pump command (${commandValue}) to device ${deviceId}`, "Pump");

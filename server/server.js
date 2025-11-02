@@ -172,22 +172,35 @@ const startServer = async () => {
 
     /**
      * (ESP32 Event)
-     * Receives pump state updates; acts as a heartbeat.
+     * Receives pump state updates.
      */
-      socket.on("pumpStateUpdate", async (data) => { //
+      socket.on("pumpStateUpdate", async (data) => { 
         try {
-          const { deviceId, pumpState } = data; 
-          console.log(`⚡ Received pump state update from ${deviceId}: Pump is ${pumpState}`);
+          // Data is now an object: { deviceId, pumpState, remainingTime_sec, pausedPhase }
+          const { deviceId, pumpState, remainingTime_sec, pausedPhase } = data; 
+          console.log(`⚡ Received pump state update from ${deviceId}: ${pumpState}`);
+
+          // Prepare the database update
+          const updateSet = {
+            "currentState.pump": pumpState,
+            "commands.setPump": "NONE",
+            "currentState.lastContact": new Date(),
+          };
+
+          if (pumpState === 'IDLE' && pausedPhase && pausedPhase !== 'NONE') {
+            // This is a PAUSE event! Save the remaining time.
+            console.log(`   ... Storing PAUSE state. Phase: ${pausedPhase}, Remaining: ${remainingTime_sec}s`);
+            updateSet["currentState.pumpCycle.pausedPhase"] = pausedPhase;
+            updateSet["currentState.pumpCycle.remainingTime_sec"] = remainingTime_sec;
+          } else if (pumpState === 'FILLING' || pumpState === 'DRAINING' || pumpState === 'DELAY') {
+            // This is a START or RESUME event. Clear the paused state.
+            updateSet["currentState.pumpCycle.pausedPhase"] = 'NONE';
+            updateSet["currentState.pumpCycle.remainingTime_sec"] = 0;
+          }
 
           const updatedDevice = await Device.findByIdAndUpdate(
             deviceId,
-            {
-              $set: {
-                "currentState.pump": pumpState, //
-                "commands.setPump": "NONE", //
-                "currentState.lastContact": new Date(), // ✅ HEARTBEAT
-              },
-            },
+            { $set: updateSet },
             { new: true }
           );
 

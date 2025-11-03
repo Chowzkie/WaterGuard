@@ -1,4 +1,3 @@
-// helpers/deviceStatusManager.js
 const cron = require("node-cron");
 const Device = require("../models/Device");
 const { createSystemLogs } = require("./createSystemLogs");
@@ -8,7 +7,7 @@ const { createSystemLogs } = require("./createSystemLogs");
 const OFFLINE_THRESHOLD_MS = 60 * 1000;
 
 const initializeDeviceStatusCheck = (io) => {
-  console.log("✅ Initializing device status (offline) check...");
+  console.log(" Initializing device status (offline) check...");
   
   // Run this check every 30 seconds
   cron.schedule("*/30 * * * * *", async () => {
@@ -34,7 +33,7 @@ const initializeDeviceStatusCheck = (io) => {
        // 1. Mark the device itself Offline
         device.currentState.status = "Offline"; //
 
-        // 2. ✅ NEW: Mark all its sensors Offline at the same time
+        // 2.  Mark all its sensors Offline at the same time
         device.currentState.sensorStatus.PH.status = "Offline";
         device.currentState.sensorStatus.TEMP.status = "Offline";
         device.currentState.sensorStatus.TDS.status = "Offline";

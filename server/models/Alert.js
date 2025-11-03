@@ -1,5 +1,3 @@
-// server/models/Alert.js
-
 const mongoose = require('mongoose');
 
 // A small, reusable schema for the 'acknowledgedBy' field

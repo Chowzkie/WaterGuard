@@ -126,7 +126,7 @@ const initializeAlertCronJobs = () => {
     }
   });
 
-  // --- 🧹 Job 4: Auto-clear stuck or stale "Active" alerts ---
+  // --- Job 4: Auto-clear stuck or stale "Active" alerts ---
   cron.schedule('*/60 * * * * *', async () => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {

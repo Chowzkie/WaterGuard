@@ -1,10 +1,7 @@
-// helpers/sensorStatusManager.js
 const cron = require("node-cron");
 const Device = require("../models/Device");
 const { createSystemLogs } = require("./createSystemLogs");
 
-// ✅ FIX #2: Changed threshold to 5 minutes (300,000 ms)
-// This job now only catches individual sensor failures, not whole-device disconnects.
 const SENSOR_OFFLINE_THRESHOLD_MS = 1 * 60 * 1000;
 
 const initializeSensorStatusCheck = (io) => {
@@ -25,7 +22,7 @@ const initializeSensorStatusCheck = (io) => {
         const sensors = device.currentState.sensorStatus;
 
         
-        // ✅ FIX #1: Add safety check for old device documents
+        //  Add safety check for old device documents
         if (!sensors) {
           console.warn(`[SensorCheck] Device ${deviceId} is missing 'currentState.sensorStatus' object. Skipping.`);
           continue; // Go to the next device
@@ -35,7 +32,7 @@ const initializeSensorStatusCheck = (io) => {
           const sensor = sensors[sensorKey];
     
 
-          // ✅ FIX #1: Add safety check for 'sensor' object
+          //  Add safety check for 'sensor' object
           // If sensor is 'Online' but its last reading is older than the cutoff...
           if (sensor && sensor.status === 'Online' && sensor.lastReadingTimestamp < cutoff) {
             

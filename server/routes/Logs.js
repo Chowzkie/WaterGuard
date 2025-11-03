@@ -8,7 +8,6 @@ router.post('/restore', LogsController.restoreUserLogs);
 router.get("/systemlogs", LogsController.getSystemLogs);
 router.post("/deleteSysLog", LogsController.deleteSystemLogs);
 router.post("/restoreSysLog", LogsController.restoreSystemLogs);
-// --- MODIFIED: Route Order Swapped ---
 
 // Route to mark multiple notifications as read
 // This specific route MUST come FIRST

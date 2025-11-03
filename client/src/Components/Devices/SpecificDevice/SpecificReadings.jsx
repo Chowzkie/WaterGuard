@@ -11,7 +11,7 @@ const PARAMETER_CONFIG = {
 
 function SpecificReadings({ deviceReadings, deviceId, deviceStatus }) {
   // Handle offline or maintenance mode
-  if (deviceStatus === 'Online' || deviceStatus === 'Maintenance') {
+  if (deviceStatus === 'Offline' || deviceStatus === 'Maintenance') {
     return (
       <div className={Style.container}>
         <div className={Style.blockContainer}>

@@ -1,5 +1,3 @@
-// server/routes/sensorReadings.js
-
 const express = require("express");
 const router = express.Router();
 // We will create the controller file and logic in the next steps

@@ -1,4 +1,3 @@
-// server/controllers/sensorReadingController.js
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
 const { evaluateSensorReading } = require('../utils/SensorLogic'); // Assumed helper function
@@ -31,7 +30,7 @@ exports.processReading = async (req, res) => {
   }
 
   try {
-    // --- 1. Find the Device ---
+    // Find the Device 
     const device = await Device.findById(deviceId); //
     if (!device) {
       // If no device is found, we can't process the reading.
@@ -41,14 +40,14 @@ exports.processReading = async (req, res) => {
     // Get the socket.io instance, which was attached to the 'app' in server.js
     const io = req.app.get("io");
     
-    // --- 2. Evaluate Readings for Alerts ---
+    // Evaluate Readings for Alerts 
     // This helper function (from /utils) compares readings to the device's
     // configured thresholds and returns an array of alert objects.
     const evaluatedAlerts = evaluateSensorReading(reading, device.configurations);
     const actionsTaken = []; // An array to log what actions this function performs
     
     // =================================================================
-    // --- 3. AUTOMATION LOGIC BLOCK (SHUT-OFF & OPEN) ---
+    // AUTOMATION LOGIC BLOCK (SHUT-OFF & OPEN)
     // =================================================================
 
     // Get automation rules and current state from the device model
@@ -70,7 +69,7 @@ exports.processReading = async (req, res) => {
       triggeringParameters.push("TDS");
     }
 
-    // --- LOGIC 1: AUTO SHUT-OFF ---
+    // AUTO SHUT-OFF 
     // If any parameter is critical AND the valve is currently OPEN, send a CLOSE command.
     if (shutOffEnabled && triggeringParameters.length > 0 && currentValveState === 'OPEN') {
       
@@ -99,7 +98,7 @@ exports.processReading = async (req, res) => {
       );
     } 
     
-    // --- LOGIC 2: AUTO OPEN-ON-NORMAL ---
+    //  AUTO OPEN-ON-NORMAL 
     // ELSE IF the feature is enabled, AND no parameters are critical, AND the valve is CLOSED, send OPEN.
     else if (openOnNormalEnabled && triggeringParameters.length === 0 && currentValveState === 'CLOSED') {
       
@@ -128,7 +127,7 @@ exports.processReading = async (req, res) => {
     }
     
     // =================================================================
-    // --- 4. ALERT DOCUMENT CREATION LOGIC ---
+    //  ALERT DOCUMENT CREATION LOGIC 
     // =================================================================
 
     // This loop handles creating/updating Alert *documents* in the 'alerts' collection
@@ -143,7 +142,7 @@ exports.processReading = async (req, res) => {
         lifecycle: 'Active',
       }).sort({ createdAt: -1 });
 
-      // --- CASE 1: No active alert, and the new reading is abnormal (Warning/Critical) -> Create a new alert.
+      // No active alert, and the new reading is abnormal (Warning/Critical) -> Create a new alert.
       if (!existingAlert && severity !== 'Normal') {
         await Alert.create({
           ...alertData,
@@ -153,7 +152,7 @@ exports.processReading = async (req, res) => {
         actionsTaken.push(`Created new '${parameter}' ${severity} alert.`);
       }
 
-      // --- CASE 2: An active alert exists, and the severity has changed (e.g., Warning -> Critical) -> Escalate.
+      // An active alert exists, and the severity has changed (e.g., Warning -> Critical) -> Escalate.
       else if (existingAlert && severity !== 'Normal' && severity !== existingAlert.severity) {
         // 1. Move the old alert to 'Recent' history
         existingAlert.status = 'Escalated';
@@ -169,7 +168,7 @@ exports.processReading = async (req, res) => {
         actionsTaken.push(`Escalated '${parameter}' alert to ${severity}.`);
       }
 
-      // --- CASE 3: An active alert exists, and the reading is now 'Normal' -> Resolve.
+      // An active alert exists, and the reading is now 'Normal' -> Resolve.
       else if (existingAlert && existingAlert.severity !== 'Normal' && severity === 'Normal') {
         // 1. Mark the old alert as 'Resolved' and move to 'Recent'
         existingAlert.status = 'Resolved';
@@ -196,14 +195,14 @@ exports.processReading = async (req, res) => {
         }
       }
 
-      // --- CASE 4: No change (still Normal, or same Warning/Critical) -> Do nothing.
+      // No change (still Normal, or same Warning/Critical) -> Do nothing.
       else {
         // This case is implicitly handled (no action taken)
       }
     }
 
     // =================================================================
-    // --- 5. 6. 7. UPDATE DEVICE STATE & HEARTBEATS ---
+    //  UPDATE DEVICE STATE & HEARTBEATS 
     // =================================================================
 
    const currentTimestamp = reading.timestamp ? new Date(reading.timestamp) : new Date();
@@ -218,12 +217,12 @@ exports.processReading = async (req, res) => {
     
     device.currentState.lastContact = currentTimestamp; //
 
-    // ✅ UPDATE: Individual sensor statuses, timestamps, and "Online" logging
+    // Individual sensor statuses, timestamps, and "Online" logging
     
     // --- PH Sensor ---
     if (reading.pH !== null && reading.pH !== undefined) {
       if (device.currentState.sensorStatus.PH.status === 'Offline') { //
-        // ✅ Changed component label
+        // hanged component label
         createSystemLogs(null, deviceId, "pH Sensor", "Sensor PH is online", "success"); //
       }
       device.currentState.sensorStatus.PH.status = 'Online'; //
@@ -233,7 +232,7 @@ exports.processReading = async (req, res) => {
     // --- TEMP Sensor ---
     if (reading.temp !== null && reading.temp !== undefined) {
       if (device.currentState.sensorStatus.TEMP.status === 'Offline') { //
-        // ✅ Changed component label
+        // Changed component label
         createSystemLogs(null, deviceId, "Temp Sensor", "Sensor TEMP is online", "success"); //
       }
       device.currentState.sensorStatus.TEMP.status = 'Online'; //
@@ -243,7 +242,7 @@ exports.processReading = async (req, res) => {
     // --- TDS Sensor ---
     if (reading.tds !== null && reading.tds !== undefined) {
       if (device.currentState.sensorStatus.TDS.status === 'Offline') { //
-        // ✅ Changed component label
+        // Changed component label
         createSystemLogs(null, deviceId, "TDS Sensor", "Sensor TDS is online", "success"); //
       }
       device.currentState.sensorStatus.TDS.status = 'Online'; //
@@ -253,7 +252,7 @@ exports.processReading = async (req, res) => {
     // --- TURBIDITY Sensor ---
     if (reading.turbidity !== null && reading.turbidity !== undefined) {
       if (device.currentState.sensorStatus.TURBIDITY.status === 'Offline') { //
-        // ✅ Changed component label
+        // Changed component label
         createSystemLogs(null, deviceId, "Turbidity Sensor", "Sensor TURBIDITY is online", "success"); //
       }
       device.currentState.sensorStatus.TURBIDITY.status = 'Online'; //

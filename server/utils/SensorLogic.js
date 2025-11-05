@@ -9,9 +9,9 @@
 
 /**
  * Evaluates a single parameter against its thresholds.
- * @param {string} parameter - The name of the parameter (e.g., 'pH').
+ * @param {string} parameter - The name of the parameter 
  * @param {number} value - The sensor reading value.
- * @param {object} thresholds - The device-specific thresholds object (e.g., device.configurations.thresholds).
+ * @param {object} thresholds - The device-specific thresholds object 
  * @returns {{severity: string, message: string, note?: string}} The evaluation result.
  */
 const evaluateParameter = (parameter, value, thresholds) => {

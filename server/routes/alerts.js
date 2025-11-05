@@ -1,16 +1,11 @@
-// server/routes/alerts.js
-
 const express = require('express');
 const router = express.Router();
 
-// We will create this controller file in the next step
+// get the alert controller
 const alertController = require('../controllers/alertController');
 
 // **GET /api/alerts/**
-// This single, powerful route will fetch all alerts based on query parameters.
-// Examples:
-// GET /api/alerts?lifecycle=Active  -> Gets all active alerts
-// GET /api/alerts?lifecycle=History&severity=Critical -> Gets critical history alerts
+// fetch all alerts based on query parameters.
 router.get('/', alertController.getAlerts);
 
 // **POST /api/alerts/acknowledge/:id**

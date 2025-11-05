@@ -5,7 +5,7 @@ exports.validateName = (name) => {
     if (!name) {
         return { isValid: false, message: "Name is required." };
     }
-    // Corrected: Compare the length of the trimmed string
+    // Compare the length of the trimmed string
     if (name.trim().length < 5) {
         return {
             isValid: false,
@@ -22,7 +22,7 @@ exports.validateUsername = (username) => {
     if (!usernameRegex.test(username)) {
         return {
             isValid: false,
-            // Corrected: Changed key from 'username' to 'message'
+            //  Changed key from 'username' to 'message'
             message: "Username must be 5-20 characters and contain only letters, numbers, and underscores."
         };
     }

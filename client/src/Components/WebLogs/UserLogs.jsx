@@ -43,7 +43,7 @@ function UserLogs() {
             setLogs(logsToKeep);
 
             // Make a POST request to the backend with the array of IDs.
-            await axios.post(`${API_BASE_URL}/logs/delete`, { ids: idsArray });
+            await axios.post(`${API_BASE_URL}/api/logs/delete`, { ids: idsArray });
             
         } catch (error) {
             console.error("Error deleting logs:", error);

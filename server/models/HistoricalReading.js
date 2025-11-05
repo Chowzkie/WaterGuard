@@ -1,27 +1,30 @@
-    // server/models/Reading.js
-    const mongoose = require('mongoose');
+// server/models/Reading.js
+const mongoose = require('mongoose');
 
-    const ReadingSchema = new mongoose.Schema({
-        // The ID of the device that produced this reading (e.g., 'ps01-dev')
-        deviceId: {
-            type: String,
-            required: true,
-            index: true // Index this field for faster queries
-        },
-        // The exact time this reading was recorded
-        timestamp: {
-            type: Date,
-            required: true,
-            index: true // Also index by time for fast time-based lookups
-        },
-        // An object containing the actual sensor values
-        reading: {
-            PH: { type: Number },
-            TDS: { type: Number },
-            TEMP: { type: Number },
-            TURBIDITY: { type: Number }
-        }
-    });
+const ReadingSchema = new mongoose.Schema({
+    // The ID of the device that produced this reading (e.g., 'ps01-dev')
+    deviceId: {
+        type: String,
+        required: true,
+        index: true // Index this field for faster queries
+    },
+    // The exact time this reading was recorded
+    timestamp: {
+        type: Date,
+        required: true,
+        index: true, // Also index by time for fast time-based lookups
+        
+        // This TTL index tells MongoDB to automatically delete any document
+        // 90 days after the date specified in this 'timestamp' field.
+        expires: '90d' 
+    },
+    // An object containing the actual sensor values
+    reading: {
+        PH: { type: Number },
+        TDS: { type: Number },
+        TEMP: { type: Number },
+        TURBIDITY: { type:Number }
+    }
+});
 
-    module.exports = mongoose.model('Historical Reading', ReadingSchema);
-    
+module.exports = mongoose.model('Historical Reading', ReadingSchema);

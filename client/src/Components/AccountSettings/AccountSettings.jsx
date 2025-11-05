@@ -6,7 +6,7 @@ import Styles from '../../Styles/AccountSettStyle/AccountSettings.module.css';
 import AlertsContext from '../../utils/AlertsContext';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AccountSettings = () => {
     const navigate = useNavigate();
@@ -53,7 +53,7 @@ const AccountSettings = () => {
             }
 
             try {
-                const response = await axios.get(`${API_BASE_URL}/auth/user`, {
+                const response = await axios.get(`${API_BASE_URL}/api/auth/user`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -115,7 +115,7 @@ const AccountSettings = () => {
         setErrorMessage("");
 
 
-        const response = await axios.put(`${API_BASE_URL}/auth/upload-image/${userId}`, formData, {
+        const response = await axios.put(`${API_BASE_URL}/api/auth/upload-image/${userId}`, formData, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -140,7 +140,7 @@ const AccountSettings = () => {
         e.preventDefault();
         try {
             const result = await axios.put(
-                `${API_BASE_URL}/auth/update-name`,
+                `${API_BASE_URL}/api/auth/update-name`,
                 { name: fullname },
                 { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
             );
@@ -170,7 +170,7 @@ const AccountSettings = () => {
         e.preventDefault();
         try{
             const result = await axios.put(
-                `${API_BASE_URL}/auth/update-username`, 
+                `${API_BASE_URL}/api/auth/update-username`, 
                 {username: username}, 
                 {headers : {Authorization: `Bearer ${localStorage.getItem("token")}`}}
             );
@@ -218,7 +218,7 @@ const AccountSettings = () => {
         e.preventDefault();
         try{
             const result = await axios.put(
-                `${API_BASE_URL}/auth/update-password`,
+                `${API_BASE_URL}/api/auth/update-password`,
                 {currentPassword: currentPassword, newPassword: newPassword, confirmPassword: confirmPassword},
                 {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
             );

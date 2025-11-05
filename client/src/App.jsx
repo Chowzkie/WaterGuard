@@ -31,7 +31,7 @@ const CURRENT_USER = {
 };
 
 // Define your backend API base URL
-const API_BASE_URL = 'http://localhost:8080'; // Make sure this matches your backend port
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Make sure this matches your backend port
 
 // =================================================================================
 // MOCK DATA AND INITIAL STATE (These are now fetched from backend)

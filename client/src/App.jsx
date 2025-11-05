@@ -169,13 +169,19 @@ function App() {
             await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
                 headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}
             })
-            window.location.reload();
         }catch(error){
             console.error("Logout Error", error)
         }finally{
+            // Clear all user/session-related data
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
             setLoggedInUser(null);
-            setNotifications([]); // Clear notifications on logout
+            setNotifications([]);
+            setActiveAlerts([]);
+            setRecentAlerts([]);
+            setAlertsHistory([]);
+            setDeviceLocations([]);
+            setPumpingStations([]);
             navigate('/login');
         }
     };

@@ -22,7 +22,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://waterguardapp.com", "http://localhost:5173"], //keep the localhost for testing
+    origin: ["https://waterguardapp.com"], //keep the localhost for testing
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
   allowEIO3: true,       //

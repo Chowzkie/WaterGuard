@@ -6,7 +6,7 @@ import { PARAMETER_TO_COMPONENT_MAP } from '../../utils/logMaps';
 import {formatDateTime} from '../../utils/formatDateTime'
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function SystemLogs() {
     // --- STATE MANAGEMENT ---
@@ -17,7 +17,7 @@ function SystemLogs() {
     useEffect(() => {
         const fetchSystemLogs = async() => {
             try{
-                const response = await axios.get(`${API_BASE_URL}/logs/systemlogs`);
+                const response = await axios.get(`${API_BASE_URL}/api/logs/systemlogs`);
                 setLogs(response.data.map(log => ({...log, id: log._id}))); // Update the logs state with the fetched data, adding a local 'id' field for keying.
             }catch(error){
                 console.error("Error fetching system logs:", error);
@@ -40,7 +40,7 @@ function SystemLogs() {
             setLogs(logsToKeep);
 
             // Make a POST request to the backend with the array of IDs.
-            await axios.post(`${API_BASE_URL}/logs/deleteSysLog`, { ids: idsArray });
+            await axios.post(`${API_BASE_URL}/api/logs/deleteSysLog`, { ids: idsArray });
         }catch(error){
             console.error("Error deleting logs:", error);
             // Revert the UI state if the API call fails.
@@ -54,12 +54,12 @@ function SystemLogs() {
         if (lastDeletedLogs.length === 0) return;
         try {
             // Make a POST request to the backend to restore the logs.
-            await axios.post(`${API_BASE_URL}/logs/restoreSysLog`, { logs: lastDeletedLogs });
+            await axios.post(`${API_BASE_URL}/api/logs/restoreSysLog`, { logs: lastDeletedLogs });
             setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]); // Add the restored logs back to the main logs state.
             setLastDeletedLogs([]); // Clear the temporary restore state.
         } catch (error) {
             console.error("Error restoring logs:", error);
-            const response = await axios.get(`${API_BASE_URL}/logs/systemlogs`); // Re-fetch all logs from the backend to ensure data consistency in case of failure.
+            const response = await axios.get(`${API_BASE_URL}/api/logs/systemlogs`); // Re-fetch all logs from the backend to ensure data consistency in case of failure.
             setLogs(response.data.map(log => ({ ...log, id: log._id })));
         }
     }

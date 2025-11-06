@@ -41,19 +41,19 @@ const deviceSchema = new mongoose.Schema({
     },
     sensorStatus: {
       PH: {
-        status: { type: String, default: 'Online' },
+        status: { type: String, default: 'Offline' },
         lastReadingTimestamp: { type: Date, default: () => new Date() }
       },
       TDS: {
-        status: { type: String, default: 'Online' },
+        status: { type: String, default: 'Offline' },
         lastReadingTimestamp: { type: Date, default: () => new Date() }
       },
       TEMP: {
-        status: { type: String, default: 'Online' },
+        status: { type: String, default: 'Offline' },
         lastReadingTimestamp: { type: Date, default: () => new Date() }
       },
       TURBIDITY: {
-        status: { type: String, default: 'Online' },
+        status: { type: String, default: 'Offline' },
         lastReadingTimestamp: { type: Date, default: () => new Date() }
       }
     }

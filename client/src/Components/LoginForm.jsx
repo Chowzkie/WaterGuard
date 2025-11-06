@@ -16,6 +16,7 @@ function LoginForm({ onLogin }) {
     const [shake, setShake] = useState(false);
 
     // login submission to interact with the backend
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const handleSubmit = async (e) => { // Made the function async
         e.preventDefault();
         setMessage('Logging in...'); // Provide feedback to the user
@@ -24,7 +25,7 @@ function LoginForm({ onLogin }) {
 
         try {
             // Send a POST request to backend's login endpoint
-            const response = await axios.post('http://localhost:8080/api/auth/login', {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
                 username,
                 password,
             });

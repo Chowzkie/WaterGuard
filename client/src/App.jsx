@@ -31,7 +31,7 @@ const CURRENT_USER = {
 };
 
 // Define your backend API base URL
-const API_BASE_URL = 'http://localhost:8080'; // Make sure this matches your backend port
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Make sure this matches your backend port
 
 // =================================================================================
 // MOCK DATA AND INITIAL STATE (These are now fetched from backend)
@@ -169,13 +169,19 @@ function App() {
             await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
                 headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}
             })
-            window.location.reload();
         }catch(error){
             console.error("Logout Error", error)
         }finally{
+            // Clear all user/session-related data
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
             setLoggedInUser(null);
-            setNotifications([]); // Clear notifications on logout
+            setNotifications([]);
+            setActiveAlerts([]);
+            setRecentAlerts([]);
+            setAlertsHistory([]);
+            setDeviceLocations([]);
+            setPumpingStations([]);
             navigate('/login');
         }
     };

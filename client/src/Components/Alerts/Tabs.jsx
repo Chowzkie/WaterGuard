@@ -1,6 +1,3 @@
-// components/Tabs.jsx
-
-import React from 'react';
 import styles from '../../Styles/Tabs.module.css';
 
 const Tabs = ({ tabs, activeTab, onTabClick }) => {

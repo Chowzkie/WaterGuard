@@ -42,7 +42,7 @@ const ActiveAlerts = ({
   const toggleDropdown = (alertId) => setExpandedAlertId(prev => (prev === alertId ? null : alertId));
   const toggleDeviceDropdown = () => setDropdownOpen(prev => !prev);
   
-  // --- UPDATED: Use device._id ---
+  // --- Use device._id ---
   const handleDeviceSelect = (deviceId) => { onDeviceFilterChange({ target: { value: deviceId } }); setDropdownOpen(false); };
   
   const handleAcknowledgeClick = (alertId) => { onAcknowledgeAlert(alertId); setExpandedAlertId(null); };
@@ -61,7 +61,7 @@ const ActiveAlerts = ({
                     <label>Filter by Device:</label>
                     <div className={styles['custom-dropdown']}>
                         <div className={styles['dropdown-header']} onClick={toggleDeviceDropdown}>
-                            {/* --- UPDATED: Find by device._id --- */}
+                            {/* --- Find by device._id --- */}
                             {(devices || []).find(d => d._id === selectedDevice)?.label || 'All Devices'}
                             <span className={styles['dropdown-arrow']}>
                                 {dropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -72,7 +72,7 @@ const ActiveAlerts = ({
                                 All Devices
                             </div>
                             {(devices || []).map(device => (
-                                /* --- UPDATED: Use key={device._id} and pass device._id --- */
+                                /* --- Use key={device._id} and pass device._id --- */
                                 <div key={device._id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device._id)}>
                                     {device.label}
                                 </div>

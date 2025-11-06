@@ -40,7 +40,7 @@ function Logs() {
             </div>
 
             <div className={Style['logContent']}>
-                {/* MODIFIED: Pass the systemLogs from context to the SystemLogs component */}
+                {/* Pass the systemLogs from context to the SystemLogs component */}
                 {activeTab === 'system' && 
                     <SystemLogs/>
                 }

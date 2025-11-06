@@ -45,7 +45,7 @@ function LoginForm({ onLogin }) {
             }
         } catch (error) {
             console.error('Login error:', error);
-            // FIX: Use the error message from the backend response if available, otherwise use a generic message
+            // Use the error message from the backend response if available, otherwise use a generic message
             const errorMessage = error.response?.data?.message || 'An error occurred during login. Please try again.';
             setMessage(errorMessage);
             setIsError(true);

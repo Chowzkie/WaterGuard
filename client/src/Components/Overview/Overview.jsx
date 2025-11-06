@@ -1,4 +1,3 @@
-import React from 'react';
 import PumpingStatus from './PumpingStatus';
 import InteractiveMap from './InteractiveMap';
 import ActiveAlerts from './ActiveAlerts';

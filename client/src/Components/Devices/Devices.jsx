@@ -1,4 +1,3 @@
-// Components/Devices/Devices.jsx
 import React, { useState, useContext } from 'react'; // <--- Import useContext
 import TestingDevice from "./TestingDevice";
 import Style from '../../Styles/Device.module.css';

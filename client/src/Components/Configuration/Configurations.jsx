@@ -1,11 +1,8 @@
-// src/Components/Configuration/Configurations.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useAlerts } from '../../utils/AlertsContext';
 import styles from '../../Styles/Configurations.module.css';
 import DeviceSelection from './DeviceSelection';
 import ConfigurationSettings from './ConfigurationSettings';
-// Import the hooks from React Router
 import { useParams, useNavigate } from 'react-router-dom';
 
 const Configurations = ({ onSetHeaderDeviceLabel }) => {

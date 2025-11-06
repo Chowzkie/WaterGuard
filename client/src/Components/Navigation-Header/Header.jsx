@@ -1,8 +1,6 @@
-// Components/Navigation-Header/Header.jsx
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bell, Settings, LogOut, ChevronRight, Logs, ShieldUser } from 'lucide-react';
-import axios from 'axios';
+import { Bell, Settings, LogOut, ChevronRight, Logs } from 'lucide-react';
 import styles from '../../Styles/Nav-Head-Style/Header.module.css'; 
 import Logo from '../../assets/Logo.png'; 
 import Notifications from './Notifications'; // The separate notifications component
@@ -55,7 +53,7 @@ function Header({
         setOpen(false); // Close user menu when opening notifications
     };
 
-    // --- RESTORED: Logic to close dropdowns when clicking outside ---
+    // --- Logic to close dropdowns when clicking outside ---
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {

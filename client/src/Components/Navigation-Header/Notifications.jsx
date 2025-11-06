@@ -7,7 +7,7 @@ import styles from '../../Styles/Nav-Head-Style/Notifications.module.css';
 const formatTimeAgo = (timestamp) => {
     if (!timestamp) return '';
     const now = new Date();
-    // --- MODIFIED: Use createdAt from the database ---
+    // --- Use createdAt from the database ---
     const seconds = Math.floor((now - new Date(timestamp)) / 1000);
 
     if (seconds < 60) return `${seconds}s ago`;
@@ -53,7 +53,7 @@ const Notifications = ({
         }
     };
     
-    // --- NEW: Calculate unread count directly from props ---
+    // --- Calculate unread count directly from props ---
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
@@ -80,7 +80,7 @@ const Notifications = ({
                     // The component now maps over the 'notifications' prop.
                     notifications.map((notif) => (
                         <div 
-                            // --- MODIFIED: Use MongoDB _id ---
+                            // --- Use MongoDB _id ---
                             className={`${styles.dropdownItemN} ${getItemClass(notif.type)} ${notif.read ? styles.read : ''}`} 
                             key={notif._id} 
                         >
@@ -88,10 +88,10 @@ const Notifications = ({
                             <div className={styles.itemRight}>
                                 <span>{notif.message}</span>
                                 <div className={styles.meta}>
-                                    {/* --- MODIFIED: Use createdAt from DB --- */}
+                                    {/* --- Use createdAt from DB --- */}
                                     <small>{formatTimeAgo(notif.createdAt)}</small>
                                     {/* The onClick handler calls the prop function with the notification's unique ID. */}
-                                    {/* --- MODIFIED: Use MongoDB _id --- */}
+                                    {/* --- Use MongoDB _id --- */}
                                     {!notif.read && (
                                         <button onClick={() => onMarkAsRead(notif._id)}>
                                             <i>Mark as read</i>

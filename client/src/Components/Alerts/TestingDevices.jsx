@@ -1,8 +1,6 @@
-import React from 'react';
-import { Search } from 'lucide-react';
 import styles from '../../Styles/TestingDevices.module.css';
 
-// --- MODIFIED --- Accept new props for interactivity
+// Accept new props for interactivity
 const TestingDevices = ({ devices = [], selectedDeviceId, onDeviceSelect }) => {
 
   return (

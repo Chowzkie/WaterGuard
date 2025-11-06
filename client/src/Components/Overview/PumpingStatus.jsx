@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'; // Import useMemo
 import {  SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare } from 'lucide-react';
 import '../../Styles/PumpingStatus.css';
 
-// --- UPDATED: Accept 'devices' prop ---
+// --- Accept 'devices' prop ---
 const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devices to empty array
     
     const [isEditing, setIsEditing] = useState(false);
@@ -10,9 +10,9 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
     
     const [newLabel, setNewLabel] = useState('');
-    // --- UPDATED: 'newLocation' is now auto-filled ---
+    // --- 'newLocation' is now auto-filled ---
     const [newLocation, setNewLocation] = useState('');
-    // --- NEW: State to track the selected device ID ---
+    // --- State to track the selected device ID ---
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
     const [newOperation, setNewOperation] = useState('On-going');
     const [error, setError] = useState('');
@@ -21,7 +21,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
     const [draftDetails, setDraftDetails] = useState({ cause: '', date: '', startTime: '', endTime: '' });
     const [stationBeingDetailed, setStationBeingDetailed] = useState(null);
 
-    // --- NEW: Memoized list of available devices ---
+    // ---Memoized list of available devices ---
     // This now depends on 'draftStations' to update the dropdown
     // as you add new stations in the modal.
     const availableDevices = useMemo(() => {
@@ -37,7 +37,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         return devices.filter(d => !assignedDeviceIds.has(d._id));
     }, [devices, draftStations]); // <-- UPDATED DEPENDENCY
 
-    // --- NEW: Handler for the device dropdown ---
+    // --- Handler for the device dropdown ---
     const handleDeviceSelectChange = (e) => {
         const deviceId = e.target.value;
         setSelectedDeviceId(deviceId);
@@ -72,7 +72,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         setDetailsForStationId(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
         setStationBeingDetailed(null);
-        // --- NEW: Reset new station fields on close ---
+        // --- Reset new station fields on close ---
         setNewLabel('');
         setNewLocation('');
         setSelectedDeviceId('');
@@ -93,7 +93,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
             return;
         }
         
-        // --- UPDATED: Prepare stations for saving ---
+        // --- Prepare stations for saving ---
         // Ensure deviceId is just the ID string, not the populated object
         const stationsToSave = draftStations.map(s => ({
             ...s,
@@ -112,14 +112,14 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
 
     const handleAddStationToDraft = (e) => {
         e.preventDefault();
-        // --- UPDATED: Validation check ---
+        // --- Validation check ---
         if (!newLabel || !selectedDeviceId) {
             setError('Please fill out Label and select a Device.');
             return;
         }
         setError('');
         
-        // --- UPDATED: New station object ---
+        // ---  New station object ---
         const newStation = {
             tempId: Date.now(),
             label: newLabel,
@@ -129,7 +129,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         };
         setDraftStations([...draftStations, newStation]);
         
-        // --- UPDATED: Reset fields ---
+        // --- Reset fields ---
         setNewLabel('');
         setNewLocation('');
         setSelectedDeviceId('');
@@ -200,7 +200,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
     }
     // ...
     
-    // --- NEW: Helper to get device label for display ---
+    // ---Helper to get device label for display ---
     // Handles both populated objects (from DB) and string IDs (newly added)
     const getDeviceLabel = (deviceId) => {
         if (!deviceId) return 'N/A';
@@ -232,7 +232,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                     </div>
                     <div className="station-list">
                         <div className="station-list-header">
-                            {/* --- UPDATED: Added Device column --- */}
+                            {/* --- Added Device column --- */}
                             <div>Label</div><div>Location</div><div>Device</div><div>Operation</div>
                         </div>
                         <div className="station-list-items">
@@ -240,7 +240,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                 <div key={s._id} className="station-item">
                                     <div>{s.label}</div>
                                     <div>{s.location}</div>
-                                    {/* --- UPDATED: Display device label --- */}
+                                    {/* --- Display device label --- */}
                                     {/* s.deviceId is populated by the backend as { _id: '...', label: '...' } */}
                                     <div>{s.deviceId?.label || 'N/A'}</div>
                                     <div>
@@ -270,7 +270,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                     <div key={station._id || station.tempId} className="station-item">
                                         <div>{station.label}</div>
                                         <div>{station.location}</div>
-                                        {/* --- UPDATED: Display device label --- */}
+                                        {/* --- Display device label --- */}
                                         <div>{getDeviceLabel(station.deviceId)}</div>
                                         <div>
                                             <select
@@ -324,7 +324,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                 ))}
                             </div>
 
-                            {/* --- UPDATED: Add Station Form --- */}
+                            {/* --- Add Station Form --- */}
                             <form className="add-station-form" onSubmit={handleAddStationToDraft} noValidate>
                                 <h4 className="form-title">Add New Station</h4>
                                 <div className="form-inputs">
@@ -338,7 +338,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                         />
                                     </div>
                                     
-                                    {/* --- NEW: Device Dropdown --- */}
+                                    {/* --- Device Dropdown --- */}
                                     <div className="form-input-group">
                                         <select
                                             value={selectedDeviceId}
@@ -355,7 +355,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                         </select>
                                     </div>
 
-                                    {/* --- UPDATED: Location Input (Auto-filled) --- */}
+                                    {/* --- Location Input (Auto-filled) --- */}
                                     <div className="form-input-group">
                                         <input
                                             type="text"

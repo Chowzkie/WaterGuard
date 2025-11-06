@@ -4,7 +4,7 @@ import GuidelinesModal from './GuidelinesModal';
 import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff, HelpCircle, X, Link } from 'lucide-react';
 
 /**
- * A reusable component to display a message when a setting is not configured.
+ *  component to display a message when a setting is not configured.
  */
 const NotConfiguredMessage = () => (
     <div className={styles['not-configured-message']}>
@@ -16,61 +16,27 @@ const NotConfiguredMessage = () => (
 const ConfigurationSettings = ({ device, onSave, onBack }) => {
     // --- STATE MANAGEMENT ---
 
-    /**
-     * @state {object | null} originalConfigs - Stores a deep copy of the device's original configurations.
-     * This acts as a "baseline" to compare against for detecting unsaved changes.
-     */
+
     const [originalConfigs, setOriginalConfigs] = useState(null);
-
-    /**
-     * @state {object | null} draftConfigs - Stores the configurations as the user modifies them.
-     * All user input updates this state, leaving `originalConfigs` untouched until a save occurs.
-     */
     const [draftConfigs, setDraftConfigs] = useState(null);
-
-    /**
-     * @state {boolean} showUnsavedPrompt - Controls the visibility of the "Unsaved Changes" confirmation modal.
-     */
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
-
-    /**
-     * @state {boolean} isSaving - A flag to indicate when a save operation is in progress.
-     * Used to disable buttons and show loading indicators.
-     */
     const [isSaving, setIsSaving] = useState(false);
-
-    /**
-     * @state {boolean} saveSuccess - A flag to temporarily show a "Saved!" success message on the save button.
-     */
     const [saveSuccess, setSaveSuccess] = useState(false);
-
-    /**
-     * @state {object} openPanels - Manages the open/closed state of the collapsible panels.
-     */
     const [openPanels, setOpenPanels] = useState({
         alerts: true, // Start with the main panel open
         logging: false,
         testing: false,
         shutoff: false,
     });
-
-    /**
-     * @state {boolean} showSyncPrompt - NEW: Controls the visibility of the "Threshold Sync" modal.
-     */
     const [showSyncPrompt, setShowSyncPrompt] = useState(false);
-
-    /**
-     * @state {object} mismatchData - NEW: Stores which parameters are mismatched.
-     */
     const [mismatchData, setMismatchData] = useState(null);
-
     const initializedDeviceIdRef = useRef(null);
     const [showGuidelines, setShowGuidelines] = useState(false);
 
     // --- LIFECYCLE HOOKS ---
 
     /**
-     * @effect Initializes component state when a new `device` is selected.
+     * Initializes component state when a new `device` is selected.
      * It creates deep copies of the device's configurations for both the 'original' and 'draft' states.
      * It also gracefully handles cases where a device has no pre-existing configuration data by defaulting to an empty object.
      */
@@ -78,7 +44,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         // Only reset the form if the actual device ID has changed.
         if (device && device._id !== initializedDeviceIdRef.current) {
             
-            // --- MODIFICATION: Ensure nested objects exist ---
+            // --- Ensure nested objects exist ---
             // Create a deep copy
             let initialConfigs = device.configurations
                 ? JSON.parse(JSON.stringify(device.configurations))
@@ -98,7 +64,6 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
             
             initialConfigs.logging = initialConfigs.logging || {};
             initialConfigs.logging.alertIntervals = initialConfigs.logging.alertIntervals || {};
-            // --- End Modification ---
             
             setOriginalConfigs(initialConfigs);
             setDraftConfigs(initialConfigs);
@@ -170,11 +135,11 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     };
 
 
-    // --- NEW: SYNC HANDLER ---
+    // ---SYNC HANDLER ---
 
     /**
      * @function handleSyncAllFromAlerts
-     * @description NEW: Copies all critical alert thresholds TO the valve shut-off thresholds.
+     * @description Copies all critical alert thresholds TO the valve shut-off thresholds.
      */
     const handleSyncAllFromAlerts = () => {
         setDraftConfigs(prev => {
@@ -190,7 +155,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         });
     };
 
-    // --- MODIFIED SAVE LOGIC ---
+    // --- SAVE LOGIC ---
 
     /**
      * @function proceedWithSave
@@ -309,8 +274,6 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         setShowSyncPrompt(false);
         setMismatchData(null);
     };
-
-    // --- End Modified Save Logic ---
 
     
     /**
@@ -549,14 +512,13 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                         >
                             {draftConfigs?.controls?.valveShutOff ? (
                                 <>
-                                    {/* --- NEW SYNC BUTTON --- */}
+                                    {/* ---  SYNC BUTTON --- */}
                                     <div className={styles['sync-button-wrapper']}>
                                         <button onClick={handleSyncAllFromAlerts} className={styles['sync-button']}>
                                             <Link size={14} />
                                             <span>Sync from Alert Thresholds</span>
                                         </button>
                                     </div>
-                                    {/* --- END NEW SYNC BUTTON --- */}
 
                                     <ThresholdGroup label="Shut-Off on pH">
                                         <div className={styles['input-row-2-col']}>
@@ -621,7 +583,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                 </div>
             )}
 
-            {/* --- NEW: THRESHOLD SYNC MODAL --- */}
+            {/* --- THRESHOLD SYNC MODAL --- */}
             {showSyncPrompt && mismatchData && (
                 <div className={`${styles.modalBackdrop} ${styles.confirmationModalBackdrop}`}>
                     <div className={`${styles.confirmationModalContent} ${styles.syncModalContent}`}>
@@ -688,7 +650,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
 /**
  * A reusable collapsible panel component for the accordion layout.
- * MODIFIED: The title prop now directly renders JSX for more flexibility.
+ * The title prop now directly renders JSX for more flexibility.
  */
 const CollapsiblePanel = ({ icon, title, isOpen, onToggle, children }) => {
     return (
@@ -731,7 +693,7 @@ const SelectField = ({ value, onChange, options, unit = "minutes" }) => (
 );
 
 /**
- * NEW: A reusable select component for Yes/No options.
+ * A reusable select component for Yes/No options.
  * @param {string} label - The label for the select field.
  * @param {string} value - The current value ('yes' or 'no').
  * @param {function} onChange - The function to call when the value changes.

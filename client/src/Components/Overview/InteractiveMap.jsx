@@ -53,7 +53,7 @@ const ConfirmationModal = ({ title, message, confirmText, onConfirm, onCancel, i
     </div>
 );
 
-// --- NEW Helper Component: Device Info Modal ---
+// --- Helper Component: Device Info Modal ---
 const DeviceInfoModal = ({ device, onClose }) => (
     <div className="modal-backdrop" onClick={onClose}>
         <div className="add-device-form-content" onClick={e => e.stopPropagation()}>
@@ -81,7 +81,6 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
     const [lng, setLng] = useState('');
     const [validationError, setValidationError] = useState(null);
 
-    // --- THIS IS THE NEW LOGIC ---
     // This effect runs once when the modal opens to suggest the next device number.
     useEffect(() => {
         if (existingDevices && existingDevices.length > 0) {

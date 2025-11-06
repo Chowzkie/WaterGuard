@@ -105,7 +105,7 @@ function DetailsPanel({ device }) {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const socket = io(API_BASE_URL); // 👈 2. ESTABLISH THE CONNECTION ONCE
+const socket = io(API_BASE_URL); //  2. ESTABLISH THE CONNECTION ONCE
 
 function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     const { devices, setDevices } = useContext(AlertsContext);
@@ -142,7 +142,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         toastTimeouts.current[id] = setTimeout(() => startToastExit(id), 3000);
     }, [startToastExit]);
 
-    // NEW: Handler function to call the backend
+    // Handler function to call the backend
     const handleValveToggle = async (deviceId, isNowOpen) => {
         const newCommandValue = isNowOpen ? 'OPEN' : 'CLOSED';
         try {
@@ -205,7 +205,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
             };
             fetchHistoricalData();
         }
-    }, [deviceId, timeRange]); // 👈 Re-run this effect when deviceId OR timeRange changes
+    }, [deviceId, timeRange]); //  Re-run this effect when deviceId OR timeRange changes
 
     const handleGoBack = () => navigate('/devices');
 

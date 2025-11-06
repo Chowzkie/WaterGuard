@@ -84,7 +84,7 @@ const Alerts = () => {
                         historyAlerts={filteredHistoryAlerts}
                         //New
                         assigneeList={assigneeList}
-                        // CHANGE: Pass delete and restore functions down as props
+                        // Pass delete and restore functions down as props
                         onDeleteHistoryAlerts={onDeleteHistoryAlerts}
                         onRestoreHistoryAlerts={onRestoreHistoryAlerts}
                     />
@@ -107,7 +107,7 @@ const Alerts = () => {
                 </div>
             </div>
             <div className={styles['devices-column']}>
-                {/* --- MODIFIED --- Pass new props to make it a navigation menu */}
+                {/*Pass new props to make it a navigation menu */}
                 <TestingDevices
                     devices={devices}
                     selectedDeviceId={viewedDeviceId}

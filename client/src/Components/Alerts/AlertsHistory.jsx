@@ -20,21 +20,20 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
     const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
     
-    // --- NEW: State for managing the delete UI structure ---
+    // ---State for managing the delete UI structure ---
     const [deleteMode, setDeleteMode] = useState('off'); // 'off', 'all', 'select'
     const [selectedToDelete, setSelectedToDelete] = useState([]);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showUndoToast, setShowUndoToast] = useState(false);
     const lastDeleted = useRef([]); // Use a ref to hold the last deleted items for the undo action
     const undoTimerRef = useRef(null);
-    const wasUndoClicked = useRef(false);
 
     // --- All existing refs and memos are unchanged ---
     const filterPanelRef = useRef(null);
     const typeDropdownRef = useRef(null);
     const assigneeDropdownRef = useRef(null);
 
-    // --- NEW: State to manage which alert detail panel is open ---
+    // --- State to manage which alert detail panel is open ---
     const [expandedAlertId, setExpandedAlertId] = useState(null);
 
     const uniqueAlertTypes = useMemo(() => {
@@ -42,7 +41,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         return Array.from(types);
     }, [historyAlerts]);
 
-    // ADDED: Create the assignees list for the dropdown, ensuring 'All' is always first.
+    // Create the assignees list for the dropdown, ensuring 'All' is always first.
     const assignees = useMemo(() => ['All', ...assigneeList], [assigneeList]);
 
 
@@ -53,7 +52,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             const statusMatch = filters.status.length === 0 || filters.status.includes(alert.status);
             const severityMatch = filters.severity.length === 0 || filters.severity.includes(alert.severity);
             const typeMatch = filters.type.length === 0 || filters.type.some(t => baseType.toLowerCase().includes(t.toLowerCase()));
-            // MODIFIED: This logic now correctly checks the nested 'acknowledgedBy.name' property.
+            // This logic now correctly checks the nested 'acknowledgedBy.name' property.
             const assigneeMatch = filters.assignee === 'All' || (alert.acknowledgedBy && alert.acknowledgedBy.name === filters.assignee);
             const actionMatch = filters.action.length === 0 ||
                 (filters.action.includes('Acknowledged') && alert.acknowledged === true) ||
@@ -80,7 +79,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // --- NEW: Handlers for the entire delete functionality structure ---
+    // --- Handlers for the entire delete functionality structure ---
     const handleToggleDeleteMode = () => {
         setDeleteMode(prev => (prev === 'off' ? 'all' : 'off'));
         setSelectedToDelete([]); // Reset selection when toggling
@@ -189,7 +188,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         }
     };
 
-     // --- NEW: Handler to toggle the expanded/collapsed state of a row ---
+     // --- Handler to toggle the expanded/collapsed state of a row ---
     const handleRowClick = (alertId, hasAcknowledgement) => {
         // Only allow expanding if the alert has been acknowledged
         if (hasAcknowledgement) {
@@ -225,7 +224,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                     )}
                     
                     {isFilterOpen && (
-                        // --- FIX: Restored the full filter panel JSX ---
+                        // --- Restored the full filter panel JSX ---
                         <div className={styles['filter-panel']} ref={filterPanelRef}>
                             <div className={styles['filter-header']}>
                                 <h4>Filter Alerts</h4>

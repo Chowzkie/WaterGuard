@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-// --- NEW: Added Cpu icon for the cards ---
+// --- Added Cpu icon for the cards ---
 import { Menu, Cpu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Style from '../../Styles/DeviceTesting.module.css';

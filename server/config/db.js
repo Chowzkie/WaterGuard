@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 
 const connectDB = async() => {
     try{
-        await mongoose.connect("mongodb+srv://WaterGuard:p1hv6uI5qM6qK6Hu@cluster0.euoms4a.mongodb.net/WaterGuard");
+        await mongoose.connect(process.env.MONGO_URI); //local db
         console.log("MongoDB connected")
     }catch(err){
         console.error("Database connnection to MongoDB is failed", err.message);

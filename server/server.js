@@ -303,6 +303,9 @@ const startServer = async () => {
     // ===========================
     // 🚀 START SERVER
     // ===========================
+    app.get("/", (req, res) => {
+      res.send("Server is running");
+    });
     server.listen(PORT, () => {
       console.log(`🚀 Server with real-time sockets running on port ${PORT}`);
     });

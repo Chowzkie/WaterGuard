@@ -170,7 +170,6 @@ function App() {
     }
 
     // --- State Management ---
-    const [archiveInterval, setArchiveInterval] = useState(60000);
 
     const [deviceLocations, setDeviceLocations] = useState([]);
     const [pumpingStations, setPumpingStations] = useState([]);
@@ -181,10 +180,7 @@ function App() {
     const [activeFilterDevice, setActiveFilterDevice] = useState('All Devices');
     const [recentFilterDevice, setRecentFilterDevice] = useState('All Devices');
 
-    const alertIdCounter = useRef(0);
-    const [latestReading, setLatestReading] = useState(null);
     const backToNormalTimers = useRef(new Map());
-    const maxSeenId = useRef(0);
     const [assigneeList, setAssigneeList] = useState([]);
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
@@ -258,7 +254,9 @@ function App() {
                         
                         if (newestEvent._id !== lastPlayedSoundId.current) {
                             // --- Plays sound for ALERTS only ---
-                            playAlertSound(); 
+                            if (isAuthenticated) {
+                                playAlertSound(); 
+                            }
                             lastPlayedSoundId.current = newestEvent._id;
                         }
                     }
@@ -276,7 +274,7 @@ function App() {
         fetchAlerts();
         const intervalId = setInterval(fetchAlerts, 5000);
         return () => clearInterval(intervalId);
-    }, [playAlertSound]); // --- Dependency updated
+    }, [playAlertSound, isAuthenticated]); // --- Dependency updated
 
     // --- old addNotification function ---
     
@@ -356,7 +354,7 @@ function App() {
                 setUnreadCount(currentUnreadCount);
 
                 // Play sound *once* if new unread logs were found
-                if (hasNewUnreadLogs) {
+                if (hasNewUnreadLogs && isAuthenticated) {
                     playNotificationSound();
                 }
 
@@ -369,7 +367,7 @@ function App() {
         const intervalId = setInterval(fetchNotifications, 7000); // Poll every 7 seconds
         return () => clearInterval(intervalId);
 
-    }, [deviceLocations, playNotificationSound]); // Re-run if devices load
+    }, [deviceLocations, playNotificationSound, isAuthenticated]); // Re-run if devices load
 
 
     //  handler to allow child components to signal animation completion

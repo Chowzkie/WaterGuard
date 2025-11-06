@@ -1,4 +1,4 @@
-import NoDevicesFound from '../NoDevFound/noDevicesFound';
+import NoDevicesFound from '../NoDevFound/noDevicesFound'; //import nodevfound
 import { ChevronRight, Cpu } from 'lucide-react';
 import styles from '../../Styles/DeviceSelection.module.css';
 

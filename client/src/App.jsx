@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Import Axios
+import axios from 'axios';
 import socket from "./socket";
-import { jwtDecode } from 'jwt-decode'
 import './App.css';
 
 import Login from './Components/Login';
@@ -21,28 +20,8 @@ import AccountSettings from './Components/AccountSettings/AccountSettings';
 
 import routeTitleMap from './utils/routeTitleMap';
 
-// =================================================================================
-// SIMULATED CURRENT USER
-// =================================================================================
-const CURRENT_USER = {
-    username: 'j.doe',
-    fullname: 'John Doe',
-    role: 'System Operator'
-};
-
 // Define your backend API base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Make sure this matches your backend port
-
-// =================================================================================
-// MOCK DATA AND INITIAL STATE (These are now fetched from backend)
-// =================================================================================
-
-const initialState = {
-    activeAlerts: [],
-    recentAlerts: [],
-    alertsHistory: [],
-    recentlyDeletedHistory: [],
-};
 
 /**
  * Generates a list of human-readable log messages by comparing old and new configuration objects.
@@ -63,13 +42,12 @@ function App() {
     const showHeader = !noHeaderPaths.includes(location.pathname);
     const showNavigation = !noNavPaths.includes(location.pathname);
     const [headerDeviceLabel, setHeaderDeviceLabel] = useState(null);
-    const [socketConnected, setSocketConnected] = useState(false);
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
-        socket.on("disconnect", () => console.log("❌ Socket disconnected"));
+        //socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
+        //socket.on("disconnect", () => console.log("❌ Socket disconnected"));
 
         socket.on("deviceUpdate", (updatedDevice) => {
             setDeviceLocations(prev => {
@@ -82,7 +60,6 @@ function App() {
         });
 
         socket.on("newReading", (payload) => {
-            // optional UI updates
         });
 
         return () => {
@@ -131,7 +108,7 @@ function App() {
                 setLoggedInUser(response.data)
                 localStorage.setItem("user", JSON.stringify(response.data))
             }catch (error) {
-                console.log("failed to fetch user profile", error);
+                //console.log("failed to fetch user profile", error);
                 // If unauthorized, clear session
                 if (error.response && error.response.status === 401) {
                     localStorage.removeItem("token");
@@ -157,7 +134,7 @@ function App() {
         localStorage.setItem("token", token); // Store the token, not the user object
         localStorage.setItem("user", JSON.stringify(user)) // store the decoded user in localstorage
         setLoggedInUser(user); 
-        console.log("App.jsx - user logged in:", user);
+        //console.log("App.jsx - user logged in:", user);
     } catch (e) {
         console.error("Failed to get user", e);
         // Handle invalid token case
@@ -190,7 +167,6 @@ function App() {
     const handleUserUpdate = (updatedUserData) => {
         setLoggedInUser(updatedUserData);
         localStorage.setItem("user", JSON.stringify(updatedUserData))
-        console.log("App.jsx user updated to", updatedUserData);
     }
 
     // --- State Management ---
@@ -213,10 +189,10 @@ function App() {
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
 
-    // --- FIX: Ref to hold previous device state to prevent inaccurate logging ---
+    // --- Ref to hold previous device state to prevent inaccurate logging ---
     const previousDevicesRef = useRef([]);
 
-    // --- NEW: STATE MANAGEMENT FOR NOTIFICATIONS ---
+    // --- STATE MANAGEMENT FOR NOTIFICATIONS ---
     const [notifications, setNotifications] = useState([]); // Now holds logs from DB
     const [unreadCount, setUnreadCount] = useState(0); // For the badge
     const processedLogIds = useRef(new Set()); // To track seen logs and prevent duplicates
@@ -227,7 +203,7 @@ function App() {
     const [alertsHistory, setAlertsHistory] = useState([]);
 
     // =================================================================================
-    // --- NEW: SEPARATE SOUND FUNCTIONS ---
+    // --- SEPARATE SOUND FUNCTIONS ---
     // =================================================================================
 
     // Sound for the ACTIVE ALERTS UI
@@ -253,7 +229,7 @@ function App() {
     }, []);
 
     // =================================================================================
-    // MODIFIED: LIVE ALERT POLLING (Sound only)
+    // LIVE ALERT POLLING (Sound only)
     // =================================================================================
     useEffect(() => {
         const fetchAlerts = async () => {
@@ -281,7 +257,7 @@ function App() {
                         setNewlyAddedId(newestEvent._id);
                         
                         if (newestEvent._id !== lastPlayedSoundId.current) {
-                            // --- MODIFIED: Plays sound for ALERTS only ---
+                            // --- Plays sound for ALERTS only ---
                             playAlertSound(); 
                             lastPlayedSoundId.current = newestEvent._id;
                         }
@@ -300,12 +276,12 @@ function App() {
         fetchAlerts();
         const intervalId = setInterval(fetchAlerts, 5000);
         return () => clearInterval(intervalId);
-    }, [playAlertSound]); // --- MODIFIED: Dependency updated
+    }, [playAlertSound]); // --- Dependency updated
 
-    // --- REMOVED: old addNotification function ---
+    // --- old addNotification function ---
     
     // --- Utility function for creating System Logs (from original file) ---
-    // --- MODIFIED: Removed call to setSystemLogs which is not defined ---
+    // ---  Removed call to setSystemLogs which is not defined ---
     const logSystemEvent = useCallback((logData) => {
         const newLog = {
             id: Date.now() + Math.random(),
@@ -317,7 +293,7 @@ function App() {
     }, []);
 
     // =================================================================================
-    // --- NEW: NOTIFICATION POLLING FROM DATABASE ---
+    // --- NOTIFICATION POLLING FROM DATABASE ---
     // =================================================================================
     useEffect(() => {
         // This function maps a system log from the DB to a notification object
@@ -396,7 +372,7 @@ function App() {
     }, [deviceLocations, playNotificationSound]); // Re-run if devices load
 
 
-    // --- ADDED --- A handler to allow child components to signal animation completion
+    //  handler to allow child components to signal animation completion
     const handleAnimationComplete = () => {
         setNewlyAddedId(null);
     };
@@ -416,7 +392,7 @@ function App() {
         }
     };
 
-    // --- This useEffect fetches all initial data required for the application ---
+    // ---  fetches all initial data required for the application ---
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -426,7 +402,7 @@ function App() {
                 ]);
                 setDeviceLocations(devicesRes.data);
 setPumpingStations(stationsRes.data);
-                // --- FIX: Prime the ref with the initial device state ---
+                // --- Prime the ref with the initial device state ---
                 previousDevicesRef.current = devicesRes.data;
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -435,7 +411,7 @@ setPumpingStations(stationsRes.data);
         fetchInitialData();
     }, []);
 
-   // --- MODIFIED: This useEffect ONLY logs events. It no longer adds notifications. ---
+   // --- This useEffect ONLY logs events. It no longer adds notifications. ---
     useEffect(() => {
         const pollDeviceStatus = async () => {
             try {
@@ -456,7 +432,6 @@ setPumpingStations(stationsRes.data);
                             status: latestDevice.status === 'Online' ? 'Success' : 'Error',
                         });
 
-                        // --- REMOVED addNotification call ---
                         // The polling hook will pick up the new log from the DB
                     }
                 });
@@ -472,10 +447,10 @@ setPumpingStations(stationsRes.data);
 
         const pollInterval = setInterval(pollDeviceStatus, 10000);
         return () => clearInterval(pollInterval);
-    }, [logSystemEvent]); // --- MODIFIED: Dependency updated
+    }, [logSystemEvent]); // ---  Dependency updated
 
     // =================================================================================
-    // NEW & UPDATED EVENT HANDLERS (API-DRIVEN with Full Logging)
+    //  UPDATED EVENT HANDLERS (API-DRIVEN with Full Logging)
     // =================================================================================
 
     const handleAcknowledgeAlert = async (alertId) => {
@@ -484,7 +459,6 @@ setPumpingStations(stationsRes.data);
                 userID
             });
 
-            // --- THIS IS THE FIX ---
             // Instead of filtering the alert out, we now MAP over the array and
             // update the specific alert that was acknowledged. This will make the
             // checkmark appear without removing the alert from the list.
@@ -570,7 +544,7 @@ setPumpingStations(stationsRes.data);
     
     const handleSaveStations = async (updatedStations) => {
         try {
-            // UPDATED: Send the required payload structure with userID for logging
+            // Send the required payload structure with userID for logging
             const response = await axios.post(`${API_BASE_URL}/api/stations/batch-update`, {
                 stationsFromClient: updatedStations,
                 userID: userID 
@@ -585,7 +559,7 @@ setPumpingStations(stationsRes.data);
         }
     };
 
-    // --- MODIFIED: handleSaveConfiguration sends a PUT request and logs changes ---
+    // --- handleSaveConfiguration sends a PUT request and logs changes ---
     const handleSaveConfiguration = useCallback(async (deviceId, newConfigs) => {
 
         try {
@@ -605,7 +579,7 @@ setPumpingStations(stationsRes.data);
         }
     }, [deviceLocations]);
 
-    // --- NEW --- This useEffect automatically creates a unique list of assignees for the filter
+    // This useEffect automatically creates a unique list of assignees for the filter
     useEffect(() => {
         if (alertsHistory && alertsHistory.length > 0) {
             const uniqueAssignees = [...new Set(
@@ -618,7 +592,7 @@ setPumpingStations(stationsRes.data);
     }, [alertsHistory]);
 
     // =================================================================================
-    // --- NEW: Handlers for managing notification read status ---
+    // --- Handlers for managing notification read status ---
     // =================================================================================
     const handleMarkNotificationAsRead = useCallback(async (notificationId) => {
         // Optimistic UI update: Mark as read immediately

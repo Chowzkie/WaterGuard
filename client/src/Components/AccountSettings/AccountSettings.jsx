@@ -1,5 +1,6 @@
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Phone, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera, Check, X as CancelIcon } from 'lucide-react';
+import { User, Lock, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera, Check, X as CancelIcon } from 'lucide-react';
 import { Eye, EyeOff } from 'lucide-react';
 import Styles from '../../Styles/AccountSettStyle/AccountSettings.module.css';
 import AlertsContext from '../../utils/AlertsContext';
@@ -42,11 +43,11 @@ const AccountSettings = () => {
     // --- useEffect Hooks ---
     const fetchUserProfile = async () => {
         if (loggedInUser?.username) {
-            console.log("AccountSettings.jsx - fetchUserProfile: Attempting to fetch for username:", loggedInUser.username);
+            //console.log("AccountSettings.jsx - fetchUserProfile: Attempting to fetch for username:", loggedInUser.username);
             const token = localStorage.getItem('token');
 
             if (!token) {
-                console.error("AccountSettings.jsx - fetchUserProfile: No token found, cannot fetch user profile.");
+                //console.error("AccountSettings.jsx - fetchUserProfile: No token found, cannot fetch user profile.");
                 setErrorMessage("Authentication failed. Please log in again.");
                 return;
             }
@@ -64,7 +65,7 @@ const AccountSettings = () => {
                 setUsername(response.data.username);
                 setPhoneNumber(response.data.contact);
 
-                console.log("AccountSettings.jsx - fetchUserProfile: Successfully fetched currentUser:", response.data);
+                //console.log("AccountSettings.jsx - fetchUserProfile: Successfully fetched currentUser:", response.data);
             } catch (error) {
                 console.error("AccountSettings.jsx - fetchUserProfile: Failed to fetch user profile:", error.response?.data?.message || error.message);
                 if (error.response?.status === 401) {
@@ -75,7 +76,7 @@ const AccountSettings = () => {
                 //setCurrentUser(null);
             }
         } else {
-            console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
+            //console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
         }
     };
     useEffect(() => {

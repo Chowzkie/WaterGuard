@@ -276,7 +276,9 @@ function App() {
                         
                         if (newestEvent._id !== lastPlayedSoundId.current) {
                             // --- MODIFIED: Plays sound for ALERTS only ---
-                            playAlertSound(); 
+                            if (isAuthenticated) {
+                                playAlertSound(); 
+                            }
                             lastPlayedSoundId.current = newestEvent._id;
                         }
                     }
@@ -294,7 +296,7 @@ function App() {
         fetchAlerts();
         const intervalId = setInterval(fetchAlerts, 5000);
         return () => clearInterval(intervalId);
-    }, [playAlertSound]); // --- MODIFIED: Dependency updated
+    }, [playAlertSound, isAuthenticated]); // --- MODIFIED: Dependency updated
 
     // --- REMOVED: old addNotification function ---
     
@@ -374,7 +376,7 @@ function App() {
                 setUnreadCount(currentUnreadCount);
 
                 // Play sound *once* if new unread logs were found
-                if (hasNewUnreadLogs) {
+               if (hasNewUnreadLogs && isAuthenticated) {
                     playNotificationSound();
                 }
 
@@ -387,7 +389,7 @@ function App() {
         const intervalId = setInterval(fetchNotifications, 7000); // Poll every 7 seconds
         return () => clearInterval(intervalId);
 
-    }, [deviceLocations, playNotificationSound]); // Re-run if devices load
+    }, [deviceLocations, playNotificationSound, isAuthenticated]); // Re-run if devices load
 
 
     // --- ADDED --- A handler to allow child components to signal animation completion

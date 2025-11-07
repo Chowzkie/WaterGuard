@@ -306,7 +306,7 @@ const startServer = async () => {
     app.get("/", (req, res) => {
       res.send("Server is running");
     });
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server with real-time sockets running on port ${PORT}`);
     });
   } catch (err) {

@@ -2,7 +2,8 @@ const cors = require("cors");
 
 const corsOptions = {
   origin: [
-    "https://waterguardapp.com",   // your live frontend domain
+    "https://waterguardapp.com", 
+    "https://www.waterguardapp.com",  // live frontend domain
     "http://localhost:5173"        // optional: allow local testing
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],

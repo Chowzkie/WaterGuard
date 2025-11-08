@@ -477,7 +477,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             isOpen={openPanels.logging}
                             onToggle={() => handleTogglePanel('logging')}
                         >
-                            <ThresholdGroup label="Active Alert → Recent Alert">
+                            <ThresholdGroup label="Back-to-normal Alert → Recent Alert">
                                 <SelectField value={draftConfigs.logging?.alertIntervals?.activeToRecent} onChange={e => handleDeepChange(['logging', 'alertIntervals', 'activeToRecent'], parseInt(e.target.value))} options={[15, 30, 45, 60]} unit="seconds" />
                             </ThresholdGroup>
                             <ThresholdGroup label="Recent Alert → History">

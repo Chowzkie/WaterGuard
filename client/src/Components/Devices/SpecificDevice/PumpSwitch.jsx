@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Style from '../../../Styles/SpecificDeviceStyle/ValveSwitch.module.css';
 
-// 1. ACCEPT 'pumpCycle' as a prop
 function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, addToast }) {
     const [isPumpOn, setIsPumpOn] = useState(false);
     
@@ -124,18 +123,26 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, ad
     const progress = isRunning ? Math.max(0, Math.min(1, remainingTime / totalDuration)) : 0;
     const strokeDashoffset = circumference * (1 - progress);
 
-    // --- FORMAT STATUS TEXT ---
+    // --- **IMPROVED** FORMAT STATUS TEXT ---
     const formatPhaseName = (phase) => {
-        if (!phase || phase === 'NONE') return 'IDLE';
-        return phase.replace('_', ' ').toUpperCase();
+        if (!phase || phase === 'NONE') return 'Idle';
+        switch(phase) {
+            case 'FILLING': return 'Filling';
+            case 'DRAINING': return 'Draining';
+            case 'DELAY_AFTER_FILL': return 'Delay (Post-Fill)';
+            case 'DELAY_AFTER_DRAIN': return 'Delay (Post-Drain)';
+            default: return 'Idle';
+        }
     }
 
     return (
         <div className={Style['valve-container']}>
             <div className={Style['valve-title']}>Pump Control</div>
+            
+            {/* --- **UPDATED** STATUS SECTION --- */}
             <div className={Style['status-section']}>
                 
-                {/* --- RENDER SPINNER OR LED --- */}
+                {/* 1. Spinner (now without text inside) or LED */}
                 {isRunning ? (
                     <div className={Style['countdown-spinner']}>
                         <svg className={Style['countdown-svg']} viewBox="0 0 40 40">
@@ -149,7 +156,7 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, ad
                                 strokeDashoffset={strokeDashoffset}
                             />
                         </svg>
-                        <span className={Style['countdown-text']}>{remainingTime}s</span>
+                        {/* The time text is no longer here */}
                     </div>
                 ) : (
                     <div
@@ -159,11 +166,20 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, ad
                     ></div>
                 )}
                 
-                <span className={Style['status-text']}>
-                    {/* Use the detailed phase name from pumpCycle */}
-                    Pump is {formatPhaseName(pumpCycle?.pausedPhase)}
-                </span>
+                {/* 2. New Stacked Text Block */}
+                <div className={Style['status-text-block']}>
+                    <span className={Style['status-text-main']}>
+                        {formatPhaseName(pumpCycle?.pausedPhase)}
+                    </span>
+                    {/* Show remaining time here ONLY if running */}
+                    {isRunning && (
+                        <span className={Style['status-text-sub']}>
+                            {remainingTime}s remaining
+                        </span>
+                    )}
+                </div>
 
+                {/* 3. The Toggle Switch */}
                 <label className={Style['switch']}>
                     <input
                         type="checkbox"

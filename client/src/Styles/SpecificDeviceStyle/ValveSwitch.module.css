@@ -152,3 +152,44 @@ input:checked + .slider:before { transform: translateX(26px); }
   min-width: 140px; /* Increased min-width */
   text-align: left;
 }
+
+/* === ADD THESE CLASSES to ValveSwitch.module.css === */
+
+/* 1. Update status-section to fill the width */
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%; /* Make it fill the container */
+}
+
+/* 2. This is the new container for the stacked text */
+.status-text-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  flex-grow: 1; /* This is KEY: it pushes the switch to the right */
+  min-width: 140px; /* Give it space */
+  line-height: 1.3; /* Tighter line spacing */
+}
+
+/* 3. This is the main status text (e.g., "Filling") */
+.status-text-main {
+  font-size: 1.1rem;
+  font-weight: 600; /* Bolder */
+  color: #374151;
+}
+
+/* 4. This is the sub-text for the countdown (e.g., "13s remaining") */
+.status-text-sub {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #6b7280; /* Lighter color */
+}
+
+/* 5. We removed the text from the spinner, so this isn't needed,
+      but we'll override it just in case */
+.countdown-text {
+  display: none;
+}

@@ -170,32 +170,39 @@ const startServer = async () => {
         }
       });
 
+    // THIS IS THE NEW (UPDATED) CODE:
     /**
      * (ESP32 Event)
      * Receives pump state updates.
+     * --- UPDATED for Pause/Resume Spinner ---
      */
       socket.on("pumpStateUpdate", async (data) => { 
         try {
-          // Data is now an object: { deviceId, pumpState, remainingTime_sec, pausedPhase }
+          // Data is an object: { deviceId, pumpState, remainingTime_sec, pausedPhase }
           const { deviceId, pumpState, remainingTime_sec, pausedPhase } = data; 
-          console.log(`⚡ Received pump state update from ${deviceId}: ${pumpState}`);
+          console.log(`⚡ Pump state from ${deviceId}: ${pumpState}, Phase: ${pausedPhase}, Time: ${remainingTime_sec}s`);
 
           // Prepare the database update
           const updateSet = {
             "currentState.pump": pumpState,
-            "commands.setPump": "NONE",
-            "currentState.lastContact": new Date(),
+            "commands.setPump": "NONE", // Acknowledge command
+            "currentState.lastContact": new Date(), // Heartbeat
+
+            // This logic now correctly handles all cases:
+            // 1. PAUSED (e.g., pumpState: 'IDLE', pausedPhase: 'FILLING', remainingTime_sec: 30)
+            // 2. RUNNING (e.g., pumpState: 'FILLING', pausedPhase: 'FILLING', remainingTime_sec: 60)
+            // 3. FULLY IDLE (e.g., pumpState: 'IDLE', pausedPhase: 'NONE', remainingTime_sec: 0)
+            "currentState.pumpCycle.pausedPhase": pausedPhase,
+            "currentState.pumpCycle.remainingTime_sec": remainingTime_sec,
+            
+            // --- THIS IS THE CRITICAL ADDITION ---
+            // This records *when* the phase started, so the spinner can count down.
+            "currentState.pumpCycle.phaseStartedAt": new Date()
           };
 
           if (pumpState === 'IDLE' && pausedPhase && pausedPhase !== 'NONE') {
-            // This is a PAUSE event! Save the remaining time.
+            // This is a PAUSE event.
             console.log(`   ... Storing PAUSE state. Phase: ${pausedPhase}, Remaining: ${remainingTime_sec}s`);
-            updateSet["currentState.pumpCycle.pausedPhase"] = pausedPhase;
-            updateSet["currentState.pumpCycle.remainingTime_sec"] = remainingTime_sec;
-          } else if (pumpState === 'FILLING' || pumpState === 'DRAINING' || pumpState === 'DELAY') {
-            // This is a START or RESUME event. Clear the paused state.
-            updateSet["currentState.pumpCycle.pausedPhase"] = 'NONE';
-            updateSet["currentState.pumpCycle.remainingTime_sec"] = 0;
           }
 
           const updatedDevice = await Device.findByIdAndUpdate(
@@ -205,7 +212,9 @@ const startServer = async () => {
           );
 
           if (updatedDevice) {
+            // Send the full, updated device object to all web clients
             io.emit("deviceUpdate", updatedDevice);
+            console.log(`   ... Emitted deviceUpdate for ${deviceId}`);
           }
         } catch (error) {
           console.error("Error processing pump state update from device:", error);

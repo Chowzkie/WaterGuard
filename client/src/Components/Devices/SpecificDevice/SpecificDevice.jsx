@@ -238,6 +238,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                     deviceStatus={currentDevice.currentState?.status}
                     valveState={currentDevice.currentState?.valve}
                     pumpState={currentDevice.currentState?.pump || 'OFF'}  // fallback: 'OFF'
+                    pumpCycle={currentDevice.currentState?.pumpCycle}
                     onValveToggle={handleValveToggle}
                     onPumpToggle={handlePumpToggle}
                     addToast={addToast}

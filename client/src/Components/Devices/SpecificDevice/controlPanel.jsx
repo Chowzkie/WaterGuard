@@ -3,11 +3,11 @@ import Style from '../../../Styles/SpecificDeviceStyle/ControlPanel.module.css';
 import ValveSwitch from './ValveSwitch';
 import PumpSwitch from './PumpSwitch';
 
-function ControlPanel({ deviceId, deviceStatus, valveState, pumpState, onValveToggle, onPumpToggle, addToast }) {
+function ControlPanel({ deviceId, deviceStatus, valveState, pumpState, pumpCycle, onValveToggle, onPumpToggle, addToast }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const panels = [
         { component: <ValveSwitch deviceId={deviceId} deviceStatus={deviceStatus} valveState={valveState} onToggle={onValveToggle} addToast={addToast} /> },
-        { component: <PumpSwitch deviceId={deviceId} deviceStatus={deviceStatus} pumpState={pumpState} onToggle={onPumpToggle} addToast={addToast} /> }
+        { component: <PumpSwitch deviceId={deviceId} deviceStatus={deviceStatus} pumpState={pumpState} pumpCycle={pumpCycle} onToggle={onPumpToggle} addToast={addToast} /> }
     ];
 
     const handlePrev = () => setCurrentIndex((prev) => (prev === 0 ? panels.length - 1 : prev - 1));

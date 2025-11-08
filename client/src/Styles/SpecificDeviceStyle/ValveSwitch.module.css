@@ -104,3 +104,51 @@ input:checked + .slider:before { transform: translateX(26px); }
   90% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(10px); }
 }
+
+/* Add to Styles/SpecificDeviceStyle/ValveSwitch.module.css */
+
+.countdown-spinner {
+  position: relative;
+  width: 40px; /* Bigger than LED */
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Prevent it from shrinking */
+}
+
+.countdown-svg {
+  width: 40px;
+  height: 40px;
+  transform: rotate(-90deg); /* Start from the top */
+}
+
+.countdown-svg-bg {
+  stroke: #e5e7eb; /* Light grey background track */
+  fill: none;
+  stroke-width: 4;
+}
+
+.countdown-svg-progress {
+  stroke: #2563eb; /* Blue progress */
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s linear;
+}
+
+.countdown-text {
+  position: absolute;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Fix status text min-width */
+.status-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #374151;
+  min-width: 140px; /* Increased min-width */
+  text-align: left;
+}

@@ -195,6 +195,7 @@ const sendPumpCommand = async (req, res) => {
           commandPayload.value = 'RESUME';
           commandPayload.phase = pausedPhase; // e.g., "DRAINING" or "DELAY_AFTER_FILL"
           commandPayload.resumeTime = remainingTime_sec;
+          device.currentState.pump = pausedPhase;
         } else {
           // --- THIS IS A FRESH START ---
           // Device is idle, so start a new cycle.

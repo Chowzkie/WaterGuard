@@ -22,7 +22,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: ["https://waterguardapp.com", "https://www.waterguardapp.com"], //keep the localhost for testing
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
   allowEIO3: true,       //
@@ -306,7 +306,7 @@ const startServer = async () => {
     app.get("/", (req, res) => {
       res.send("Server is running");
     });
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server with real-time sockets running on port ${PORT}`);
     });
   } catch (err) {

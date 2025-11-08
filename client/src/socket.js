@@ -1,12 +1,12 @@
 import { io } from "socket.io-client";
 
-const API_BASE_URL = "http://localhost:4000"; // adjust to your backend
-
-const socket = io(API_BASE_URL, {
-  transports: ["websocket"],
+const socket = io(import.meta.env.VITE_SOCKET_URL, {
+  transports: ["websocket", "polling"],
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 2000,
+  secure: true,
+  withCredentials: true,
 });
 
 export default socket;

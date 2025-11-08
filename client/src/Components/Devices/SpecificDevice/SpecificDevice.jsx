@@ -105,7 +105,7 @@ function DetailsPanel({ device }) {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const socket = io(API_BASE_URL); //  2. ESTABLISH THE CONNECTION ONCE
+const socket = io(process.env.VITE_SOCKET_URL); //  2. ESTABLISH THE CONNECTION ONCE
 
 function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     const { devices, setDevices } = useContext(AlertsContext);

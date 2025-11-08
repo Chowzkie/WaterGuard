@@ -5,7 +5,7 @@ import Readings from './Readings';
 import '../../Styles/Dashboard.css';
 import AlertsContext from '../../utils/AlertsContext';
 
-const socket = io("http://localhost:8080"); // Adjust URL if deployed
+const socket = io(process.env.VITE_SOCKET_URL); // Adjust URL if deployed
 
 function Dashboard() {
   const { devices: devicesFromContext } = useContext(AlertsContext);

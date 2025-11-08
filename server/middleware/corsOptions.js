@@ -1,8 +1,13 @@
-//corsOptions.js
-const cors = require('cors');
+const cors = require("cors");
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173"
+  origin: [
+    "https://waterguardapp.com", 
+    "https://www.waterguardapp.com",  // live frontend domain
+    "http://localhost:5173"        // optional: allow local testing
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true, // allow cookies or auth headers if used
 };
 
 module.exports = cors(corsOptions);

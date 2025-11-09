@@ -73,16 +73,19 @@ function App() {
         let currentTitle = "WaterGuard";
 
         if (headerDeviceLabel) {
-            // If we have a device label, show it
-            currentTitle = location.pathname.startsWith("/devices/") ? `Device | ${headerDeviceLabel}` : `Configuration | ${headerDeviceLabel}`;
+            if (location.pathname.startsWith("/devices/")) {
+            currentTitle = `Device | ${headerDeviceLabel}`;
+            } else if (location.pathname.startsWith("/configurations/")) {
+            currentTitle = `Configuration | ${headerDeviceLabel}`;
+            } else {
+            currentTitle = routeTitleMap[location.pathname];
+            }
         } else {
-            // Otherwise, use routeTitleMap or fallback
             currentTitle = routeTitleMap[location.pathname] || "WaterGuard";
         }
 
         document.title = `WaterGuard | ${currentTitle}`;
     }, [location.pathname, headerDeviceLabel]);
-
 
     //// State for the currently logged-in user
     // Initialize from localStorage if available

@@ -168,6 +168,7 @@ const sendPumpCommand = async (req, res) => {
   try {
     const { deviceId } = req.params;
     const { commandValue, userID } = req.body; // 'FILL', 'DRAIN', 'IDLE'
+    const io = req.app.get('io'); // Get Socket.IO instance
 
     if (!['FILL', 'DRAIN', 'IDLE'].includes(commandValue)) {
       return res.status(400).json({ message: 'Invalid pump command value.' });
@@ -180,42 +181,73 @@ const sendPumpCommand = async (req, res) => {
       phase: 'NONE',
       resumeTime: 0
     };
+    
+    // This will hold our optimistic DB update
+    const updateSet = {
+      'commands.setPump': commandValue
+    };
+
+    const device = await Device.findById(deviceId).lean();
+    if (!device) {
+       return res.status(404).json({ message: 'Device not found.' });
+    }
 
     if (commandValue === 'FILL' || commandValue === 'DRAIN') {
-      // User wants to START or RESUME the cycle
-      const device = await Device.findById(deviceId).lean();
-      
-      if (device) {
-        const { pausedPhase, remainingTime_sec } = device.currentState.pumpCycle;
+      // User wants to START or RESUME
+      const { pausedPhase, remainingTime_sec } = device.currentState.pumpCycle;
 
-        if (remainingTime_sec > 0 && pausedPhase !== 'NONE') {
-          // --- THIS IS A RESUME ---
-          // The device is paused. Tell the ESP32 to resume from that exact phase.
-          console.log(`🔄 Issuing RESUME for ${deviceId}. Phase: ${pausedPhase}, Time: ${remainingTime_sec}s`);
-          commandPayload.value = 'RESUME';
-          commandPayload.phase = pausedPhase; // e.g., "DRAINING" or "DELAY_AFTER_FILL"
-          commandPayload.resumeTime = remainingTime_sec;
-          device.currentState.pump = pausedPhase;
-        } else {
-          // --- THIS IS A FRESH START ---
-          // Device is idle, so start a new cycle.
-          commandPayload.value = commandValue; // 'FILL' or 'DRAIN'
-          commandPayload.phase = (commandValue === 'FILL') ? 'FILLING' : 'DRAINING';
-          commandPayload.resumeTime = 0;
-        }
+      if (remainingTime_sec > 0 && pausedPhase !== 'NONE') {
+        // --- THIS IS A RESUME ---
+        console.log(`🔄 Issuing RESUME for ${deviceId}. Phase: ${pausedPhase}, Time: ${remainingTime_sec}s`);
+        commandPayload.value = 'RESUME';
+        commandPayload.phase = pausedPhase;
+        commandPayload.resumeTime = remainingTime_sec;
+
+        // --- OPTIMISTIC UPDATE for RESUME ---
+        updateSet['currentState.pump'] = pausedPhase; // e.g., 'DRAINING'
+        updateSet['currentState.pumpCycle.pausedPhase'] = pausedPhase;
+        updateSet['currentState.pumpCycle.remainingTime_sec'] = remainingTime_sec;
+        updateSet['currentState.pumpCycle.phaseStartedAt'] = new Date(); // Start countdown NOW
+
+      } else {
+        // --- THIS IS A FRESH START ---
+        commandPayload.value = commandValue;
+        commandPayload.phase = (commandValue === 'FILL') ? 'FILLING' : 'DRAINING';
+        commandPayload.resumeTime = 0; // Will be set by ESP32, but we can set it optimistically
+
+        // --- OPTIMISTIC UPDATE for FRESH START ---
+        const fullTime = (commandValue === 'FILL') 
+          ? device.configurations.controls.pumpCycleIntervals.fill * 60
+          : device.configurations.controls.pumpCycleIntervals.drain * 60;
+          
+        updateSet['currentState.pump'] = commandPayload.phase;
+        updateSet['currentState.pumpCycle.pausedPhase'] = commandPayload.phase;
+        updateSet['currentState.pumpCycle.remainingTime_sec'] = fullTime;
+        updateSet['currentState.pumpCycle.phaseStartedAt'] = new Date(); // Start countdown NOW
       }
+    } else if (commandValue === 'IDLE') {
+        // --- THIS IS A PAUSE/STOP ---
+        // We are telling the pump to stop. We won't know the remaining time
+        // until the ESP32 replies, but we can set the state to IDLE.
+        updateSet['currentState.pump'] = 'IDLE';
     }
-    // Note: If commandValue is 'IDLE', the default payload is sent, which is correct.
 
-    // Update DB to reflect desired command (e.g., 'commands.setPump': 'FILL')
-    await Device.findByIdAndUpdate(deviceId, {
-      $set: { 'commands.setPump': commandValue }
-    });
+    // --- 1. UPDATE THE DATABASE (Optimistic) ---
+    const updatedDevice = await Device.findByIdAndUpdate(
+      deviceId,
+      { $set: updateSet },
+      { new: true } // Return the new, updated document
+    );
 
-    // Emit the detailed payload to the device
-    const io = req.app.get('io');
+    // --- 2. EMIT COMMAND TO ESP32 ---
     io.to(deviceId).emit('command', commandPayload);
-    console.log(`📢 Emitted pump command to ${deviceId}:`, JSON.stringify(commandPayload));
+    console.log(`📢 Emitted command to ${deviceId}:`, JSON.stringify(commandPayload));
+
+    // --- 3. EMIT NEW STATE TO UI (The Fix) ---
+    if (updatedDevice) {
+      io.emit("deviceUpdate", updatedDevice);
+      console.log(`   ... Optimistically emitted deviceUpdate for ${deviceId}`);
+    }
 
     // Create user log
     await createUserlog(userID, `sent pump command (${commandValue}) to device ${deviceId}`, "Pump");

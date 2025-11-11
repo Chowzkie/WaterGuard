@@ -223,6 +223,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                     onGoBack={handleGoBack}
                     timeRange={timeRange}
                     setTimeRange={setTimeRange}
+                    deviceStatus={currentDevice.currentState?.status}
                 />
                 <SpecificReadings
                     deviceReadings={currentDevice.latestReading}

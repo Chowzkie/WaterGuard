@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler } from 'chart.js';
 import Style from '../../../Styles/SpecificDeviceStyle/ParameterChart.module.css';
+import { WifiOff } from 'lucide-react';
 
 // Register the 'Filler' plugin to draw the shaded min/max range
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler);
@@ -13,7 +14,7 @@ const PARAM_MAP = {
     tds: { key: 'TDS', label: 'TDS', color: '#E91E63' },
 };
 
-function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRange }) {
+function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRange, deviceStatus}) {
     const [selectedParam, setSelectedParam] = useState('ph');
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
@@ -112,6 +113,23 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         },
     };
 
+    if (deviceStatus === 'Offline') {
+        return (
+
+            <div className={Style.container}>
+                <div className={Style.statusMessage}>
+                    <div className={Style['offline-card']}>
+                        <div className={Style['icon-wrapper']}>
+                            <WifiOff size={50} />
+                        </div>
+                    </div>
+                    <h3>Device Status: {deviceStatus}</h3>
+                    <p>Historical readings are not available for devices that are {deviceStatus.toLowerCase()}.</p>
+                </div>
+            </div>
+        );
+      }
+
     return (
         <div className={Style['panel-container']}>
             <div className={Style['panel-header']}>
@@ -132,7 +150,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
                 ))}
             </div>
 
-           <div className={Style['chart-wrapper']}>
+            <div className={Style['chart-wrapper']}>
                 {isLoading ? (
                     <div className={Style['no-data-message']}>Loading Chart Data...</div>
                 ) : (historicalData && historicalData.length > 0) ? (

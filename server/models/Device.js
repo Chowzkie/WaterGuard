@@ -117,6 +117,9 @@ const deviceSchema = new mongoose.Schema({
       },
       valveOpenOnNormal: {
         enabled: { type: Boolean, default: true },
+        triggerPH: { type: Boolean, default: true },
+        triggerTurbidity: { type: Boolean, default: true },
+        triggerTDS: { type: Boolean, default: true },
       },
     },
     logging: {

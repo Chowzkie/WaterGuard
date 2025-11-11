@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../Styles/ConfigurationSettings.module.css';
 import GuidelinesModal from './GuidelinesModal';
-import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff, HelpCircle, X, Link } from 'lucide-react';
+import { WifiOff, ArrowLeft, Save, AlertTriangle, LoaderCircle, Check, ChevronDown, History, RefreshCw, PowerOff, HelpCircle, X, Link, ShieldAlert } from 'lucide-react';
 
 /**
- *  component to display a message when a setting is not configured.
+ * component to display a message when a setting is not configured.
  */
 const NotConfiguredMessage = () => (
     <div className={styles['not-configured-message']}>
@@ -13,10 +13,48 @@ const NotConfiguredMessage = () => (
     </div>
 );
 
+// --- Slide-in Validation Modal ---
+const ValidationErrorModal = ({ message, onClose }) => {
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        // Trigger slide-in animation after mount
+        const timer = setTimeout(() => setIsVisible(true), 10);
+        
+        // Auto-dismiss after 5 seconds
+        const autoClose = setTimeout(() => handleClose(), 5000);
+
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(autoClose);
+        };
+    }, []);
+
+    const handleClose = () => {
+        setIsVisible(false); // Trigger slide-out
+        setTimeout(onClose, 300); // Wait for animation to finish before unmounting
+    };
+
+    return (
+        <div className={`${styles['validation-toast']} ${isVisible ? styles['visible'] : ''}`}>
+            <div className={styles['validation-icon']}>
+                <ShieldAlert size={24} />
+            </div>
+            <div className={styles['validation-content']}>
+                <h4>Validation Error</h4>
+                <p>{message}</p>
+            </div>
+            <button onClick={handleClose} className={styles['validation-close']}>
+                <X size={18} />
+            </button>
+        </div>
+    );
+};
+
 const ConfigurationSettings = ({ device, onSave, onBack }) => {
     // --- STATE MANAGEMENT ---
 
-
+    const [validationError, setValidationError] = useState(null);
     const [originalConfigs, setOriginalConfigs] = useState(null);
     const [draftConfigs, setDraftConfigs] = useState(null);
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
@@ -64,6 +102,25 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
             
             initialConfigs.logging = initialConfigs.logging || {};
             initialConfigs.logging.alertIntervals = initialConfigs.logging.alertIntervals || {};
+
+            // Helper function to initialize boolean triggers.
+            // This ensures that if the fields don't exist in the DB (for older devices),
+            // they default to 'true' to maintain original functionality.
+            const initBool = (obj, key) => {
+                if (obj[key] === undefined) {
+                    obj[key] = true; // Default to true (checked)
+                }
+            };
+            
+            // Initialize specific trigger flags for Valve Shutoff
+            initBool(initialConfigs.controls.valveShutOff, 'triggerPH');
+            initBool(initialConfigs.controls.valveShutOff, 'triggerTurbidity');
+            initBool(initialConfigs.controls.valveShutOff, 'triggerTDS');
+            
+            // Initialize specific trigger flags for Valve Re-open
+            initBool(initialConfigs.controls.valveOpenOnNormal, 'triggerPH');
+            initBool(initialConfigs.controls.valveOpenOnNormal, 'triggerTurbidity');
+            initBool(initialConfigs.controls.valveOpenOnNormal, 'triggerTDS');
             
             setOriginalConfigs(initialConfigs);
             setDraftConfigs(initialConfigs);
@@ -94,6 +151,12 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         return JSON.stringify(originalConfigs) !== JSON.stringify(draftConfigs);
     };
 
+    /**
+     * @function handleDeepChange
+     * @description A versatile handler for updating nested state properties.
+     * @param {string[]} path - An array of keys representing the path to the value.
+     * @param {*} value - The new value to set.
+     */
     const handleDeepChange = (path, value) => {
         setDraftConfigs(prev => {
             const newConfigs = JSON.parse(JSON.stringify(prev)); // Deep copy to avoid bugs
@@ -107,33 +170,6 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
             return newConfigs;
         });
     };
-    
-    /**
-     * @function handleIntervalChange - Generic handler for integer-based select/dropdown fields.
-     * @param {string} category - The top-level key in the config object (e.g., 'alertLoggingIntervals').
-     * @param {string} field - The nested key to update (e.g., 'activeToRecent').
-     * @param {string} value - The new value from the select field.
-     */
-    const handleIntervalChange = (category, field, value) => {
-        setDraftConfigs(prev => ({
-            ...prev,
-            [category]: { ...prev[category], [field]: parseInt(value) }
-        }));
-    };
-
-    /**
-     * @function handleSelectChange - Generic handler for string-based select fields (like Yes/No).
-     * @param {string} category - The top-level key in the config object (e.g., 'valveShutOff').
-     * @param {string} field - The nested key to update (e.g., 'reopenOnNormalPH').
-     * @param {string} value - The new value from the select field ('yes' or 'no').
-     */
-    const handleSelectChange = (category, field, value) => {
-        setDraftConfigs(prev => ({
-            ...prev,
-            [category]: { ...prev[category], [field]: value }
-        }));
-    };
-
 
     // ---SYNC HANDLER ---
 
@@ -155,8 +191,38 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         });
     };
 
-    // --- SAVE LOGIC ---
+   
 
+    // Validation function to check parameter selection rules
+    /**
+     * @function validateParameterSelection
+     * @description Checks if at least one parameter is selected if the master switch is enabled.
+     * @returns {boolean} - True if validation passes, false otherwise.
+     */
+    const validateParameterSelection = () => {
+        const shutOff = draftConfigs.controls.valveShutOff;
+        const reOpen = draftConfigs.controls.valveOpenOnNormal;
+
+        // Rule: If Shut-off is Enabled, at least one shut-off trigger must be true
+        if (shutOff.enabled && !(shutOff.triggerPH || shutOff.triggerTurbidity || shutOff.triggerTDS)) {
+            // NOTE: Using alert() here because we are not in a React render prop.
+            // A more robust solution would be a modal or error message state.
+           setValidationError("'Auto Shut-off' is enabled, but no parameters (pH, Turbidity, TDS) are selected to trigger it.");
+            return false;
+        }
+
+        // Rule: If Re-open is Enabled, at least one re-open trigger must be true
+        if (reOpen.enabled && !(reOpen.triggerPH || reOpen.triggerTurbidity || reOpen.triggerTDS)) {
+           setValidationError("'Auto Re-open' is enabled, but no parameters (pH, Turbidity, TDS) are selected to monitor.");
+            return false;
+        }
+
+        // All rules passed
+        setValidationError(null); // Clear errors if valid
+        return true;
+    };
+
+     // --- SAVE LOGIC ---
     /**
      * @function proceedWithSave
      * @description The actual save operation, now separated to be called from multiple places.
@@ -174,7 +240,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch (error) {
             console.error("Failed to save configurations:", error);
-            alert("Error: Could not save settings.");
+            setValidationError("Error: Could not save settings. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -187,6 +253,12 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     const handleSaveClick = () => {
         if (isSaving) return;
 
+        // NEW: 1. Run new validation logic first.
+        if (!validateParameterSelection()) {
+            return; // Stop save if validation fails.
+        }
+
+        // ORIGINAL: 2. Check for mismatches.
         const alerts = draftConfigs.thresholds;
         const shutoff = draftConfigs.controls.valveShutOff;
 
@@ -300,6 +372,12 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
      * @function handleSaveAndExit - Handles the "Save & Exit" action from the modal.
      */
     const handleSaveAndExit = async () => {
+        // NEW: 1. Run new validation logic first.
+        if (!validateParameterSelection()) {
+            return; // Stop save if validation fails.
+        }
+
+        // ORIGINAL: 2. Run mismatch check.
         // We must run the same mismatch check here!
         setIsSaving(true); // Show loading state on modal button
 
@@ -368,6 +446,14 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
     return (
         <>
+            {/* Validation Modal Render */}
+            {validationError && (
+                <ValidationErrorModal 
+                    message={validationError} 
+                    onClose={() => setValidationError(null)} 
+                />
+            )}
+
             <div className={styles['settings-wrapper']}>
                 <div className={styles['settings-actions']}>
                     <button onClick={handleAttemptBack} className={styles['back-button']} disabled={isSaving}>
@@ -503,9 +589,9 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             </ThresholdGroup>
                         </CollapsiblePanel>
                         
-                        {/* --- Valve Shut-off Thresholds Panel --- */}
+                        {/* --- Valve Shut-off Panel --- */}
                         <CollapsiblePanel
-                            title="Valve Shut-off Thresholds"
+                            title="Valve Rules & Thresholds" 
                             icon={<PowerOff size={18} className={`${styles['header-icon']} ${styles['icon-shutoff']}`} />}
                             isOpen={openPanels.shutoff}
                             onToggle={() => handleTogglePanel('shutoff')}
@@ -520,37 +606,90 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                                         </button>
                                     </div>
 
-                                    <ThresholdGroup label="Shut-Off on pH">
+                                    {/* --- THRESHOLD INPUTS --- */}
+                                    <ThresholdGroup label="Shut-Off Threshold Definition">
                                         <div className={styles['input-row-2-col']}>
-                                            <InputField label="Critical Low" value={draftConfigs.controls.valveShutOff.phLow} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phLow'], parseFloat(e.target.value) || 0)} />
-                                            <InputField label="Critical High" value={draftConfigs.controls.valveShutOff.phHigh} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phHigh'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="pH Critical Low" value={draftConfigs.controls.valveShutOff.phLow} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phLow'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="pH Critical High" value={draftConfigs.controls.valveShutOff.phHigh} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'phHigh'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
                                     <ThresholdGroup label="Shut-Off on Turbidity">
                                         <div className={styles['input-row-1-col']}>
-                                            <InputField label="Critical Threshold" value={draftConfigs.controls.valveShutOff.turbidityCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'turbidityCrit'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="Turbidity Critical" value={draftConfigs.controls.valveShutOff.turbidityCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'turbidityCrit'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
                                     <ThresholdGroup label="Shut-Off on TDS">
                                         <div className={styles['input-row-1-col']}>
-                                            <InputField label="Critical Threshold" value={draftConfigs.controls.valveShutOff.tdsCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'tdsCrit'], parseFloat(e.target.value) || 0)} />
+                                            <InputField label="TDS Critical" value={draftConfigs.controls.valveShutOff.tdsCrit} onChange={e => handleDeepChange(['controls', 'valveShutOff', 'tdsCrit'], parseFloat(e.target.value) || 0)} />
                                         </div>
                                     </ThresholdGroup>
                                     
                                     <div className={styles['global-rule-divider']}></div>
                                     
-                                    {/* --- THIS GROUP CONTAINS THE NEW/MODIFIED RULES --- */}
-                                    <ThresholdGroup label="Valve Rules">
+                                    {/* --- AUTO SHUT-OFF RULES --- */}
+                                    <ThresholdGroup label="Automatic Shut-off Rules">
                                         <YesNoSelect
                                             label="Enable Automatic Valve Shut-off?"
                                             value={draftConfigs.controls.valveShutOff?.enabled ? 'yes' : 'no'}
                                             onChange={e => handleDeepChange(['controls', 'valveShutOff', 'enabled'], e.target.value === 'yes')}
                                         />
+                                        
+                                        {/* Conditionally Render Checkboxes based on the 'enabled' flag */}
+                                        {draftConfigs.controls.valveShutOff?.enabled && (
+                                            <div className={styles['checkbox-container']}>
+                                                <p className={styles['checkbox-label']}>Trigger Shut-off on:</p>
+                                                <div className={styles['checkbox-group']}>
+                                                    <Checkbox 
+                                                        label="pH" 
+                                                        checked={draftConfigs.controls.valveShutOff.triggerPH}
+                                                        onChange={e => handleDeepChange(['controls', 'valveShutOff', 'triggerPH'], e.target.checked)}
+                                                    />
+                                                    <Checkbox 
+                                                        label="Turbidity" 
+                                                        checked={draftConfigs.controls.valveShutOff.triggerTurbidity}
+                                                        onChange={e => handleDeepChange(['controls', 'valveShutOff', 'triggerTurbidity'], e.target.checked)}
+                                                    />
+                                                    <Checkbox 
+                                                        label="TDS" 
+                                                        checked={draftConfigs.controls.valveShutOff.triggerTDS}
+                                                        onChange={e => handleDeepChange(['controls', 'valveShutOff', 'triggerTDS'], e.target.checked)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </ThresholdGroup>
+
+                                    {/* --- AUTO RE-OPEN RULES --- */}
+                                    <ThresholdGroup label="Automatic Re-open Rules">
                                         <YesNoSelect
-                                            label="Auto Re-open Valve once the alert is cleared?"
+                                            label="Auto Re-open Valve once alert is cleared?"
                                             value={draftConfigs.controls.valveOpenOnNormal?.enabled ? 'yes' : 'no'}
                                             onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'enabled'], e.target.value === 'yes')}
                                         />
+
+                                        {/* Conditionally Render Checkboxes based on the 'enabled' flag */}
+                                        {draftConfigs.controls.valveOpenOnNormal?.enabled && (
+                                            <div className={styles['checkbox-container']}>
+                                                <p className={styles['checkbox-label']}>Trigger Re-open on (Monitors):</p>
+                                                <div className={styles['checkbox-group']}>
+                                                    <Checkbox 
+                                                        label="pH" 
+                                                        checked={draftConfigs.controls.valveOpenOnNormal.triggerPH}
+                                                        onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'triggerPH'], e.target.checked)}
+                                                    />
+                                                    <Checkbox 
+                                                        label="Turbidity" 
+                                                        checked={draftConfigs.controls.valveOpenOnNormal.triggerTurbidity}
+                                                        onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'triggerTurbidity'], e.target.checked)}
+                                                    />
+                                                    <Checkbox 
+                                                        label="TDS" 
+                                                        checked={draftConfigs.controls.valveOpenOnNormal.triggerTDS}
+                                                        onChange={e => handleDeepChange(['controls', 'valveOpenOnNormal', 'triggerTDS'], e.target.checked)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </ThresholdGroup>
                                 </>
                             ) : <NotConfiguredMessage />}
@@ -706,6 +845,20 @@ const YesNoSelect = ({ label, value, onChange }) => (
             <option value="yes">Enabled</option>
         </select>
     </div>
+);
+
+/**
+ * A reusable checkbox component for the parameter triggers.
+ * @param {string} label - The label for the checkbox.
+ * @param {boolean} checked - The current checked state.
+ * @param {function} onChange - The function to call when the value changes.
+ */
+const Checkbox = ({ label, checked, onChange }) => (
+    <label className={styles['custom-checkbox']}>
+        <input type="checkbox" checked={checked} onChange={onChange} />
+        {/* Using a span for better styling control of the label text */}
+        <span>{label}</span>
+    </label>
 );
 
 export default ConfigurationSettings;

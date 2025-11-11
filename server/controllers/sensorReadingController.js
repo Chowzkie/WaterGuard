@@ -50,79 +50,119 @@ exports.processReading = async (req, res) => {
     // AUTOMATION LOGIC BLOCK (SHUT-OFF & OPEN)
     // =================================================================
 
-    // Get automation rules and current state from the device model
-    const shutOffRules = device.configurations.controls.valveShutOff;
-    const shutOffEnabled = device.configurations.controls.valveShutOff.enabled;
-    const openOnNormalEnabled = device.configurations.controls.valveOpenOnNormal.enabled;
+    // Get automation configurations
+    const shutOffConfig = device.configurations.controls.valveShutOff;
+    const openConfig = device.configurations.controls.valveOpenOnNormal;
     const currentValveState = device.currentState.valve;
     
-    let triggeringParameters = []; // To store which sensor(s) caused a shutoff
+    // --- 1. CHECK FOR SHUT-OFF TRIGGERS ---
+    // We only add a parameter to 'shutOffCauses' if:
+    // A. The Master Shut-off is ENABLED
+    // B. The specific parameter trigger is ENABLED (checked)
+    // C. The reading violates the threshold
+    
+    let shutOffCauses = [];
 
-    // Check reading against the *shut-off thresholds*
-    if (reading.pH && (reading.pH < shutOffRules.phLow || reading.pH > shutOffRules.phHigh)) {
-      triggeringParameters.push("pH");
-    }
-    if (reading.turbidity && reading.turbidity > shutOffRules.turbidityCrit) {
-      triggeringParameters.push("Turbidity");
-    }
-    if (reading.tds && reading.tds > shutOffRules.tdsCrit) {
-      triggeringParameters.push("TDS");
+    if (shutOffConfig.enabled) {
+        // Check pH (only if triggerPH is true)
+        if (shutOffConfig.triggerPH && reading.pH !== undefined && 
+           (reading.pH < shutOffConfig.phLow || reading.pH > shutOffConfig.phHigh)) {
+            shutOffCauses.push("pH");
+        }
+        
+        // Check Turbidity (only if triggerTurbidity is true)
+        if (shutOffConfig.triggerTurbidity && reading.turbidity !== undefined && 
+           (reading.turbidity > shutOffConfig.turbidityCrit)) {
+            shutOffCauses.push("Turbidity");
+        }
+
+        // Check TDS (only if triggerTDS is true)
+        if (shutOffConfig.triggerTDS && reading.tds !== undefined && 
+           (reading.tds > shutOffConfig.tdsCrit)) {
+            shutOffCauses.push("TDS");
+        }
     }
 
-    // AUTO SHUT-OFF 
-    // If any parameter is critical AND the valve is currently OPEN, send a CLOSE command.
-    if (shutOffEnabled && triggeringParameters.length > 0 && currentValveState === 'OPEN') {
+    // --- 2. CHECK FOR RE-OPEN CONDITIONS ---
+    // We can only auto-open if:
+    // A. The Master Re-open is ENABLED
+    // B. All parameters that are CHECKED (enabled for re-open) are currently safe.
+    //    (If a parameter is unchecked, we ignore its bad value and allow opening)
+
+    let isSafeToOpen = false;
+
+    if (openConfig.enabled) {
+        // Assume safe initially, then prove unsafe based on CHECKED triggers
+        isSafeToOpen = true;
+
+        // If pH trigger is checked for re-open, block open if pH is critical
+        if (openConfig.triggerPH && reading.pH !== undefined && 
+           (reading.pH < shutOffConfig.phLow || reading.pH > shutOffConfig.phHigh)) {
+            isSafeToOpen = false;
+        }
+
+        // If Turbidity trigger is checked for re-open, block open if Turbidity is critical
+        if (openConfig.triggerTurbidity && reading.turbidity !== undefined && 
+           (reading.turbidity > shutOffConfig.turbidityCrit)) {
+            isSafeToOpen = false;
+        }
+
+        // If TDS trigger is checked for re-open, block open if TDS is critical
+        if (openConfig.triggerTDS && reading.tds !== undefined && 
+           (reading.tds > shutOffConfig.tdsCrit)) {
+            isSafeToOpen = false;
+        }
+    }
+
+    // --- 3. EXECUTE ACTIONS ---
+
+    // ACTION: AUTO SHUT-OFF
+    if (shutOffCauses.length > 0 && currentValveState === 'OPEN') {
       
       // Set the pending command on the device model
-      device.commands.setValve = 'CLOSED'; //
+      device.commands.setValve = 'CLOSED';
       device.currentState.valve = 'CLOSED';
 
-      // Create the command payload to send to the ESP32
-      const commandPayload = { type: "setValve", value: "CLOSED" }; //
+      const commandPayload = { type: "setValve", value: "CLOSED" };
 
-      // Emit the 'command' event *only* to the room for this specific deviceId
       if (io) {
         io.to(deviceId).emit("command", commandPayload);
       }
 
-      const logMessage = `Auto-shutoff: Valve command sent due to critical ${triggeringParameters.join(" & ")} reading(s).`;
+      const logMessage = `Auto-shutoff: Valve command sent due to critical ${shutOffCauses.join(" & ")} reading(s).`;
       actionsTaken.push(logMessage);
 
-      // Create a system log for this critical automation event
       await createSystemLogs(
         null,
         deviceId,
         "Valve Actuator",
         logMessage,
-        "error" // 'error' status for critical shutdowns
+        "error"
       );
     } 
     
-    //  AUTO OPEN-ON-NORMAL 
-    // ELSE IF the feature is enabled, AND no parameters are critical, AND the valve is CLOSED, send OPEN.
-    else if (openOnNormalEnabled && triggeringParameters.length === 0 && currentValveState === 'CLOSED') {
+    // ACTION: AUTO OPEN-ON-NORMAL
+    // Only proceed if it is explicitly safe to open, the valve is currently closed, AND we are not currently triggering a shut-off
+    else if (isSafeToOpen && shutOffCauses.length === 0 && currentValveState === 'CLOSED') {
       
-      // Set the pending command on the device model
-      device.commands.setValve = 'OPEN'; //
-      device.currentState.valve = 'OPEN'
+      device.commands.setValve = 'OPEN';
+      device.currentState.valve = 'OPEN';
 
-      const commandPayload = { type: "setValve", value: "OPEN" }; //
+      const commandPayload = { type: "setValve", value: "OPEN" };
 
-      // Emit the 'command' event *only* to this device
       if (io) {
         io.to(deviceId).emit("command", commandPayload);
       }
 
-      const logMessage = "Auto-open: Valve command sent as readings returned to normal.";
+      const logMessage = "Auto-open: Valve command sent as monitored readings returned to normal.";
       actionsTaken.push(logMessage);
 
-      // Create a system log for this "return to normal" event
       await createSystemLogs(
         null,
         deviceId,
         "Valve Actuator",
         logMessage,
-        "success" // 'success' status for returning to a good state
+        "success"
       );
     }
     

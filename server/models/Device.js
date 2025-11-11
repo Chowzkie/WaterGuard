@@ -37,7 +37,8 @@ const deviceSchema = new mongoose.Schema({
         enum: ['FILLING', 'DRAINING', 'DELAY_AFTER_FILL', 'DELAY_AFTER_DRAIN', 'NONE'], 
         default: 'NONE' 
       },
-      remainingTime_sec: { type: Number, default: 0 }
+      remainingTime_sec: { type: Number, default: 0 },
+      phaseStartedAt: { type: Date, default: () => new Date() }
     },
     sensorStatus: {
       PH: {
@@ -116,6 +117,9 @@ const deviceSchema = new mongoose.Schema({
       },
       valveOpenOnNormal: {
         enabled: { type: Boolean, default: true },
+        triggerPH: { type: Boolean, default: true },
+        triggerTurbidity: { type: Boolean, default: true },
+        triggerTDS: { type: Boolean, default: true },
       },
     },
     logging: {

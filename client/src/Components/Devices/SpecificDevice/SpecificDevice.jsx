@@ -8,27 +8,40 @@ import ControlPanel from './controlPanel';
 import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css';
 import ToastStyle from '../../../Styles/ToastStyle/Toast.module.css'
 import AlertsContext from '../../../utils/AlertsContext';
-import { CheckCircle2, AlertCircle,  Waves, Thermometer, TestTube2, Gauge } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, Waves, Thermometer, TestTube2, Gauge, X } from 'lucide-react';
 import io from 'socket.io-client'; 
 
-//add toast 
-const Toast = ({ message, type, status, onClose }) => {
-    const handleAnimationEnd = () => {
-        if (status === 'exiting') onClose();
+// --- TOAST COMPONENT ---
+const NotificationToast = ({ message, type, status, onClose }) => {
+    const handleAnimationEnd = (e) => {
+        // Prevent event from bubbling
+        e.stopPropagation(); 
+        if (status === 'exiting') {
+            onClose();
+        }
     };
+
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
     return (
         <div
             className={`
                 ${ToastStyle.toast}
-                ${type === 'success' ? ToastStyle.toastSuccess : ToastStyle.toastError}
+                ${isSuccess ? ToastStyle.toastSuccess : ToastStyle.toastError}
                 ${status === 'exiting' ? ToastStyle.toastOutRight : ToastStyle.toastIn}
             `}
             onAnimationEnd={handleAnimationEnd}
         >
-            {type === 'success'
-                ? <CheckCircle2 className={ToastStyle.toastIcon} />
-                : <AlertCircle className={ToastStyle.toastIcon} />}
-            <span>{message}</span>
+            <Icon className={ToastStyle.toastIcon} size={22} />
+            <div className={ToastStyle.toastContent}>
+                <h4>{title}</h4>
+                <p>{message}</p>
+                <button onClick={onClose} className={ToastStyle.toastClose}>
+                    <X size={18} />
+                </button>
+            </div>
         </div>
     );
 };
@@ -113,12 +126,11 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     const navigate = useNavigate();
     const [currentDevice, setCurrentDevice] = useState(null);
 
+    // This logic for managing toasts is great and remains unchanged.
     const [toasts, setToasts] = useState([]);
     const toastTimeouts = useRef({});
-
     const [historicalData, setHistoricalData] = useState([]);
     const [isChartLoading, setIsChartLoading] = useState(true);
-
     const [timeRange, setTimeRange] = useState('7d'); // Default to 7 days
 
     const removeToast = useCallback((id) => {
@@ -135,14 +147,21 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
 
     const addToast = useCallback((message, type = 'success') => {
         const id = Date.now();
+        // Set a 5-second exit timer
+        const exitTimer = 5000; 
+        
         setToasts(curr => [
-            ...curr.map(t => ({ ...t, status: 'exiting' })),
+            // Exit all current toasts immediately
+            ...curr.map(t => ({ ...t, status: 'exiting' })), 
             { id, message, type, status: 'entering' }
         ]);
-        toastTimeouts.current[id] = setTimeout(() => startToastExit(id), 3000);
+        
+        // Clear the new toast after 5 seconds
+        toastTimeouts.current[id] = setTimeout(() => startToastExit(id), exitTimer);
     }, [startToastExit]);
+    // --- End of toast logic ---
 
-    // NEW: Handler function to call the backend
+    // Handler function to call the backend
     const handleValveToggle = async (deviceId, isNowOpen) => {
         const newCommandValue = isNowOpen ? 'OPEN' : 'CLOSED';
         try {
@@ -205,7 +224,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
             };
             fetchHistoricalData();
         }
-    }, [deviceId, timeRange]); // 👈 Re-run this effect when deviceId OR timeRange changes
+    }, [deviceId, timeRange]); //  Re-run this effect when deviceId OR timeRange changes
 
     const handleGoBack = () => navigate('/devices');
 
@@ -223,6 +242,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                     onGoBack={handleGoBack}
                     timeRange={timeRange}
                     setTimeRange={setTimeRange}
+                    deviceStatus={currentDevice.currentState?.status}
                 />
                 <SpecificReadings
                     deviceReadings={currentDevice.latestReading}
@@ -238,6 +258,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                     deviceStatus={currentDevice.currentState?.status}
                     valveState={currentDevice.currentState?.valve}
                     pumpState={currentDevice.currentState?.pump || 'OFF'}  // fallback: 'OFF'
+                    pumpCycle={currentDevice.currentState?.pumpCycle}
                     onValveToggle={handleValveToggle}
                     onPumpToggle={handlePumpToggle}
                     addToast={addToast}
@@ -248,7 +269,12 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
             <div className={ToastStyle.toastContainerWrapper}>
                 <div className={ToastStyle.toastContainer}>
                     {toasts.map(t => (
-                        <Toast key={t.id} {...t} onClose={() => removeToast(t.id)} />
+                        // UPDATED: Render the new NotificationToast component
+                        <NotificationToast 
+                            key={t.id} 
+                            {...t} 
+                            onClose={() => removeToast(t.id)} 
+                        />
                     ))}
                 </div>
             </div>

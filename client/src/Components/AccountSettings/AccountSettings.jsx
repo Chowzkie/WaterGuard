@@ -1,54 +1,104 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Edit2, ShieldCheck, AlertTriangle, ArrowLeft, Camera, Check, X as CancelIcon } from 'lucide-react';
-import { Eye, EyeOff } from 'lucide-react';
+// Imported specific icons for the UI and the Toast notification system
+import { User, Lock, Edit2, ArrowLeft, Camera, Check, X, Eye, EyeOff, CheckCircle2, ShieldAlert } from 'lucide-react';
 import Styles from '../../Styles/AccountSettStyle/AccountSettings.module.css';
 import AlertsContext from '../../utils/AlertsContext';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Internal component for handling slide-in notifications
+// This component manages its own exit animation before unmounting
+const NotificationToast = ({ message, type, onClose }) => {
+    const [isExiting, setIsExiting] = useState(false);
+
+    // Automatically close the toast after a set duration
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            handleClose();
+        }, 4000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Triggers the exit animation and waits for it to finish before removing the component
+    const handleClose = () => {
+        setIsExiting(true);
+        setTimeout(onClose, 300);
+    };
+
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
+    // Dynamically assign classes based on message type and animation state
+    return (
+        <div
+            className={`
+                ${Styles.toast}
+                ${isSuccess ? Styles.toastSuccess : Styles.toastError}
+                ${isExiting ? Styles.toastOutRight : Styles.toastIn}
+            `}
+        >
+            <Icon className={Styles.toastIcon} size={22} />
+            <div className={Styles.toastContent}>
+                <h4>{title}</h4>
+                <p>{message}</p>
+                <button onClick={handleClose} className={Styles.toastClose}>
+                    <X size={18} />
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const AccountSettings = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
     const { loggedInUser, onUserUpdate } = useContext(AlertsContext);
 
-    // --- STATE MANAGEMENT ---
+    // Manage which settings tab is currently visible
     const [activeTab, setActiveTab] = useState('profile');
     const [currentUser, setCurrentUser] = useState(null);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+    
+    // Centralized state for handling toast notifications
+    const [toast, setToast] = useState(null); 
 
     // State for Phone Number editing
     const [isEditingPhone, setIsEditingPhone] = useState(false);
     const [phoneNumber, setPhoneNumber] = useState('');
 
-    // Corrected state variables for Full Name
+    // State variables for Full Name editing
     const [isEditingFullname, setIsEditingFullname] = useState(false);
     const [fullname, setFullname] = useState('');
 
-    // Corrected state variables for Username
+    // State variables for Username editing
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [username, setUsername] = useState('');
 
+    // State variables for Password management
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    // State for password visibility
+    // State for password input visibility toggles
     const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
     const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
-    // --- useEffect Hooks ---
+    // Helper function to trigger a toast notification
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
+    // Fetches the latest user profile data from the API
     const fetchUserProfile = async () => {
         if (loggedInUser?.username) {
-            //console.log("AccountSettings.jsx - fetchUserProfile: Attempting to fetch for username:", loggedInUser.username);
             const token = localStorage.getItem('token');
 
             if (!token) {
-                //console.error("AccountSettings.jsx - fetchUserProfile: No token found, cannot fetch user profile.");
-                setErrorMessage("Authentication failed. Please log in again.");
+                console.error("AccountSettings.jsx: No token found, cannot fetch user profile.");
+                showToast("Authentication failed. Please log in again.", 'error');
                 return;
             }
 
@@ -60,44 +110,31 @@ const AccountSettings = () => {
                 });
 
                 setCurrentUser(response.data);
-                // Initialize all state variables with fetched data
+                // Initialize local state with the fetched data
                 setFullname(response.data.name);
                 setUsername(response.data.username);
                 setPhoneNumber(response.data.contact);
 
-                //console.log("AccountSettings.jsx - fetchUserProfile: Successfully fetched currentUser:", response.data);
             } catch (error) {
-                console.error("AccountSettings.jsx - fetchUserProfile: Failed to fetch user profile:", error.response?.data?.message || error.message);
+                console.error("AccountSettings.jsx: Failed to fetch user profile:", error.response?.data?.message || error.message);
                 if (error.response?.status === 401) {
-                    setErrorMessage("Your session has expired. Please log in again.");
+                    showToast("Your session has expired. Please log in again.", 'error');
                 } else {
-                    setErrorMessage("Failed to load user profile.");
+                    showToast("Failed to load user profile.", 'error');
                 }
-                //setCurrentUser(null);
             }
-        } else {
-            //console.log("AccountSettings.jsx - fetchUserProfile: loggedInUser or username is missing, not fetching.");
         }
     };
+
+    // Trigger data fetch when the logged-in user context changes
     useEffect(() => {
         fetchUserProfile();
     }, [loggedInUser]);
 
-    useEffect(() => {
-        if (successMessage || errorMessage) {
-            const timer = setTimeout(() => {
-                setSuccessMessage('');
-                setErrorMessage('');
-            }, 4000);
-            return () => clearTimeout(timer);
-        }
-    }, [successMessage, errorMessage]);
-
-    // --- HANDLERS ---
+    // Navigation handler
     const handleBack = () => navigate('/overview');
 
-
-
+    // Handles file selection and uploading for the profile picture
     const handleProfilePicChange = async (e) => {
         e.preventDefault();
         const file = e.target.files[0];
@@ -111,31 +148,33 @@ const AccountSettings = () => {
         const userId = currentUser._id
         
         try {
-        setSuccessMessage("Uploading new profile picture...");
-        setErrorMessage("");
+            // Show immediate feedback to the user
+            showToast("Uploading new profile picture...", 'success');
 
-
-        const response = await axios.put(`${API_BASE_URL}/api/auth/upload-image/${userId}`, formData, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-    
-        onUserUpdate(response.data.user)
-        setCurrentUser(response.data.user)
-        setSuccessMessage("Profile picture updated successfully!");
+            const response = await axios.put(`${API_BASE_URL}/api/auth/upload-image/${userId}`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        
+            // Update global context and local state on success
+            onUserUpdate(response.data.user)
+            setCurrentUser(response.data.user)
+            showToast("Profile picture updated successfully!", 'success');
 
         } catch (error) {
             console.error("Failed to upload profile picture:", error.response?.data?.message || error.message);
-            setErrorMessage(error.response?.data?.message || "Failed to update profile picture.");
+            showToast(error.response?.data?.message || "Failed to update profile picture.", 'error');
         }
     };
 
+    // Enables edit mode for Full Name
     const handleEditFullname = () => {
         setIsEditingFullname(true);
         setFullname(currentUser.name);
     };
 
+    // Submits the updated Full Name to the API
     const handleSaveFullname = async (e) => {
         e.preventDefault();
         try {
@@ -147,25 +186,26 @@ const AccountSettings = () => {
 
             setCurrentUser(result.data); 
             setIsEditingFullname(false);
-            setSuccessMessage("Full name updated successfully!");
+            showToast("Full name updated successfully!", 'success');
         } catch (err) {
             console.error(err);
-            setErrorMessage(err.response?.data?.message ||"Failed to update full name.");
+            showToast(err.response?.data?.message || "Failed to update full name.", 'error');
         }
     };
 
-
+    // Reverts changes to Full Name and exits edit mode
     const handleCancelFullname = () => {
         setIsEditingFullname(false);
         setFullname(currentUser.name);
-        setErrorMessage('');
     };
 
+    // Enables edit mode for Username
     const handleEditUsername = () => {
         setIsEditingUsername(true);
         setUsername(currentUser.username);
     };
 
+    // Submits the updated Username to the API
     const handleSaveUsername = async (e) => {
         e.preventDefault();
         try{
@@ -176,21 +216,22 @@ const AccountSettings = () => {
             );
             setCurrentUser(result.data);
             setIsEditingUsername(false);
-            setSuccessMessage("Username Updated Successfully");
+            showToast("Username Updated Successfully", 'success');
 
             onUserUpdate(result.data)
         }catch(err){
             console.error(err);
-            setErrorMessage( err.response?.data?.message ||"Failed to update Username");
+            showToast(err.response?.data?.message || "Failed to update Username", 'error');
         };
     };
 
+    // Reverts changes to Username and exits edit mode
     const handleCancelUsername = () => {
         setIsEditingUsername(false);
         setUsername(currentUser.username);
-        setErrorMessage('');
     };
 
+    // Submits the updated Phone Number to the API
     const handleSavePhone = async (e) => {
         e.preventDefault();
         try{
@@ -201,19 +242,20 @@ const AccountSettings = () => {
             );
             setCurrentUser(result.data);
             setIsEditingPhone(false);
-            setSuccessMessage("Phone number updated Successfully")
+            showToast("Phone number updated Successfully", 'success');
         }catch(err){
             console.error(err);
-            setErrorMessage(err.response?.data?.message ||"Failed to Update Contact Number");
+            showToast(err.response?.data?.message || "Failed to Update Contact Number", 'error');
         };
     };
 
+    // Reverts changes to Phone Number and exits edit mode
     const handleCancelPhone = () => {
         setIsEditingPhone(false);
         setPhoneNumber(currentUser.contact);
-        setErrorMessage('');
     };
 
+    // Validates and submits password changes
     const handleChangePassword = async (e) => {
         e.preventDefault();
         try{
@@ -222,23 +264,25 @@ const AccountSettings = () => {
                 {currentPassword: currentPassword, newPassword: newPassword, confirmPassword: confirmPassword},
                 {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
             );
-            setSuccessMessage(result.data.message);
-            //it will be back the state into default
+            showToast(result.data.message, 'success');
+            
+            // Reset form fields upon success
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
-            //make the eye button to close
+            
+            // Reset visibility toggles
             setIsCurrentPasswordVisible(false);
             setIsNewPasswordVisible(false);
             setIsConfirmPasswordVisible(false);
 
         }catch(err){
             console.error(err);
-            setErrorMessage(err.response?.data?.message || "Failed to Update Password")
+            showToast(err.response?.data?.message || "Failed to Update Password", 'error');
         }
     };
 
-    // Toggle functions for each password field
+    // Toggle functions for password field visibility
     const toggleCurrentPasswordVisibility = () => {
         setIsCurrentPasswordVisible(!isCurrentPasswordVisible);
     };
@@ -251,7 +295,7 @@ const AccountSettings = () => {
         setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
     };
 
-    // --- RENDER ---
+    // Renders a loading state if user data is not yet available
     if (!currentUser) {
         return (
             <div className={Styles['pageWrapper']}>
@@ -264,24 +308,30 @@ const AccountSettings = () => {
                     </aside>
                     <main className={Styles['mainContent']}>
                         <h1 className={Styles['contentTitle']}>Loading...</h1>
-                        {errorMessage &&
-                            <div className={`${Styles['alert']} ${Styles['alertError']}`}>
-                                <AlertTriangle size={20}/>
-                                {errorMessage}
-                            </div>
-                        }
                     </main>
                 </div>
+                
+                {/* Displays a toast if an error occurred during loading */}
+                {toast && (
+                    <div className={Styles.toastContainerWrapper}>
+                        <NotificationToast 
+                            message={toast.message} 
+                            type={toast.type} 
+                            onClose={() => setToast(null)} 
+                        />
+                    </div>
+                )}
             </div>
         );
     }
 
+    // Determines which profile picture to display (uploaded or placeholder)
     const profilePicToShow = currentUser.profileImage || `https://placehold.co/128x128/4f46e5/ffffff?text=${currentUser.username ? currentUser.username.charAt(0).toUpperCase() : '?'}`;
 
     return (
         <div className={Styles['pageWrapper']}>
             <div className={Styles['layoutGrid']}>
-                {/* Left Sidebar */}
+                {/* Sidebar containing profile summary and navigation tabs */}
                 <aside className={Styles['sidebar']}>
                     <button onClick={handleBack} className={Styles['backButton']}>
                         <ArrowLeft size={16} /> Back
@@ -307,7 +357,7 @@ const AccountSettings = () => {
                     </nav>
                 </aside>
 
-                {/* Main Content */}
+                {/* Main Content Area */}
                 <main className={Styles['mainContent']}>
                     <div className={Styles['contentHeader']}>
                         <h1 className={Styles['contentTitle']}>
@@ -318,7 +368,7 @@ const AccountSettings = () => {
                     {activeTab === 'profile' && (
                         <div className={Styles['card']}>
                             <div className={Styles['cardBody']}>
-                                {/* Full Name Row */}
+                                {/* Full Name Section */}
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Full Name</p>
                                     <div className={Styles['rowDetails']}>
@@ -334,7 +384,7 @@ const AccountSettings = () => {
                                                     <Check size={16} />
                                                 </button>
                                                 <button onClick={handleCancelFullname} className={`${Styles['button']} ${Styles['iconButton']}`}>
-                                                    <CancelIcon size={16} />
+                                                    <X size={16} />
                                                 </button>
                                             </form>
                                         ) : (
@@ -348,7 +398,7 @@ const AccountSettings = () => {
                                     )}
                                 </div>
 
-                                {/* Username Row */}
+                                {/* Username Section */}
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Username</p>
                                     <div className={Styles['rowDetails']}>
@@ -364,7 +414,7 @@ const AccountSettings = () => {
                                                     <Check size={16} />
                                                 </button>
                                                 <button onClick={handleCancelUsername} className={`${Styles['button']} ${Styles['iconButton']}`}>
-                                                    <CancelIcon size={16} />
+                                                    <X size={16} />
                                                 </button>
                                             </form>
                                         ) : (
@@ -378,7 +428,7 @@ const AccountSettings = () => {
                                     )}
                                 </div>
 
-                                {/* Phone Number Row */}
+                                {/* Phone Number Section */}
                                 <div className={Styles['cardRow']}>
                                     <p className={Styles['rowLabel']}>Phone Number</p>
                                     <div className={Styles['rowDetails']}>
@@ -390,7 +440,7 @@ const AccountSettings = () => {
                                                     <Check size={16} />
                                                 </button>
                                                 <button onClick={handleCancelPhone} className={`${Styles['button']} ${Styles['iconButton']}`}>
-                                                    <CancelIcon size={16} />
+                                                    <X size={16} />
                                                 </button>
                                             </form>
                                         ) : (
@@ -406,7 +456,8 @@ const AccountSettings = () => {
                             </div>
                         </div>
                     )}
-                        {/** Password */}
+                    
+                    {/* Password Management Section */}
                     {activeTab === 'password' && (
                         <form onSubmit={handleChangePassword}>
                             <div className={Styles['card']}>
@@ -415,7 +466,7 @@ const AccountSettings = () => {
                                         <label htmlFor="current-password" className={Styles['rowLabel']}>Current Password</label>
                                         <div className={Styles['inputContainer']}>
                                             <input id="current-password" type={isCurrentPasswordVisible? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={Styles['input']} required />
-                                            <button type='button' onClick={toggleCurrentPasswordVisibility} className={Styles['toggleButton']} aria-label={isCurrentPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}> 
+                                            <button type='button' onClick={toggleCurrentPasswordVisibility} className={Styles['toggleButton']} aria-label={isCurrentPasswordVisible ? 'Hide password' : 'Show password'}> 
                                                 {isCurrentPasswordVisible? <Eye /> : <EyeOff />}
                                             </button>
                                         </div>
@@ -425,7 +476,7 @@ const AccountSettings = () => {
                                         <div>
                                             <div className={Styles['inputContainer']}>
                                                 <input id="new-password" type={isNewPasswordVisible? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={Styles['input']} required />
-                                                <button type='button' onClick={toggleNewPasswordVisibility} className={Styles['toggleButton']} aria-label={isNewPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}> 
+                                                <button type='button' onClick={toggleNewPasswordVisibility} className={Styles['toggleButton']} aria-label={isNewPasswordVisible ? 'Hide password' : 'Show password'}> 
                                                     {isNewPasswordVisible? <Eye /> : <EyeOff />}
                                                 </button>
                                             </div>
@@ -440,7 +491,7 @@ const AccountSettings = () => {
                                         <label htmlFor="confirm-password" className={Styles['rowLabel']}>Confirm New Password</label>
                                         <div className={Styles['inputContainer']}>
                                             <input id="confirm-password" type={isConfirmPasswordVisible? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={Styles['input']} required />
-                                            <button type='button' onClick={toggleConfirmPasswordVisibility} className={Styles['toggleButton']} aria-label={isConfirmPasswordVisible ? 'Hide confirm password' : 'Show confirm password'}> 
+                                            <button type='button' onClick={toggleConfirmPasswordVisibility} className={Styles['toggleButton']} aria-label={isConfirmPasswordVisible ? 'Hide password' : 'Show password'}> 
                                                 {isConfirmPasswordVisible? <Eye /> : <EyeOff />}
                                             </button>
                                         </div>
@@ -455,20 +506,19 @@ const AccountSettings = () => {
                 </main>
             </div>
 
-            {/* Hidden file input and notifications */}
+            {/* Hidden file input used for profile picture selection */}
             <input type="file" ref={fileInputRef} onChange={handleProfilePicChange} className={Styles['hiddenInput']} accept="image/*" />
-            {successMessage &&
-                <div className={`${Styles['alert']} ${Styles['alertSuccess']}`}>
-                    <ShieldCheck size={20}/>
-                    {successMessage}
+            
+            {/* Renders the notification toast if a message exists */}
+            {toast && (
+                <div className={Styles.toastContainerWrapper}>
+                    <NotificationToast 
+                        message={toast.message} 
+                        type={toast.type} 
+                        onClose={() => setToast(null)} 
+                    />
                 </div>
-            }
-            {errorMessage &&
-                <div className={`${Styles['alert']} ${Styles['alertError']}`}>
-                    <AlertTriangle size={20}/>
-                    {errorMessage}
-                </div>
-            }
+            )}
         </div>
     );
 };

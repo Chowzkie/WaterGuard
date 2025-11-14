@@ -1,12 +1,65 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import Style from '../../Styles/LogsStyle/UserLogs.module.css';
-import { ListFilter, X, Trash2, Undo, Check, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { 
+    ListFilter, 
+    X, 
+    Trash2, 
+    Undo, 
+    Check, 
+    Calendar, 
+    Clock, 
+    MessageSquare, 
+    CheckCircle2, 
+    ShieldAlert 
+} from 'lucide-react';
 import {formatDateTime} from '../../utils/formatDateTime'
 import axios from 'axios';
 
 //Base URL of the Backend
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+/**
+ * NotificationToast Component
+ * Handles the slide-in visual feedback (Success/Error).
+ */
+const NotificationToast = ({ message, type, onClose }) => {
+    const [isExiting, setIsExiting] = useState(false);
+    const timerRef = useRef(null);
+
+    const handleClose = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsExiting(true);
+        setTimeout(onClose, 300);
+    };
+
+    useEffect(() => {
+        timerRef.current = setTimeout(handleClose, 4000);
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
+    return (
+        <div className={`${Style.toast} ${isSuccess ? Style.toastSuccess : Style.toastError} ${isExiting ? Style.toastOutRight : Style.toastIn}`}>
+            <Icon className={Style.toastIcon} size={22} />
+            <div className={Style.toastContent}>
+                <h4>{title}</h4>
+                <p>{message}</p>
+            </div>
+            <button onClick={handleClose} className={Style.toastClose}>
+                <X size={18} />
+            </button>
+        </div>
+    );
+};
 
 //Main container component for userlogs page and handle all the data fetching
 function UserLogs() {
@@ -94,7 +147,10 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
     const [deleteMode, setDeleteMode] = useState('off');
     const [selectedToDelete, setSelectedToDelete] = useState([]);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [showUndoToast, setShowUndoToast] = useState(false);
+    
+    // --- Notification State ---
+    const [showUndoToast, setShowUndoToast] = useState(false); // Bottom Undo Banner
+    const [toast, setToast] = useState(null); // Top-Right Slide-in Toast
     const [lastDeletedCount, setLastDeletedCount] = useState(0);
 
     const [expandedLogId, setExpandedLogId] = useState(null);
@@ -191,6 +247,14 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
         setLastDeletedCount(idsToDelete.size);
         onDelete(idsToDelete);
 
+        // 1. Trigger Success Toast (Top Right)
+        setToast({
+            id: Date.now(),
+            message: `${idsToDelete.size} log(s) moved to trash.`,
+            type: 'success'
+        });
+
+        // 2. Trigger Undo Banner (Bottom Left)
         setShowConfirmModal(false);
         setDeleteMode('off');
         setSelectedToDelete([]);
@@ -203,6 +267,13 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
         if (undoTimerRef.current) {
             clearTimeout(undoTimerRef.current);
         }
+
+        // Trigger Success Toast for Restore
+        setToast({
+            id: Date.now(),
+            message: 'Deletion undone. Logs have been restored.',
+            type: 'success'
+        });
     };
 
     const handleDateChange = (e) => { setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value })); };
@@ -430,10 +501,23 @@ function UserLogsContent({ logs, loading, onDelete, onRestore }) {
                 </div>
             )}
             
+            {/* Undo Banner (Bottom Left) */}
             <div className={`${Style['undo-toast']} ${showUndoToast ? Style.show : ''}`}>
                 <span>{lastDeletedCount} log(s) deleted.</span>
                 <button onClick={handleUndo}><Undo size={16}/> Undo</button>
             </div>
+
+             {/* Notification Toast (Top Right) */}
+            {toast && (
+                <div className={Style.toastContainerWrapper}>
+                    <NotificationToast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                </div>
+            )}
         </div>
     );
 }

@@ -2,7 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, ZoomControl, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
-import { Menu, X, Plus, Trash2, AlertCircle, Info, MoreVertical } from 'lucide-react';
+import { 
+    Menu, 
+    X, 
+    Plus, 
+    Trash2, 
+    AlertCircle, 
+    Info, 
+    MoreVertical,
+    CheckCircle2, 
+    ShieldAlert 
+} from 'lucide-react';
 
 // Import required stylesheets
 import 'leaflet/dist/leaflet.css';
@@ -14,7 +24,46 @@ import iconShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 const DefaultIcon = L.icon({ iconUrl, shadowUrl: iconShadowUrl, iconSize: [25, 41], iconAnchor: [12, 41] });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// --- Helper Component: MapFocusController (No changes needed) ---
+// --- NotificationToast Component ---
+const NotificationToast = ({ message, type, onClose }) => {
+    const [isExiting, setIsExiting] = useState(false);
+    const timerRef = useRef(null);
+
+    const handleClose = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsExiting(true);
+        setTimeout(onClose, 300);
+    };
+
+    useEffect(() => {
+        timerRef.current = setTimeout(handleClose, 4000);
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
+    return (
+        <div className={`toast ${isSuccess ? 'toastSuccess' : 'toastError'} ${isExiting ? 'toastOutRight' : 'toastIn'}`}>
+            <Icon className="toastIcon" size={22} />
+            <div className="toastContent">
+                <h4>{title}</h4>
+                <p>{message}</p>
+            </div>
+            <button onClick={handleClose} className="toastClose">
+                <X size={18} />
+            </button>
+        </div>
+    );
+};
+
+// --- Helper Component: MapFocusController ---
 const MapFocusController = ({ devices, selectedDeviceId, refocusTrigger }) => {
   const map = useMap();
   useEffect(() => {
@@ -36,7 +85,7 @@ const MapFocusController = ({ devices, selectedDeviceId, refocusTrigger }) => {
   return null;
 };
 
-// --- Helper Component: Reusable Confirmation Modal (No changes needed) ---
+// --- Helper Component: Reusable Confirmation Modal ---
 const ConfirmationModal = ({ title, message, confirmText, onConfirm, onCancel, isError }) => (
     <div className="modal-backdrop">
         <div className={`confirmation-modal-content ${isError ? 'error-modal' : ''}`}>
@@ -72,34 +121,26 @@ const DeviceInfoModal = ({ device, onClose }) => (
     </div>
 );
 
-
-// --- Helper Component: The "Add New Device" Modal Form (with number suggestion) ---
-const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
+// --- Helper Component: The "Add New Device" Modal Form ---
+const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices, showToast }) => {
     const [number, setNumber] = useState('');
     const [address, setAddress] = useState('');
     const [lat, setLat] = useState('');
     const [lng, setLng] = useState('');
     const [validationError, setValidationError] = useState(null);
 
-    // This effect runs once when the modal opens to suggest the next device number.
     useEffect(() => {
         if (existingDevices && existingDevices.length > 0) {
-            // Extract all numbers from existing device labels (e.g., "PS01-DEV" -> 1)
             const existingNumbers = existingDevices.map(device => {
                 const match = device.label.match(/PS0(\d+)-DEV/);
                 return match ? parseInt(match[1], 10) : 0;
             });
-
-            // Find the highest number currently in use
             const maxNumber = Math.max(0, ...existingNumbers);
-            
-            // Suggest the next number in the sequence
             setNumber(maxNumber + 1);
         } else {
-            // If there are no devices, suggest "1" as the starting number
             setNumber(1);
         }
-    }, [existingDevices]); // This runs only when the component is first rendered
+    }, [existingDevices]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -108,7 +149,6 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
         const latNum = parseFloat(lat);
         const lngNum = parseFloat(lng);
 
-        // Validation checks remain the same...
         if (!number || !address || !lat || !lng) {
             setValidationError("Please fill out all fields."); return;
         }
@@ -122,24 +162,23 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
             setValidationError("Latitude must be -90 to 90, and Longitude -180 to 180."); return;
         }
 
-            try {
-            // This now calls the API-connected function in App.jsx
+        try {
             await onAddDevice({
-                // The object we send to the backend
                 _id: `PS${String(num).padStart(2, '0')}-DEV`.toLowerCase(),
                 label: `PS${String(num).padStart(2, '0')}-DEV`,
                 position: [parseFloat(lat), parseFloat(lng)],
                 location: address
             });
-            onCancel(); // Close modal on success
+            // --- Trigger Success Toast ---
+            showToast('New device added successfully.', 'success');
+            onCancel();
         } catch (error) {
-            // If onAddDevice throws an error, we catch it here
             if (error.response && error.response.status === 409) {
-                // 409 is the "Conflict" status we set for duplicate devices
                 setValidationError(error.response.data.message);
             } else {
-                // For any other errors
-                setValidationError("An unexpected error occurred. Please try again.");
+                // --- Trigger Error Toast for generic server errors ---
+                showToast("Failed to add device. Please try again.", 'error');
+                setValidationError("An unexpected error occurred.");
             }
         }
     };
@@ -154,7 +193,6 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices }) => {
                         <label htmlFor="device-number">Device Number</label>
                         <div className="input-with-prefix">
                             <span>PS0</span>
-                            {/* The value is now pre-filled with the suggested number */}
                             <input id="device-number" type="text" value={number} onChange={e => setNumber(e.target.value)} placeholder="e.g., 4" />
                             <span>-DEV</span>
                         </div>
@@ -186,8 +224,11 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
     const [deviceToDelete, setDeviceToDelete] = useState(null);
     const [deviceToShowInfo, setDeviceToShowInfo] = useState(null);
     const [activeKebabMenu, setActiveKebabMenu] = useState(null);
-    const kebabMenuRef = useRef(null);
     
+    // --- Toast State ---
+    const [toast, setToast] = useState(null);
+
+    const kebabMenuRef = useRef(null);
     const navigate = useNavigate();
     const handleRedirect = (deviceId) => navigate(`/devices/${deviceId}`);
 
@@ -207,9 +248,31 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
         setIsSidebarOpen(false);
     };
     
-    const confirmDelete = () => {
-        onDeleteDevice(deviceToDelete._id);
-        setDeviceToDelete(null);
+    // --- Confirm Delete to be Async and Trigger Toast ---
+    const confirmDelete = async () => {
+        if (!deviceToDelete) return;
+        try {
+            await onDeleteDevice(deviceToDelete._id);
+            setToast({
+                id: Date.now(),
+                message: `${deviceToDelete.label} was successfully deleted.`,
+                type: 'success'
+            });
+        } catch (error) {
+            console.error(error);
+            setToast({
+                id: Date.now(),
+                message: `Failed to delete ${deviceToDelete.label}.`,
+                type: 'error'
+            });
+        } finally {
+            setDeviceToDelete(null);
+        }
+    };
+
+    // Helper to show toast from child components (like AddDeviceModal)
+    const showToast = (message, type) => {
+        setToast({ id: Date.now(), message, type });
     };
     
     const createCustomIcon = (label, status) => L.divIcon({
@@ -220,7 +283,14 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
 
     return (
         <div className="component-wrapper-mapapi">
-            {isAddModalOpen && <AddDeviceModal onAddDevice={onAddDevice} onCancel={() => setIsAddModalOpen(false)} existingDevices={devices} />}
+            {isAddModalOpen && (
+                <AddDeviceModal 
+                    onAddDevice={onAddDevice} 
+                    onCancel={() => setIsAddModalOpen(false)} 
+                    existingDevices={devices}
+                    showToast={showToast} // Pass down toast trigger
+                />
+            )}
             {deviceToDelete && <ConfirmationModal title="Delete Device" message={`Delete ${deviceToDelete.label}?`} confirmText="Delete" onConfirm={confirmDelete} onCancel={() => setDeviceToDelete(null)} />}
             {deviceToShowInfo && <DeviceInfoModal device={deviceToShowInfo} onClose={() => setDeviceToShowInfo(null)} />}
             
@@ -262,6 +332,18 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
                     <MapFocusController devices={devices} selectedDeviceId={selectedDeviceId} refocusTrigger={refocusTrigger} />
                 </MapContainer>
             </div>
+
+            {/* --- Render Toast Container --- */}
+            {toast && (
+                <div className="toastContainerWrapper">
+                    <NotificationToast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                </div>
+            )}
         </div>
     );
 };

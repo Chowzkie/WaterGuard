@@ -184,7 +184,7 @@ function App() {
     const [recentFilterDevice, setRecentFilterDevice] = useState('All Devices');
 
     const backToNormalTimers = useRef(new Map());
-    const [assigneeList, setAssigneeList] = useState([]);
+    const maxSeenId = useRef(0);
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
 
@@ -491,16 +491,37 @@ setPumpingStations(stationsRes.data);
         }
     }, [alertsHistory, deviceLocations]); // Dependencies
 
-    const handleRestoreHistoryAlerts = useCallback(async (idsToRestore) => {
+    const handleRestoreHistoryAlerts = useCallback(async (alertsToRestore) => {
+        // Guard clause in case it's empty or undefined
+        if (!alertsToRestore || alertsToRestore.length === 0) return;
+
+        // Extract IDs for the API call
+        const idsToRestore = alertsToRestore.map(a => a._id);
+
         try {
+            // 1. Update the Database
             await axios.put(`${API_BASE_URL}/api/alerts/restore`, {
                 idsToRestore,
                 userID
             });
+
+            // 2. Update the UI immediately 
+            setAlertsHistory(prev => {
+                // Create a Set of existing IDs to prevent duplicates
+                const existingIds = new Set(prev.map(a => a._id));
+                
+                // Only add alerts that aren't already in the list
+                const newAlerts = alertsToRestore.filter(a => !existingIds.has(a._id));
+                
+                // Return new combined array sorted by date 
+                const updatedList = [...prev, ...newAlerts];
+                return updatedList.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+            });
+
         } catch (error) {
             console.error("Failed to restore alerts:", error);
         }
-    }, [alertsHistory, deviceLocations]); // Dependencies
+    }, [userID]);
 
     const handleActiveFilterChange = (e) => setActiveFilterDevice(e.target.value);
     const handleRecentFilterChange = (e) => setRecentFilterDevice(e.target.value);
@@ -580,17 +601,6 @@ setPumpingStations(stationsRes.data);
         }
     }, [deviceLocations]);
 
-    // This useEffect automatically creates a unique list of assignees for the filter
-    useEffect(() => {
-        if (alertsHistory && alertsHistory.length > 0) {
-            const uniqueAssignees = [...new Set(
-                alertsHistory
-                .map(alert => alert.acknowledgedBy ?.name)
-                .filter(Boolean)
-            )];
-            setAssigneeList(uniqueAssignees);
-        }
-    }, [alertsHistory]);
 
     // =================================================================================
     // --- Handlers for managing notification read status ---
@@ -649,7 +659,6 @@ setPumpingStations(stationsRes.data);
         activeAlerts,
         recentAlerts,
         alertsHistory,
-        assigneeList,
         devices: deviceLocations,
         pumpingStations,
         activeFilterDevice,

@@ -1,59 +1,140 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Trash2, ListFilter, X, Check, User, ChevronDown, Undo, Clock } from 'lucide-react';
+// Import icons for the UI, delete actions, and toast notifications
+import { 
+    Trash2, 
+    ListFilter, 
+    X, 
+    Check, 
+    User, 
+    ChevronDown, 
+    Undo, 
+    Clock, 
+    CheckCircle2, 
+    ShieldAlert 
+} from 'lucide-react';
 import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/AlertsHistory.module.css';
 
-// The component now accepts onDeleteHistoryAlerts and onRestoreHistoryAlerts
-const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHistoryAlerts,  onPermanentDeleteAlerts, assigneeList = [] }) => {
-    // --- All existing filter state is unchanged ---
+/**
+ * NotificationToast Component
+ * A reusable component for displaying slide-in success or error notifications.
+ * It handles its own appearance, auto-dismissal, and exit animation.
+ */
+const NotificationToast = ({ message, type, onClose }) => {
+    // State to manage the exit animation
+    const [isExiting, setIsExiting] = useState(false);
+    // Ref to hold the auto-dismiss timer
+    const timerRef = useRef(null);
+
+    /**
+     * Triggers the exit animation and calls the parent's onClose function
+     * after the animation duration.
+     */
+    const handleClose = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsExiting(true);
+        setTimeout(onClose, 300); // Wait for CSS animation to finish
+    };
+
+    // Set up an auto-close timer when the toast is mounted
+    useEffect(() => {
+        timerRef.current = setTimeout(handleClose, 4000); // 4-second duration
+        
+        // Clear the timer if the component is unmounted early
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, []); // Empty dependency array ensures this runs only once on mount
+
+    // Determine the title and icon based on the 'type' prop
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
+    return (
+        <div
+            className={`
+                ${styles.toast}
+                ${isSuccess ? styles.toastSuccess : styles.toastError}
+                ${isExiting ? styles.toastOutRight : styles.toastIn}
+            `}
+        >
+            <Icon className={styles.toastIcon} size={22} />
+            <div className={styles.toastContent}>
+                <h4>{title}</h4>
+                <p>{message}</p>
+            </div>
+            <button onClick={handleClose} className={styles.toastClose}>
+                <X size={18} />
+            </button>
+        </div>
+    );
+};
+
+/**
+ * AlertsHistory Component
+ * Displays a filterable, virtualized list of all non-active alert records.
+ * Includes functionality for deleting, multi-selecting, and undoing deletions.
+ */
+const AlertsHistory = ({ 
+    historyAlerts = [], 
+    onDeleteHistoryAlerts, 
+    onRestoreHistoryAlerts,  
+    onPermanentDeleteAlerts,
+}) => {
+    // --- State for Filtering ---
     const [filters, setFilters] = useState({
         status: [],
         severity: [],
         type: [],
-        assignee: 'All',
         action: [],
     });
     const [draftFilters, setDraftFilters] = useState(filters);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [typeSearchTerm, setTypeSearchTerm] = useState('');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-    const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
     
-    // ---State for managing the delete UI structure ---
+    // --- State for Deletion UI ---
     const [deleteMode, setDeleteMode] = useState('off'); // 'off', 'all', 'select'
     const [selectedToDelete, setSelectedToDelete] = useState([]);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [showUndoToast, setShowUndoToast] = useState(false);
-    const lastDeleted = useRef([]); // Use a ref to hold the last deleted items for the undo action
-    const undoTimerRef = useRef(null);
+    
+    // --- State for Undo/Toast Functionality ---
+    const [showUndoToast, setShowUndoToast] = useState(false); // For the main undo banner
+    const [toast, setToast] = useState(null); // For slide-in success/error toasts
+    const lastDeleted = useRef([]); // Holds alerts temporarily in case of undo
+    const undoTimerRef = useRef(null); // Ref for the undo banner's 10s timer
+    const wasUndoClicked = useRef(false); // Flag to prevent double-action on timeout
 
-    // --- All existing refs and memos are unchanged ---
+    // --- State for Alert Details ---
+    const [expandedAlertId, setExpandedAlertId] = useState(null); // Tracks which row's details are open
+
+    // --- Refs for Click-Outside Listeners ---
     const filterPanelRef = useRef(null);
     const typeDropdownRef = useRef(null);
-    const assigneeDropdownRef = useRef(null);
 
-    // --- State to manage which alert detail panel is open ---
-    const [expandedAlertId, setExpandedAlertId] = useState(null);
-
+    // Memoize unique alert types for the filter dropdown
     const uniqueAlertTypes = useMemo(() => {
         const types = new Set(historyAlerts.map(alert => alert.type.replace(/\s\(.+\)/, '')));
         return Array.from(types);
     }, [historyAlerts]);
 
-    // Create the assignees list for the dropdown, ensuring 'All' is always first.
-    const assignees = useMemo(() => ['All', ...assigneeList], [assigneeList]);
-
-
-    //Filter logics
+    /**
+     * Memoized function to filter the alerts based on the currently applied filters.
+     * This runs only when the alerts list or filters object changes.
+     */
     const filteredDisplayAlerts = useMemo(() => {
         return historyAlerts.filter(alert => {
             const baseType = alert.type.replace(/\s\(.+\)/, '');
             const statusMatch = filters.status.length === 0 || filters.status.includes(alert.status);
             const severityMatch = filters.severity.length === 0 || filters.severity.includes(alert.severity);
             const typeMatch = filters.type.length === 0 || filters.type.some(t => baseType.toLowerCase().includes(t.toLowerCase()));
-            // This logic now correctly checks the nested 'acknowledgedBy.name' property.
-            const assigneeMatch = filters.assignee === 'All' || (alert.acknowledgedBy && alert.acknowledgedBy.name === filters.assignee);
             const actionMatch = filters.action.length === 0 ||
                 (filters.action.includes('Acknowledged') && alert.acknowledged === true) ||
                 (filters.action.includes('Unacknowledged') && (alert.acknowledged === false || alert.acknowledged === undefined));
@@ -63,28 +144,65 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             if (startDate) { startDate.setHours(0, 0, 0, 0); }
             if (endDate) { endDate.setHours(23, 59, 59, 999); }
             const dateMatch = (!startDate || alertDate >= startDate) && (!endDate || alertDate <= endDate);
-            return statusMatch && severityMatch && typeMatch && assigneeMatch && actionMatch && dateMatch;
+            
+            return statusMatch && severityMatch && typeMatch && actionMatch && dateMatch;
         }).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }, [historyAlerts, filters]);
 
-    // --- All existing useEffects are unchanged ---
-    useEffect(() => { if (isFilterOpen) { setDraftFilters(filters); } }, [isFilterOpen]);
+    // Effect to copy filters to draft when panel opens
+    useEffect(() => { if (isFilterOpen) { setDraftFilters(filters); } }, [isFilterOpen, filters]);
+
+    // Effect to handle clicking outside of dropdowns/panels to close them
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (filterPanelRef.current && !filterPanelRef.current.contains(event.target) && !event.target.closest(`.${styles['icon-button']}`)) { setIsFilterOpen(false); }
             if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) { setIsTypeDropdownOpen(false); }
-            if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target)) { setIsAssigneeDropdownOpen(false); }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // --- Handlers for the entire delete functionality structure ---
+    /**
+     * Handles the timeout for the "Undo" banner.
+     * If the timer completes without the user clicking "Undo", it triggers
+     * a permanent deletion of the alerts.
+     */
+    useEffect(() => {
+        if (showUndoToast) {
+            // Set a 10-second timer
+            undoTimerRef.current = setTimeout(() => {
+                // If the timer finishes and undo was NOT clicked
+                if (!wasUndoClicked.current) {
+                    console.log('Undo timeout. Permanently deleting alerts.');
+                    // Call the permanent delete function if it exists
+                    if (onPermanentDeleteAlerts && lastDeleted.current.length > 0) {
+                        const idsToPermanentlyDelete = new Set(lastDeleted.current.map(a => a._id));
+                        onPermanentDeleteAlerts(idsToPermanentlyDelete);
+                    }
+                }
+                // Hide the undo bar and clear temp data regardless
+                setShowUndoToast(false);
+                lastDeleted.current = [];
+            }, 10000); // 10-second timer
+        }
+        
+        // Cleanup function to clear the timer
+        return () => {
+            if (undoTimerRef.current) {
+                clearTimeout(undoTimerRef.current);
+            }
+        };
+    }, [showUndoToast, onPermanentDeleteAlerts]);
+
+    // --- Delete Functionality Handlers ---
+
+    /** Toggles the main delete mode on or off */
     const handleToggleDeleteMode = () => {
         setDeleteMode(prev => (prev === 'off' ? 'all' : 'off'));
         setSelectedToDelete([]); // Reset selection when toggling
     };
 
+    /** Handles selection/deselection of a single alert checkbox */
     const handleCheckboxChange = (alertId) => {
         const newSelection = new Set(selectedToDelete);
         if (newSelection.has(alertId)) {
@@ -95,6 +213,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         setSelectedToDelete(Array.from(newSelection));
     };
 
+    /** Handles the "Select All" checkbox in the table header */
     const handleSelectAll = (e) => {
         if (e.target.checked) {
            setSelectedToDelete(filteredDisplayAlerts.map(alert => alert._id));
@@ -103,83 +222,102 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         }
     };
     
+    /** Opens the confirmation modal before deleting */
     const handleDeleteClick = () => {
         if ((deleteMode === 'all' && filteredDisplayAlerts.length > 0) || (deleteMode === 'select' && selectedToDelete.length > 0)) {
             setShowConfirmModal(true);
         }
     };
 
+    /**
+     * Confirms the deletion, calls the parent function, and shows
+     * the appropriate success/error toast AND the undo banner.
+     */
     const handleConfirmDelete = () => {
-        // 1. Determine which IDs to delete based on the current mode.
-        //    Note the change from 'a.id' to 'a._id'.
         const idsToDelete = new Set(
             deleteMode === 'all' 
                 ? filteredDisplayAlerts.map(a => a._id) 
                 : selectedToDelete
         );
         
-        // 2. Find the full alert objects that are about to be deleted.
-        //    This is crucial for the undo feature to work correctly.
-        //    Note the change from 'a.id' to 'a._id'.
         lastDeleted.current = historyAlerts.filter(a => idsToDelete.has(a._id));
         
-        // 3. Call the handler in App.jsx, passing the Set of IDs.
-        onDeleteHistoryAlerts(idsToDelete);
+        try {
+            // Call the delete function passed from props
+            onDeleteHistoryAlerts(idsToDelete);
+            
+            // Show the slide-in success toast
+            setToast({
+                id: Date.now(),
+                message: `${lastDeleted.current.length} alert(s) moved to trash.`,
+                type: 'success'
+            });
 
-        // 4. Reset the component's UI state.
+            // Show the main "Undo" banner
+            setShowUndoToast(true); 
+            wasUndoClicked.current = false; // Reset undo flag
+
+        } catch (error) {
+            // Show a slide-in error toast if deletion fails
+            console.error("Failed to delete alerts:", error);
+            setToast({
+                id: Date.now(),
+                message: 'An error occurred while deleting alerts.',
+                type: 'error'
+            });
+        }
+
+        // Reset the UI
         setShowConfirmModal(false);
         setDeleteMode('off');
         setSelectedToDelete([]);
-        setShowUndoToast(true); // Show the "Undo" toast message.
     };
 
+    /**
+     * Handles the "Undo" button click from the main banner.
+     * Restores the alerts and shows a slide-in success/error toast.
+     */
     const handleUndo = () => {
-        // 1. Check if there are any alerts in our temporary 'lastDeleted' storage.
         if (lastDeleted.current.length > 0) {
-            // 2. Extract just the IDs from the full alert objects we saved.
-            //    Note the change from 'a.id' to 'a._id'.
-            const idsToRestore = lastDeleted.current.map(a => a._id);
-            
-            // 3. Call the handler in App.jsx, passing the specific array of IDs to be restored.
-            onRestoreHistoryAlerts(idsToRestore);
+            try {
+                onRestoreHistoryAlerts(lastDeleted.current);
+
+                // Show slide-in success toast
+                setToast({
+                    id: Date.now(),
+                    message: 'Deletion undone. Alerts have been restored.',
+                    type: 'success'
+                });
+
+            } catch (error) {
+                // Show slide-in error toast
+                console.error("Failed to restore alerts:", error);
+                setToast({
+                    id: Date.now(),
+                    message: 'An error occurred while restoring alerts.',
+                    type: 'error'
+                });
+            }
         }
         
-        // 4. Reset the UI and clear the temporary storage.
+        // Hide the main undo banner and clear temp data
         setShowUndoToast(false);
         lastDeleted.current = [];
         if (undoTimerRef.current) {
             clearTimeout(undoTimerRef.current);
         }
+        wasUndoClicked.current = true; // Set flag to prevent permanent deletion
     };
 
-    useEffect(() => {
-        // If the toast is visible...
-        if (showUndoToast) {
-            // ...set a timer that will simply hide it after 10 seconds.
-            undoTimerRef.current = setTimeout(() => {
-                setShowUndoToast(false);
-            }, 10000); 
-        }
-
-        // The cleanup function remains important to prevent issues
-        // if the component unmounts while the timer is active.
-        return () => {
-            if (undoTimerRef.current) {
-                clearTimeout(undoTimerRef.current);
-            }
-        };
-    }, [showUndoToast]); // The dependency array now only needs showUndoToast
-
-    // --- All existing filter handlers are unchanged ---
+    // --- Filter Handlers ---
     const handlePillSelect = (filterType, value) => { setDraftFilters(prev => ({ ...prev, [filterType]: prev[filterType].includes(value) ? prev[filterType].filter(v => v !== value) : [...prev[filterType], value] })); };
     const handleDateChange = (e) => { setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value })); };
     const handleTypeSelect = (type) => { if (!draftFilters.type.includes(type)) { setDraftFilters(prev => ({ ...prev, type: [...prev.type, type] })); } setTypeSearchTerm(''); setIsTypeDropdownOpen(false); };
     const removeSelectedType = (typeToRemove) => { setDraftFilters(prev => ({ ...prev, type: prev.type.filter(t => t !== typeToRemove) })); };
-    const handleAssigneeSelect = (assignee) => { setDraftFilters(prev => ({ ...prev, assignee })); setIsAssigneeDropdownOpen(false); };
     const applyFilters = () => { setFilters(draftFilters); setIsFilterOpen(false); };
-    const clearFilters = () => { setDraftFilters({ status: [], severity: [], type: [], assignee: 'All', action: [], startDate: '', endDate: '' }); setTypeSearchTerm(''); };
+    const clearFilters = () => { setDraftFilters({ status: [], severity: [], type: [], action: [], startDate: '', endDate: '' }); setTypeSearchTerm(''); };
     
-    // --- All utility functions are unchanged ---
+    /** Utility function to get the CSS class for alert severity */
     const getSeverityClass = (severity) => {
         switch (severity.toLowerCase()) {
             case 'critical': return styles['severity-critical'];
@@ -188,7 +326,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         }
     };
 
-     // --- Handler to toggle the expanded/collapsed state of a row ---
+    /** Toggles the expandable detail panel for an acknowledged alert */
     const handleRowClick = (alertId, hasAcknowledgement) => {
         // Only allow expanding if the alert has been acknowledged
         if (hasAcknowledgement) {
@@ -201,7 +339,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             <div className={styles['section-header']}>
                 <h3>Alerts History</h3>
                 <div className={styles['header-controls']}>
-                    {/* --- Conditionally render delete controls or normal controls --- */}
+                    {/* Conditionally render delete controls or normal controls */}
                     {deleteMode !== 'off' ? (
                         <div className={styles['delete-controls']}>
                             <div className={styles['delete-slider']}>
@@ -223,8 +361,8 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                         </>
                     )}
                     
+                    {/* Filter Panel */}
                     {isFilterOpen && (
-                        // --- Restored the full filter panel JSX ---
                         <div className={styles['filter-panel']} ref={filterPanelRef}>
                             <div className={styles['filter-header']}>
                                 <h4>Filter Alerts</h4>
@@ -247,7 +385,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     <label className={styles['filter-label']}>Alert status list</label>
                                     <div className={styles['filter-control']}>
                                         <div className={styles['pill-group']}>
-                                            {['Resolved', 'Escalated', 'Cleared'].map(status => (
+                                            {['Resolved', 'Escalated', 'Cleared', 'Expired'].map(status => (
                                                 <button key={status} onClick={() => handlePillSelect('status', status)} className={`${styles['filter-pill']} ${draftFilters.status.includes(status) ? styles.selected : ''}`}>
                                                     {draftFilters.status.includes(status) && <Check size={14} />}
                                                     {status}
@@ -304,34 +442,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                         )}
                                     </div>
                                 </div>
-                                <div className={styles['filter-row']} ref={assigneeDropdownRef}>
-                                    <label className={styles['filter-label']}>Assignee</label>
-                                    <div className={styles['filter-control']}>
-                                        <div className={styles['custom-dropdown']} onClick={() => setIsAssigneeDropdownOpen(o => !o)}>
-                                            <div className={styles['dropdown-header']}>
-                                                <User size={16} />
-                                                <span>{draftFilters.assignee}</span>
-                                                <ChevronDown size={16} className={styles['dropdown-chevron']} />
-                                            </div>
-                                            {isAssigneeDropdownOpen && (
-                                                <div className={styles['assignee-dropdown-list']}>
-                                                    {assignees.map(name => (
-                                                        <div 
-                                                            key={name} 
-                                                            className={styles['dropdown-item']} 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleAssigneeSelect(name);
-                                                            }}
-                                                        >
-                                                            {name}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div className={styles['filter-footer']}>
                                 <button className={styles['clear-btn']} onClick={clearFilters}>Reset</button>
@@ -342,8 +452,9 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                 </div>
             </div>
 
+            {/* Virtualized Alert Table */}
             <div className={styles['alerts-table']}>
-                {/* 1. The header is now a separate element, rendered only once. */}
+                {/* Table Header */}
                 <div className={`${styles['alerts-header-row']} ${deleteMode === 'select' ? styles['select-delete-grid'] : ''}`}>
                     <div>Date/Time</div>
                     <div>Origin</div>
@@ -351,6 +462,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                     <div>Severity</div>
                     <div>Status</div>
                     <div>Action</div>
+                    {/* Checkbox column header, appears only in 'select' delete mode */}
                     {deleteMode === 'select' && (
                         <div className={styles['checkbox-cell-header']}>
                             <label className={styles['custom-checkbox-container']}>
@@ -365,6 +477,8 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                         </div>
                     )}
                 </div>
+                
+                {/* Table Body (Virtualized) */}
                 <div className={styles['alerts-body']}>
                     {historyAlerts.length > 0 ? (
                         filteredDisplayAlerts.length > 0 ? (
@@ -374,11 +488,17 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                 itemContent={(index, alert) => {
                                     const hasAcknowledgement = alert.acknowledged && alert.acknowledgedBy;
                                     const isExpanded = expandedAlertId === alert._id;
+                                    const isSelected = selectedToDelete.includes(alert._id);
 
                                     return (
                                         <React.Fragment key={alert._id}>
                                             <div 
-                                                className={`${styles['alerts-row']} ${deleteMode === 'select' ? styles['select-delete-grid'] : ''} ${hasAcknowledgement ? styles['clickable-row'] : ''} ${selectedToDelete.includes(alert._id) ? styles['selected-for-deletion'] : ''}`}
+                                                className={`
+                                                    ${styles['alerts-row']} 
+                                                    ${deleteMode === 'select' ? styles['select-delete-grid'] : ''} 
+                                                    ${hasAcknowledgement ? styles['clickable-row'] : ''} 
+                                                    ${isSelected ? styles['selected-for-deletion'] : ''}
+                                                `}
                                                 onClick={() => handleRowClick(alert._id, hasAcknowledgement)}
                                             >
                                                 <div data-label="Date/Time">{formatDateTime(alert.dateTime)}</div>
@@ -401,13 +521,14 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                                     </span>
                                                 </div>
                                                 
+                                                {/* Checkbox cell, appears only in 'select' delete mode */}
                                                 {deleteMode === 'select' && (
                                                     <div className={styles['checkbox-cell']}>
                                                         <label className={styles['custom-checkbox-container']}>
                                                             <input 
                                                                 type="checkbox" 
-                                                                checked={selectedToDelete.includes(alert._id)} 
-                                                                onClick={(e) => e.stopPropagation()} 
+                                                                checked={isSelected} 
+                                                                onClick={(e) => e.stopPropagation()} // Prevent row click
                                                                 onChange={() => handleCheckboxChange(alert._id)} 
                                                             />
                                                             <span className={styles['checkmark']}></span>
@@ -416,6 +537,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                                 )}
                                             </div>
 
+                                            {/* Expandable panel for Acknowledgment Details */}
                                             {hasAcknowledgement && (
                                                 <div className={`${styles['details-panel']} ${isExpanded ? styles['expanded'] : ''}`}>
                                                     <div className={styles['details-content']}>
@@ -447,6 +569,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                 </div>
             </div>
             
+            {/* Confirmation Modal for Deletion */}
             {showConfirmModal && (
                 <div className={styles['modal-backdrop']}>
                     <div className={styles['confirmation-modal']}>
@@ -460,10 +583,23 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                 </div>
             )}
 
+            {/* The main "Undo" banner that appears at the bottom */}
             <div className={`${styles['undo-toast']} ${showUndoToast ? styles.show : ''}`}>
                 <span>{lastDeleted.current.length} alert(s) deleted.</span>
                 <button onClick={handleUndo}><Undo size={16}/> Undo</button>
             </div>
+            
+            {/* Container for slide-in success/error toasts */}
+            {toast && (
+                <div className={styles.toastContainerWrapper}>
+                    <NotificationToast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                </div>
+            )}
         </div>
     );
 };

@@ -1,12 +1,63 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import Style from '../../Styles/LogsStyle/SystemLogs.module.css';
-import { ListFilter, X, ChevronDown, Trash2, Undo, Check } from 'lucide-react';
+import { 
+    ListFilter, 
+    X, 
+    ChevronDown, 
+    Trash2, 
+    Undo, 
+    Check, 
+    CheckCircle2, 
+    ShieldAlert 
+} from 'lucide-react';
 import { PARAMETER_TO_COMPONENT_MAP } from '../../utils/logMaps';
-import {formatDateTime} from '../../utils/formatDateTime'
+import { formatDateTime } from '../../utils/formatDateTime';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+/**
+ * NotificationToast Component
+ * Handles the slide-in visual feedback (Success/Error).
+ */
+const NotificationToast = ({ message, type, onClose }) => {
+    const [isExiting, setIsExiting] = useState(false);
+    const timerRef = useRef(null);
+
+    const handleClose = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsExiting(true);
+        setTimeout(onClose, 300);
+    };
+
+    useEffect(() => {
+        timerRef.current = setTimeout(handleClose, 4000);
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
+    return (
+        <div className={`${Style.toast} ${isSuccess ? Style.toastSuccess : Style.toastError} ${isExiting ? Style.toastOutRight : Style.toastIn}`}>
+            <Icon className={Style.toastIcon} size={22} />
+            <div className={Style.toastContent}>
+                <h4>{title}</h4>
+                <p>{message}</p>
+            </div>
+            <button onClick={handleClose} className={Style.toastClose}>
+                <X size={18} />
+            </button>
+        </div>
+    );
+};
 
 function SystemLogs() {
     // --- STATE MANAGEMENT ---
@@ -18,7 +69,7 @@ function SystemLogs() {
         const fetchSystemLogs = async() => {
             try{
                 const response = await axios.get(`${API_BASE_URL}/api/logs/systemlogs`);
-                setLogs(response.data.map(log => ({...log, id: log._id}))); // Update the logs state with the fetched data, adding a local 'id' field for keying.
+                setLogs(response.data.map(log => ({...log, id: log._id}))); 
             }catch(error){
                 console.error("Error fetching system logs:", error);
             }finally{
@@ -32,20 +83,16 @@ function SystemLogs() {
         const idsArray = Array.from(idsToDelete);
 
         try{
-            // Store the full log objects of the items that will be deleted.
             const logsToRestore = logs.filter(log => idsArray.includes(log.id));
             setLastDeletedLogs(logsToRestore);
 
             const logsToKeep = logs.filter(log => !idsArray.includes(log.id));
             setLogs(logsToKeep);
 
-            // Make a POST request to the backend with the array of IDs.
             await axios.post(`${API_BASE_URL}/api/logs/deleteSysLog`, { ids: idsArray });
         }catch(error){
             console.error("Error deleting logs:", error);
-            // Revert the UI state if the API call fails.
             setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]);
-            // Clear the undo state since the delete failed.
             setLastDeletedLogs([]);
         }
     }
@@ -53,13 +100,12 @@ function SystemLogs() {
     const handleRestoreLogs = async() => {
         if (lastDeletedLogs.length === 0) return;
         try {
-            // Make a POST request to the backend to restore the logs.
             await axios.post(`${API_BASE_URL}/api/logs/restoreSysLog`, { logs: lastDeletedLogs });
-            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]); // Add the restored logs back to the main logs state.
-            setLastDeletedLogs([]); // Clear the temporary restore state.
+            setLogs(prevLogs => [...prevLogs, ...lastDeletedLogs]); 
+            setLastDeletedLogs([]); 
         } catch (error) {
             console.error("Error restoring logs:", error);
-            const response = await axios.get(`${API_BASE_URL}/api/logs/systemlogs`); // Re-fetch all logs from the backend to ensure data consistency in case of failure.
+            const response = await axios.get(`${API_BASE_URL}/api/logs/systemlogs`); 
             setLogs(response.data.map(log => ({ ...log, id: log._id })));
         }
     }
@@ -97,13 +143,15 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
     const [deleteMode, setDeleteMode] = useState('off');
     const [selectedToDelete, setSelectedToDelete] = useState([]);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [showUndoToast, setShowUndoToast] = useState(false);
+    
+    // --- Notification State ---
+    const [showUndoToast, setShowUndoToast] = useState(false); // Bottom Undo Banner
+    const [toast, setToast] = useState(null); // Top-Right Slide-in Toast
     const [lastDeletedCount, setLastDeletedCount] = useState(0);
 
     // --- State for managing the draggable panel ---
     const [isDraggable, setIsDraggable] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    // --- FIX: Position now represents the translation offset ---
     const [position, setPosition] = useState({ x: 0, y: 0 });
 
     // --- REFS ---
@@ -111,7 +159,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
     const eventDropdownRef = useRef(null);
     const deviceIdDropdownRef = useRef(null);
     const undoTimerRef = useRef(null);
-    // --- NEW: Ref to store the starting point of a drag ---
     const dragStartRef = useRef(null);
 
     // --- MEMOIZED VALUES ---
@@ -122,11 +169,9 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
 
     const componentTypes = ['Microcontroller', 'Valve Actuator', 'pH Sensor', 'TDS Sensor', 'Temp Sensor', 'Turbidity Sensor'];
 
-    // Filters the logs based on the applied filter state.
     const filteredDisplayLogs = useMemo(() => {
         let logsToFilter = [...logs];
 
-        // Apply date range filter
         const { startDate, endDate } = filters;
         if (startDate || endDate) {
             const start = startDate ? new Date(startDate) : null;
@@ -142,7 +187,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
             });
         }
         
-        // Apply component filter
         const { component } = filters;
         if (component.length > 0) {
             logsToFilter = logsToFilter.filter(log => {
@@ -151,13 +195,11 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
             });
         }
         
-        // Apply event filter
         const { event } = filters;
         if (event.length > 0) {
             logsToFilter = logsToFilter.filter(log => event.includes(log.event));
         }
 
-        // Apply device ID filter
         const { deviceId } = filters;
         if (deviceId.length > 0) {
             logsToFilter = logsToFilter.filter(log => deviceId.includes(log.deviceId));
@@ -166,12 +208,10 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         return logsToFilter.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }, [logs, filters]);
 
-    // --- useEffect to check screen size and enable/disable draggable mode ---
     useEffect(() => {
         const checkScreenSize = () => {
             const isDraggableRange = window.innerWidth > 768 && window.innerWidth <= 1400;
             setIsDraggable(isDraggableRange);
-            // If screen is resized out of draggable range, reset the position
             if (!isDraggableRange) {
                 setPosition({ x: 0, y: 0 });
             }
@@ -183,7 +223,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
 
-    // --- useEffect to handle the dragging logic ---
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!isDragging) return;
@@ -209,7 +248,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         };
     }, [isDragging]);
 
-    // --- LIFECYCLE EFFECTS ---
     useEffect(() => {
         if (isFilterOpen) {
             setDraftFilters(filters);
@@ -245,26 +283,21 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         };
     }, [showUndoToast]);
 
-     // --- MouseDown handler to initiate dragging ---
     const handleMouseDown = (e) => {
         if (!isDraggable || e.button !== 0) return;
         
         setIsDragging(true);
-        // Record the starting mouse position relative to the current translation
         dragStartRef.current = {
             x: e.clientX - position.x,
             y: e.clientY - position.y
         };
     };
     
-    // --- FIX: Function to handle closing the panel and resetting its position ---
     const handleCloseFilterPanel = () => {
         setIsFilterOpen(false);
-        setPosition({ x: 0, y: 0 }); // Reset position on close
+        setPosition({ x: 0, y: 0 }); 
     };
 
-    // --- EVENT HANDLERS ---
-    
     const handleToggleDeleteMode = () => {
         setDeleteMode(prev => (prev === 'off' ? 'all' : 'off'));
         setSelectedToDelete([]);
@@ -303,10 +336,19 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         setLastDeletedCount(idsToDelete.size);
         onDelete(idsToDelete);
 
+        // 1. Trigger Success Toast (Top Right)
+        setToast({
+            id: Date.now(),
+            message: `${idsToDelete.size} log(s) moved to trash.`,
+            type: 'success'
+        });
+
+        // 2. Trigger Undo Banner (Bottom Left)
+        setShowUndoToast(true);
+
         setShowConfirmModal(false);
         setDeleteMode('off');
         setSelectedToDelete([]);
-        setShowUndoToast(true);
     };
 
     const handleUndo = () => {
@@ -314,6 +356,14 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         if (undoTimerRef.current) {
             clearTimeout(undoTimerRef.current);
         }
+        
+        // Trigger Success Toast for Restore
+        setToast({
+            id: Date.now(),
+            message: 'Deletion undone. Logs have been restored.',
+            type: 'success'
+        });
+
         setShowUndoToast(false);
     };
 
@@ -331,7 +381,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
         });
     };
 
-    // --- NEW: Handlers for the compact multi-select dropdowns ---
     const handleMultiSelect = (filterType, value) => {
         setDraftFilters(prev => {
             const newValues = new Set(prev[filterType]);
@@ -397,7 +446,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
                         <div
                             ref={filterPanelRef}
                             className={Style['filter-panel']}
-                            // --- FIX: Use CSS transform for smoother, more reliable dragging ---
                             style={isDraggable ? { 
                                 transform: `translate(${position.x}px, ${position.y}px)`
                             } : {}}
@@ -443,7 +491,7 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
                                     </div>
                                 </div>
 
-                                {/* --- FIX: Device ID Filter using new compact dropdown style --- */}
+                                {/* Device ID Filter */}
                                 <div className={Style['filter-row']} ref={deviceIdDropdownRef}>
                                     <label className={Style['filter-label']}>Device ID</label>
                                     <div className={Style['filter-control']}>
@@ -476,7 +524,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
                 </div>
             </div>
 
-{/* 1. The header is a separate element, so it remains fixed at the top. */}
             <div className={`${Style.tableHeader} ${deleteMode === 'select' ? Style['select-delete-grid'] : ''}`}>
                 <div className={Style.headerItem}>Date & Time</div>
                 <div className={Style.headerItem}>Device ID</div>
@@ -498,7 +545,6 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
                 )}
             </div>
 
-            {/* 2. This container uses flexbox to define the scrollable area's height. */}
             <div className={Style.tableBody}>
                 {loading ? (
                     <div className={Style['loading-spinner']}>
@@ -552,10 +598,23 @@ function SystemLogsContent({logs, loading, onDelete, onRestore}){
                 </div>
             )}
 
+            {/* Undo Banner (Bottom Left) */}
             <div className={`${Style['undo-toast']} ${showUndoToast ? Style.show : ''}`}>
                 <span>{lastDeletedCount} log(s) deleted.</span>
                 <button onClick={handleUndo}><Undo size={16}/> Undo</button>
             </div>
+
+            {/* Notification Toast (Top Right) */}
+            {toast && (
+                <div className={Style.toastContainerWrapper}>
+                    <NotificationToast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                </div>
+            )}
         </div>
     );
 }

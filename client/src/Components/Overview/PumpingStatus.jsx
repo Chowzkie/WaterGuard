@@ -1,18 +1,54 @@
-import React, { useState, useMemo } from 'react'; // Import useMemo
-import {  SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import {  SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare, CheckCircle2, ShieldAlert } from 'lucide-react';
 import '../../Styles/PumpingStatus.css';
 
-// --- Accept 'devices' prop ---
-const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devices to empty array
+// --- NotificationToast Component ---
+const NotificationToast = ({ message, type, onClose }) => {
+    const [isExiting, setIsExiting] = useState(false);
+    const timerRef = useRef(null);
+
+    const handleClose = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setIsExiting(true);
+        setTimeout(onClose, 300);
+    };
+
+    useEffect(() => {
+        timerRef.current = setTimeout(handleClose, 4000);
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
+    const isSuccess = type === 'success';
+    const title = isSuccess ? 'Success' : 'Error';
+    const Icon = isSuccess ? CheckCircle2 : ShieldAlert;
+
+    return (
+        <div className={`toast ${isSuccess ? 'toastSuccess' : 'toastError'} ${isExiting ? 'toastOutRight' : 'toastIn'}`}>
+            <Icon className="toastIcon" size={22} />
+            <div className="toastContent">
+                <h4>{title}</h4>
+                <p>{message}</p>
+            </div>
+            <button onClick={handleClose} className="toastClose">
+                <X size={18} />
+            </button>
+        </div>
+    );
+};
+
+const PumpingStatus = ({ stations, onSave, devices = [] }) => { 
     
     const [isEditing, setIsEditing] = useState(false);
     const [draftStations, setDraftStations] = useState(null);
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
     
     const [newLabel, setNewLabel] = useState('');
-    // --- 'newLocation' is now auto-filled ---
     const [newLocation, setNewLocation] = useState('');
-    // --- State to track the selected device ID ---
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
     const [newOperation, setNewOperation] = useState('On-going');
     const [error, setError] = useState('');
@@ -20,36 +56,30 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
     const [detailsForStationId, setDetailsForStationId] = useState(null);
     const [draftDetails, setDraftDetails] = useState({ cause: '', date: '', startTime: '', endTime: '' });
     const [stationBeingDetailed, setStationBeingDetailed] = useState(null);
+    
+    // --- Toast State ---
+    const [toast, setToast] = useState(null);
 
-    // ---Memoized list of available devices ---
-    // This now depends on 'draftStations' to update the dropdown
-    // as you add new stations in the modal.
     const availableDevices = useMemo(() => {
-        // If the modal isn't open, draftStations is null. Don't bother.
         if (!draftStations) return []; 
         
-        // Get all device IDs assigned in the *current draft*
         const assignedDeviceIds = new Set(
             draftStations.map(s => s.deviceId?._id || s.deviceId).filter(Boolean)
         );
         
-        // Return devices that are NOT in the assigned set
         return devices.filter(d => !assignedDeviceIds.has(d._id));
-    }, [devices, draftStations]); // <-- UPDATED DEPENDENCY
+    }, [devices, draftStations]); 
 
-    // --- Handler for the device dropdown ---
     const handleDeviceSelectChange = (e) => {
         const deviceId = e.target.value;
         setSelectedDeviceId(deviceId);
 
         if (deviceId) {
-            // Find the selected device and auto-fill the location
             const selectedDevice = devices.find(d => d._id === deviceId);
             if (selectedDevice) {
                 setNewLocation(selectedDevice.location);
             }
         } else {
-            // Clear location if "Select a Device" is chosen
             setNewLocation('');
         }
     };
@@ -72,7 +102,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         setDetailsForStationId(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
         setStationBeingDetailed(null);
-        // --- Reset new station fields on close ---
         setNewLabel('');
         setNewLocation('');
         setSelectedDeviceId('');
@@ -87,23 +116,40 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         }
     };
 
-    const handleSaveChanges = () => {
+    // --- Async to handle API result and trigger Toast ---
+    const handleSaveChanges = async () => {
         if (detailsForStationId) {
             alert('Please save or cancel the details for the selected station first.');
             return;
         }
         
-        // --- Prepare stations for saving ---
-        // Ensure deviceId is just the ID string, not the populated object
         const stationsToSave = draftStations.map(s => ({
             ...s,
-            // If deviceId is an object (from populate), just send its _id.
-            // If it's a string (from new add), send it as is.
             deviceId: s.deviceId?._id || s.deviceId || null,
         }));
         
-        onSave(stationsToSave);
-        closeAndCleanup();
+        try {
+            // await the parent's onSave function.
+            // If App.jsx throws an error, it will be caught here.
+            await onSave(stationsToSave);
+            
+            // --- Trigger Success Toast ---
+            setToast({
+                id: Date.now(),
+                message: 'Pumping stations updated successfully.',
+                type: 'success'
+            });
+            
+            closeAndCleanup();
+        } catch (error) {
+            console.error("Failed to save stations:", error);
+            // --- Trigger Error Toast ---
+            setToast({
+                id: Date.now(),
+                message: 'Failed to save changes. Please try again.',
+                type: 'error'
+            });
+        }
     };
 
     const handleDiscardChanges = () => {
@@ -112,24 +158,21 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
 
     const handleAddStationToDraft = (e) => {
         e.preventDefault();
-        // --- Validation check ---
         if (!newLabel || !selectedDeviceId) {
             setError('Please fill out Label and select a Device.');
             return;
         }
         setError('');
         
-        // ---  New station object ---
         const newStation = {
             tempId: Date.now(),
             label: newLabel,
-            location: newLocation, // The auto-filled location
-            deviceId: selectedDeviceId, // Store the ID. We'll look up the label for display
+            location: newLocation,
+            deviceId: selectedDeviceId,
             operation: newOperation
         };
         setDraftStations([...draftStations, newStation]);
         
-        // --- Reset fields ---
         setNewLabel('');
         setNewLocation('');
         setSelectedDeviceId('');
@@ -140,31 +183,21 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         setDraftStations(draftStations.filter(station => (station._id || station.tempId) !== idToRemove));
     };
 
-    // ... (handleOperationChangeInDraft, handleSaveDetails, handleCancelDetails remain the same) ...
-    // ...
     const handleOperationChangeInDraft = (idToChange, newOp) => {
         const station = draftStations.find(s => (s._id || s.tempId) === idToChange);
         if (!station) return;
 
         if (newOp === 'Maintenance') {
-            // 1. Store the original status in case the user cancels.
             setStationBeingDetailed({ id: idToChange, originalOp: station.operation });
-            
-            // 2. Update the draft state IMMEDIATELY.
             setDraftStations(draftStations.map(s => 
                 (s._id || s.tempId) === idToChange ? { ...s, operation: newOp } : s
             ));
-            
-            // 3. Open the details form.
             setDetailsForStationId(idToChange);
             setDraftDetails({ cause: '', date: new Date().toISOString().split('T')[0], startTime: '', endTime: '' });
         } else {
-            // This block now runs for both "On-going" and "Offline".
             setDraftStations(draftStations.map(s =>
                 (s._id || s.tempId) === idToChange ? { ...s, operation: newOp, maintenanceInfo: null } : s
             ));
-            
-            // Hide the details form if it was open.
             setDetailsForStationId(null);
             setStationBeingDetailed(null);
             setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
@@ -198,24 +231,16 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
         setStationBeingDetailed(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
     }
-    // ...
     
-    // ---Helper to get device label for display ---
-    // Handles both populated objects (from DB) and string IDs (newly added)
     const getDeviceLabel = (deviceId) => {
         if (!deviceId) return 'N/A';
-        
-        // If it's an object (populated from DB), return its label
         if (typeof deviceId === 'object' && deviceId.label) {
             return deviceId.label;
         }
-        
-        // If it's a string ID (newly added in modal), find it in the 'devices' prop
         if (typeof deviceId === 'string') {
             const device = devices.find(d => d._id === deviceId);
             return device ? device.label : 'Unknown';
         }
-        
         return 'N/A';
     };
 
@@ -232,7 +257,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                     </div>
                     <div className="station-list">
                         <div className="station-list-header">
-                            {/* --- Added Device column --- */}
                             <div>Label</div><div>Location</div><div>Device</div><div>Operation</div>
                         </div>
                         <div className="station-list-items">
@@ -240,8 +264,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                 <div key={s._id} className="station-item">
                                     <div>{s.label}</div>
                                     <div>{s.location}</div>
-                                    {/* --- Display device label --- */}
-                                    {/* s.deviceId is populated by the backend as { _id: '...', label: '...' } */}
                                     <div>{s.deviceId?.label || 'N/A'}</div>
                                     <div>
                                         <span className={`status-badge ${s.operation.toLowerCase().replace('-', '_')}`}>
@@ -270,7 +292,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                     <div key={station._id || station.tempId} className="station-item">
                                         <div>{station.label}</div>
                                         <div>{station.location}</div>
-                                        {/* --- Display device label --- */}
                                         <div>{getDeviceLabel(station.deviceId)}</div>
                                         <div>
                                             <select
@@ -324,7 +345,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                 ))}
                             </div>
 
-                            {/* --- Add Station Form --- */}
                             <form className="add-station-form" onSubmit={handleAddStationToDraft} noValidate>
                                 <h4 className="form-title">Add New Station</h4>
                                 <div className="form-inputs">
@@ -338,7 +358,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                         />
                                     </div>
                                     
-                                    {/* --- Device Dropdown --- */}
                                     <div className="form-input-group">
                                         <select
                                             value={selectedDeviceId}
@@ -346,7 +365,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                             className="form-select"
                                         >
                                             <option value="">Select a Device</option>
-                                            {/* We use 'availableDevices' to only show unassigned devices */}
                                             {availableDevices.map(device => (
                                                 <option key={device._id} value={device._id}>
                                                     {device.label}
@@ -355,15 +373,11 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                                         </select>
                                     </div>
 
-                                    {/* --- Location Input (Auto-filled) --- */}
                                     <div className="form-input-group">
                                         <input
                                             type="text"
                                             placeholder="Location (from device)"
                                             value={newLocation}
-                                            // You can make this readOnly if you never want the user to change it
-                                            // readOnly
-                                            // Or allow them to edit it:
                                             onChange={e => setNewLocation(e.target.value)}
                                             className="form-input"
                                         />
@@ -405,6 +419,18 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => { // Default devic
                             <button onClick={handleSaveChanges} className="button-danger">Save Changes</button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* --- Render Toast Container --- */}
+            {toast && (
+                <div className="toastContainerWrapper">
+                    <NotificationToast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
                 </div>
             )}
         </>

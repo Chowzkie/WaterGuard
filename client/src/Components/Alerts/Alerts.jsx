@@ -14,7 +14,6 @@ const Alerts = () => {
         activeAlerts,
         recentAlerts,
         alertsHistory,
-        assigneeList, // <-- ADDED
         devices,
         onAcknowledgeAlert,
         // CHANGE: Get delete and restore functions from context
@@ -24,7 +23,6 @@ const Alerts = () => {
         onAnimationComplete
     } = useAlerts();
 
-    // --- MODIFIED ---
     // Add new state to track which device is selected for viewing.
     // `null` will represent the "All Devices" view.
     const [viewedDeviceId, setViewedDeviceId] = useState(null);
@@ -32,14 +30,12 @@ const Alerts = () => {
     const [activeTab, setActiveTab] = useState('History');
     const tabItems = ['Active', 'Recent', 'History'];
 
-    // --- MODIFIED ---
     // This new handler will be called by the TestingDevices component.
     // It also allows deselecting a device by clicking it again.
     const handleDeviceSelect = (deviceId) => {
         setViewedDeviceId(prevId => (prevId === deviceId ? null : deviceId));
     };
 
-    // --- MODIFIED ---
     // Filter the alert lists based on the selected device before rendering.
     const filteredActiveAlerts = viewedDeviceId 
     ? activeAlerts.filter(a => a.originator.toLowerCase() === viewedDeviceId.toLowerCase()) 
@@ -82,9 +78,7 @@ const Alerts = () => {
                     <AlertsHistory
                         // Pass the pre-filtered list
                         historyAlerts={filteredHistoryAlerts}
-                        //New
-                        assigneeList={assigneeList}
-                        // Pass delete and restore functions down as props
+                        // CHANGE: Pass delete and restore functions down as props
                         onDeleteHistoryAlerts={onDeleteHistoryAlerts}
                         onRestoreHistoryAlerts={onRestoreHistoryAlerts}
                     />

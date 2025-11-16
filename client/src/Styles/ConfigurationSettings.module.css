@@ -713,3 +713,87 @@
     background-color: #f1f5f9;
     color: #1e293b;
 }
+
+/* --- Threshold Imbalance Modal Styles --- */
+
+.imbalance-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.imbalance-item {
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+}
+
+.imbalance-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.imbalance-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.imbalance-comparison {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.comparison-box {
+    background-color: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+}
+
+.comparison-box strong {
+    display: block;
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.comparison-box .val {
+    font-family: monospace;
+    font-weight: 600;
+    color: #334155;
+}
+
+.comparison-box.optimized {
+    background-color: #f0fdf4; /* Light green bg */
+    border-color: #bbf7d0;
+}
+
+.comparison-box.optimized .val {
+    color: #15803d; /* Dark green text */
+}
+
+.arrow-divider {
+    color: #94a3b8;
+}
+
+.issue-text {
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 6px;
+    font-style: italic;
+}

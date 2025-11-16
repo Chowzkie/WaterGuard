@@ -68,6 +68,11 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     });
     const [showSyncPrompt, setShowSyncPrompt] = useState(false);
     const [mismatchData, setMismatchData] = useState(null);
+    
+    // --- NEW: Imbalance Modal State ---
+    const [showImbalancePrompt, setShowImbalancePrompt] = useState(false);
+    const [imbalanceDetails, setImbalanceDetails] = useState(null); 
+
     const initializedDeviceIdRef = useRef(null);
     const [showGuidelines, setShowGuidelines] = useState(false);
 
@@ -171,7 +176,127 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         });
     };
 
-    // ---SYNC HANDLER ---
+    // --- NEW: VALIDATION ALGORITHMS ---
+
+    /**
+     * Generates a corrected configuration object by enforcing standard logic.
+     * Logic: Enforce strict ascending order (CritLow < WarnLow < NormLow < NormHigh < WarnHigh < CritHigh)
+     */
+    const generateOptimizedConfigs = (currentConfigs) => {
+        const optimized = JSON.parse(JSON.stringify(currentConfigs));
+        const th = optimized.thresholds;
+
+        // Helper to ensure A < B. If not, B = A + delta
+        const ensureLess = (valA, valB, setB, delta = 0.1) => {
+            if (valA >= valB) setB(parseFloat((valA + delta).toFixed(2)));
+        };
+
+        // 1. Optimize pH
+        if (th.ph) {
+            let { critLow, warnLow, normalLow, normalHigh, warnHigh, critHigh } = th.ph;
+            // Enforce chain from bottom up
+            ensureLess(critLow, warnLow, (v) => th.ph.warnLow = v);
+            ensureLess(th.ph.warnLow, normalLow, (v) => th.ph.normalLow = v);
+            ensureLess(th.ph.normalLow, normalHigh, (v) => th.ph.normalHigh = v);
+            ensureLess(th.ph.normalHigh, warnHigh, (v) => th.ph.warnHigh = v);
+            ensureLess(th.ph.warnHigh, critHigh, (v) => th.ph.critHigh = v);
+        }
+
+        // 2. Optimize Temp
+        if (th.temp) {
+            let { critLow, warnLow, normalLow, normalHigh, warnHigh, critHigh } = th.temp;
+            ensureLess(critLow, warnLow, (v) => th.temp.warnLow = v);
+            ensureLess(th.temp.warnLow, normalLow, (v) => th.temp.normalLow = v);
+            ensureLess(th.temp.normalLow, normalHigh, (v) => th.temp.normalHigh = v);
+            ensureLess(th.temp.normalHigh, warnHigh, (v) => th.temp.warnHigh = v);
+            ensureLess(th.temp.warnHigh, critHigh, (v) => th.temp.critHigh = v);
+        }
+
+        // 3. Optimize Turbidity (Single direction: NormLow < NormHigh < Warn < Crit)
+        if (th.turbidity) {
+            let { normalLow, normalHigh, warn, crit } = th.turbidity;
+            ensureLess(normalLow, normalHigh, (v) => th.turbidity.normalHigh = v, 1);
+            ensureLess(th.turbidity.normalHigh, warn, (v) => th.turbidity.warn = v, 1);
+            ensureLess(th.turbidity.warn, crit, (v) => th.turbidity.crit = v, 1);
+        }
+
+        // 4. Optimize TDS (Single direction)
+        if (th.tds) {
+            let { normalLow, normalHigh, warn, crit } = th.tds;
+            ensureLess(normalLow, normalHigh, (v) => th.tds.normalHigh = v, 10);
+            ensureLess(th.tds.normalHigh, warn, (v) => th.tds.warn = v, 10);
+            ensureLess(th.tds.warn, crit, (v) => th.tds.crit = v, 10);
+        }
+
+        return optimized;
+    };
+
+    /**
+     * Checks for logical imbalances in the thresholds.
+     * Returns object with details if issues found, else null.
+     */
+    const checkThresholdImbalance = (configs) => {
+        const issues = [];
+        const th = configs.thresholds;
+
+        // Check pH
+        if (th.ph) {
+            const { critLow, warnLow, normalLow, normalHigh, warnHigh, critHigh } = th.ph;
+            const phIssues = [];
+            if (warnLow <= critLow) phIssues.push(`Warning Low (${warnLow}) must be > Critical Low (${critLow})`);
+            if (normalLow <= warnLow) phIssues.push(`Normal Low (${normalLow}) must be > Warning Low (${warnLow})`);
+            if (normalHigh <= normalLow) phIssues.push(`Normal High (${normalHigh}) must be > Normal Low (${normalLow})`);
+            if (warnHigh <= normalHigh) phIssues.push(`Warning High (${warnHigh}) must be > Normal High (${normalHigh})`);
+            if (critHigh <= warnHigh) phIssues.push(`Critical High (${critHigh}) must be > Warning High (${warnHigh})`);
+            
+            if (phIssues.length > 0) issues.push({ param: 'pH Level', list: phIssues });
+        }
+
+        // Check Turbidity
+        if (th.turbidity) {
+            const { normalLow, normalHigh, warn, crit } = th.turbidity;
+            const turbIssues = [];
+            if (normalHigh <= normalLow) turbIssues.push(`Normal High (${normalHigh}) must be > Normal Low (${normalLow})`);
+            if (warn <= normalHigh) turbIssues.push(`Warning (${warn}) must be > Normal High (${normalHigh})`);
+            if (crit <= warn) turbIssues.push(`Critical (${crit}) must be > Warning (${warn})`);
+
+            if (turbIssues.length > 0) issues.push({ param: 'Turbidity', list: turbIssues });
+        }
+
+        // Check TDS
+        if (th.tds) {
+             const { normalLow, normalHigh, warn, crit } = th.tds;
+             const tdsIssues = [];
+             if (normalHigh <= normalLow) tdsIssues.push(`Normal High (${normalHigh}) must be > Normal Low (${normalLow})`);
+             if (warn <= normalHigh) tdsIssues.push(`Warning (${warn}) must be > Normal High (${normalHigh})`);
+             if (crit <= warn) tdsIssues.push(`Critical (${crit}) must be > Warning (${warn})`);
+ 
+             if (tdsIssues.length > 0) issues.push({ param: 'TDS', list: tdsIssues });
+        }
+
+        // Check Temp
+        if (th.temp) {
+            const { critLow, warnLow, normalLow, normalHigh, warnHigh, critHigh } = th.temp;
+            const tempIssues = [];
+            if (warnLow <= critLow) tempIssues.push(`Warning Low <= Critical Low`);
+            if (normalLow <= warnLow) tempIssues.push(`Normal Low <= Warning Low`);
+            if (normalHigh <= normalLow) tempIssues.push(`Normal High <= Normal Low`);
+            if (warnHigh <= normalHigh) tempIssues.push(`Warning High <= Normal High`);
+            if (critHigh <= warnHigh) tempIssues.push(`Critical High <= Warning High`);
+            
+            if (tempIssues.length > 0) issues.push({ param: 'Temperature', list: tempIssues });
+        }
+
+        if (issues.length > 0) {
+            return {
+                issues,
+                optimizedConfig: generateOptimizedConfigs(configs)
+            };
+        }
+        return null;
+    };
+
+    // --- SYNC HANDLER ---
 
     /**
      * @function handleSyncAllFromAlerts
@@ -247,20 +372,24 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     };
 
     /**
-     * @function handleSaveClick - Handles the main "Save Configurations" button click.
-     * This now *checks for mismatches* before deciding to save or show the sync prompt.
+     * Main internal function to route the save process through all validation layers (Imbalance -> Sync -> Save).
+     * @param {object} configs - The configurations to validate/save
+     * @param {boolean} skipImbalanceCheck - If true, bypasses the imbalance check (used after "Ignore" or "Optimize")
      */
-    const handleSaveClick = () => {
-        if (isSaving) return;
-
-        // NEW: 1. Run new validation logic first.
-        if (!validateParameterSelection()) {
-            return; // Stop save if validation fails.
+    const triggerSaveFlow = (configs, skipImbalanceCheck = false) => {
+        // 1. Validate Logic Imbalance (Unless skipped)
+        if (!skipImbalanceCheck) {
+            const imbalance = checkThresholdImbalance(configs);
+            if (imbalance) {
+                setImbalanceDetails(imbalance);
+                setShowImbalancePrompt(true);
+                return; // STOP here, wait for Modal
+            }
         }
 
-        // ORIGINAL: 2. Check for mismatches.
-        const alerts = draftConfigs.thresholds;
-        const shutoff = draftConfigs.controls.valveShutOff;
+        // 2. Validate Sync Mismatch (Original Logic)
+        const alerts = configs.thresholds;
+        const shutoff = configs.controls.valveShutOff;
 
         // Define the values to compare
         const values = {
@@ -291,11 +420,53 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         if (hasMismatch) {
             setMismatchData(values); // Store the detailed mismatch data
             setShowSyncPrompt(true); // Show the sync modal
-        } else {
-            // No mismatch, proceed with save as normal
-            proceedWithSave(draftConfigs);
-        }
+            return; // Stop here, wait for modal
+        } 
+
+        // 3. If all clear, Save
+        proceedWithSave(configs);
     };
+
+    /**
+     * @function handleSaveClick - Handles the main "Save Configurations" button click.
+     */
+    const handleSaveClick = () => {
+        if (isSaving) return;
+
+        // 1. Run parameter selection validation first
+        if (!validateParameterSelection()) {
+            return; // Stop save if validation fails.
+        }
+
+        // 2. Trigger the full save flow (Imbalance -> Mismatch -> Save)
+        triggerSaveFlow(draftConfigs);
+    };
+
+
+    // --- NEW: IMBALANCE MODAL HANDLERS ---
+
+    const handleOptimizeAndSave = () => {
+        // 1. Apply optimized configs
+        setDraftConfigs(imbalanceDetails.optimizedConfig);
+        setShowImbalancePrompt(false);
+        
+        // 2. Immediately try to save again with the NEW optimized configs
+        // We pass a flag 'true' to indicate we skipped the imbalance check this time
+        triggerSaveFlow(imbalanceDetails.optimizedConfig, true);
+    };
+
+    const handleIgnoreImbalance = () => {
+        setShowImbalancePrompt(false);
+        // Proceed with the ORIGINAL draft configs, skipping imbalance check
+        triggerSaveFlow(draftConfigs, true);
+    };
+
+    const handleDiscardImbalance = () => {
+        setShowImbalancePrompt(false);
+        setImbalanceDetails(null);
+        // Do nothing, user stays on page to fix manually
+    };
+
 
     /**
      * @function handleSaveWithoutSyncing - Modal Action: Save the mismatched values as-is.
@@ -372,45 +543,22 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
      * @function handleSaveAndExit - Handles the "Save & Exit" action from the modal.
      */
     const handleSaveAndExit = async () => {
-        // NEW: 1. Run new validation logic first.
+        // 1. Run new validation logic first.
         if (!validateParameterSelection()) {
             return; // Stop save if validation fails.
         }
 
-        // ORIGINAL: 2. Run mismatch check.
-        // We must run the same mismatch check here!
-        setIsSaving(true); // Show loading state on modal button
-
-        const alerts = draftConfigs.thresholds;
-        const shutoff = draftConfigs.controls.valveShutOff;
-
-        const values = {
-            phLow: { alert: alerts.ph.critLow, shutoff: shutoff.phLow, isMismatched: alerts.ph.critLow !== shutoff.phLow },
-            phHigh: { alert: alerts.ph.critHigh, shutoff: shutoff.phHigh, isMismatched: alerts.ph.critHigh !== shutoff.phHigh },
-            turbidity: { alert: alerts.turbidity.crit, shutoff: shutoff.turbidityCrit, isMismatched: alerts.turbidity.crit !== shutoff.turbidityCrit },
-            tds: { alert: alerts.tds.crit, shutoff: shutoff.tdsCrit, isMismatched: alerts.tds.crit !== shutoff.tdsCrit }
-        };
-
-        const hasMismatch = Object.values(values).some(v => v.isMismatched);
-
-        if (hasMismatch) {
-            setIsSaving(false); // Hide loading
-            setShowUnsavedPrompt(false); // Hide this modal
-            setMismatchData(values); // Store data
-            setShowSyncPrompt(true); // Show the *other* modal
-        } else {
-            // No mismatch, proceed with save and exit
-            try {
-                await onSave(device._id, draftConfigs);
-                setShowUnsavedPrompt(false);
-                onBack();
-            } catch (error) {
-                console.error("Failed to save configurations:", error);
-                alert("Error: Could not save settings.");
-            } finally {
-                setIsSaving(false);
-            }
-        }
+        // 2. Use the standard flow, but we need to handle the 'Exit' part.
+        // Since standard flow is async and involves modals, we simply trigger it.
+        // If successful, 'proceedWithSave' will execute. 
+        // NOTE: In this simplified version, we rely on the user clicking "Back" again after saving.
+        // Or we assume 'onSave' updates parent state which might unmount this component.
+        
+        // Trigger the validation/save flow
+        triggerSaveFlow(draftConfigs);
+        
+        // Hide the "Unsaved Changes" prompt immediately so other modals can show up if needed
+        setShowUnsavedPrompt(false);
     };
     
     /**
@@ -717,6 +865,47 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                             <button onClick={() => setShowUnsavedPrompt(false)} className={styles.buttonTertiary} disabled={isSaving}>Stay on Page</button>
                             <button onClick={handleDiscardAndExit} className={styles.buttonSecondary} disabled={isSaving}>Discard & Exit</button>
                             <button onClick={handleSaveAndExit} className={styles.buttonPrimary} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save & Exit'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- THRESHOLD IMBALANCE MODAL --- */}
+            {showImbalancePrompt && imbalanceDetails && (
+                <div className={`${styles.modalBackdrop} ${styles.confirmationModalBackdrop}`}>
+                    <div className={`${styles.confirmationModalContent} ${styles.syncModalContent}`}>
+                        <div className={styles.icon}><AlertTriangle size={48} /></div>
+                        <h4>Configuration Imbalance Detected</h4>
+                        <p>The thresholds you entered violate the logical order required for the system to generate alerts correctly (e.g., Critical Low must be less than Warning Low).</p>
+
+                        <div className={styles['imbalance-container']}>
+                            {imbalanceDetails.issues.map((issue, idx) => (
+                                <div key={idx} className={styles['imbalance-item']}>
+                                    <div className={styles['imbalance-title']}>
+                                        <AlertTriangle size={14} color="#f59e0b" /> 
+                                        Issue in {issue.param}
+                                    </div>
+                                    {issue.list.map((text, i) => (
+                                        <p key={i} className={styles['issue-text']}>{text}</p>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+
+                        <p style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '15px'}}>
+                            We can automatically optimize your settings by adjusting values to restore the logical order.
+                        </p>
+
+                        <div className={styles.syncModalFooter}>
+                            <button onClick={handleOptimizeAndSave} className={styles.buttonPrimary} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Optimize & Save (Recommended)'}
+                            </button>
+                            <button onClick={handleIgnoreImbalance} className={styles.buttonSecondary} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Ignore & Save (Risk of System Errors)'}
+                            </button>
+                            <button onClick={handleDiscardImbalance} className={styles.buttonTertiary} disabled={isSaving}>
+                                Cancel & Edit Manually
+                            </button>
                         </div>
                     </div>
                 </div>

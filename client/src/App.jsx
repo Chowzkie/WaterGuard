@@ -46,6 +46,24 @@ function App() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // List of paths where the header should reset to default (no device label)
+        const mainPaths = [
+            '/overview', 
+            '/dashboard', 
+            '/alerts', 
+            '/devices', 
+            '/logs', 
+            '/account-settings'
+        ];
+
+        // If the current path is one of the main paths, clear the specific device label
+        if (mainPaths.includes(location.pathname)) {
+            setHeaderDeviceLabel(null);
+        }
+    }, [location.pathname]);
+
+
+    useEffect(() => {
         //socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
         //socket.on("disconnect", () => console.log("❌ Socket disconnected"));
 

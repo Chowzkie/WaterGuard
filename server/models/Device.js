@@ -105,6 +105,11 @@ const deviceSchema = new mongoose.Schema({
     controls: {
       valveShutOff: {
         enabled: { type: Boolean, default: true },
+        //Specific triggers for Shut-off
+        triggerPH: { type: Boolean, default: true },
+        triggerTurbidity: { type: Boolean, default: true },
+        triggerTDS: { type: Boolean, default: true },
+
         phLow: { type: Number, default: 5.9 },
         phHigh: { type: Number, default: 9.1 },
         turbidityCrit: { type: Number, default: 13 },
@@ -117,6 +122,7 @@ const deviceSchema = new mongoose.Schema({
       },
       valveOpenOnNormal: {
         enabled: { type: Boolean, default: true },
+        //Specific triggers for Auto Re-open
         triggerPH: { type: Boolean, default: true },
         triggerTurbidity: { type: Boolean, default: true },
         triggerTDS: { type: Boolean, default: true },

@@ -344,7 +344,7 @@
     font-family: 'Poppins', sans-serif;
 }
 
-.type-dropdown-list, .assignee-dropdown-list {
+.type-dropdown-list {
     position: absolute;
     width: 100%;
     background: white;

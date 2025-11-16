@@ -5,20 +5,18 @@ import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/AlertsHistory.module.css';
 
 // The component now accepts onDeleteHistoryAlerts and onRestoreHistoryAlerts
-const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHistoryAlerts,  onPermanentDeleteAlerts, assigneeList = [] }) => {
+const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHistoryAlerts,  onPermanentDeleteAlerts = [] }) => {
     // --- All existing filter state is unchanged ---
     const [filters, setFilters] = useState({
         status: [],
         severity: [],
         type: [],
-        assignee: 'All',
         action: [],
     });
     const [draftFilters, setDraftFilters] = useState(filters);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [typeSearchTerm, setTypeSearchTerm] = useState('');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-    const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
     
     // --- NEW: State for managing the delete UI structure ---
     const [deleteMode, setDeleteMode] = useState('off'); // 'off', 'all', 'select'
@@ -32,7 +30,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
     // --- All existing refs and memos are unchanged ---
     const filterPanelRef = useRef(null);
     const typeDropdownRef = useRef(null);
-    const assigneeDropdownRef = useRef(null);
 
     // --- NEW: State to manage which alert detail panel is open ---
     const [expandedAlertId, setExpandedAlertId] = useState(null);
@@ -42,10 +39,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         return Array.from(types);
     }, [historyAlerts]);
 
-    // ADDED: Create the assignees list for the dropdown, ensuring 'All' is always first.
-    const assignees = useMemo(() => ['All', ...assigneeList], [assigneeList]);
-
-
     //Filter logics
     const filteredDisplayAlerts = useMemo(() => {
         return historyAlerts.filter(alert => {
@@ -54,7 +47,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             const severityMatch = filters.severity.length === 0 || filters.severity.includes(alert.severity);
             const typeMatch = filters.type.length === 0 || filters.type.some(t => baseType.toLowerCase().includes(t.toLowerCase()));
             // MODIFIED: This logic now correctly checks the nested 'acknowledgedBy.name' property.
-            const assigneeMatch = filters.assignee === 'All' || (alert.acknowledgedBy && alert.acknowledgedBy.name === filters.assignee);
             const actionMatch = filters.action.length === 0 ||
                 (filters.action.includes('Acknowledged') && alert.acknowledged === true) ||
                 (filters.action.includes('Unacknowledged') && (alert.acknowledged === false || alert.acknowledged === undefined));
@@ -64,7 +56,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
             if (startDate) { startDate.setHours(0, 0, 0, 0); }
             if (endDate) { endDate.setHours(23, 59, 59, 999); }
             const dateMatch = (!startDate || alertDate >= startDate) && (!endDate || alertDate <= endDate);
-            return statusMatch && severityMatch && typeMatch && assigneeMatch && actionMatch && dateMatch;
+            return statusMatch && severityMatch && typeMatch && actionMatch && dateMatch;
         }).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }, [historyAlerts, filters]);
 
@@ -74,7 +66,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
         const handleClickOutside = (event) => {
             if (filterPanelRef.current && !filterPanelRef.current.contains(event.target) && !event.target.closest(`.${styles['icon-button']}`)) { setIsFilterOpen(false); }
             if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) { setIsTypeDropdownOpen(false); }
-            if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target)) { setIsAssigneeDropdownOpen(false); }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -176,9 +167,8 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
     const handleDateChange = (e) => { setDraftFilters(prev => ({ ...prev, [e.target.name]: e.target.value })); };
     const handleTypeSelect = (type) => { if (!draftFilters.type.includes(type)) { setDraftFilters(prev => ({ ...prev, type: [...prev.type, type] })); } setTypeSearchTerm(''); setIsTypeDropdownOpen(false); };
     const removeSelectedType = (typeToRemove) => { setDraftFilters(prev => ({ ...prev, type: prev.type.filter(t => t !== typeToRemove) })); };
-    const handleAssigneeSelect = (assignee) => { setDraftFilters(prev => ({ ...prev, assignee })); setIsAssigneeDropdownOpen(false); };
     const applyFilters = () => { setFilters(draftFilters); setIsFilterOpen(false); };
-    const clearFilters = () => { setDraftFilters({ status: [], severity: [], type: [], assignee: 'All', action: [], startDate: '', endDate: '' }); setTypeSearchTerm(''); };
+    const clearFilters = () => { setDraftFilters({ status: [], severity: [], type: [], action: [], startDate: '', endDate: '' }); setTypeSearchTerm(''); };
     
     // --- All utility functions are unchanged ---
     const getSeverityClass = (severity) => {
@@ -248,7 +238,7 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                     <label className={styles['filter-label']}>Alert status list</label>
                                     <div className={styles['filter-control']}>
                                         <div className={styles['pill-group']}>
-                                            {['Resolved', 'Escalated', 'Cleared'].map(status => (
+                                            {['Resolved', 'Escalated', 'Cleared', 'Expired'].map(status => (
                                                 <button key={status} onClick={() => handlePillSelect('status', status)} className={`${styles['filter-pill']} ${draftFilters.status.includes(status) ? styles.selected : ''}`}>
                                                     {draftFilters.status.includes(status) && <Check size={14} />}
                                                     {status}
@@ -303,34 +293,6 @@ const AlertsHistory = ({ historyAlerts = [], onDeleteHistoryAlerts, onRestoreHis
                                                 ))}
                                             </div>
                                         )}
-                                    </div>
-                                </div>
-                                <div className={styles['filter-row']} ref={assigneeDropdownRef}>
-                                    <label className={styles['filter-label']}>Assignee</label>
-                                    <div className={styles['filter-control']}>
-                                        <div className={styles['custom-dropdown']} onClick={() => setIsAssigneeDropdownOpen(o => !o)}>
-                                            <div className={styles['dropdown-header']}>
-                                                <User size={16} />
-                                                <span>{draftFilters.assignee}</span>
-                                                <ChevronDown size={16} className={styles['dropdown-chevron']} />
-                                            </div>
-                                            {isAssigneeDropdownOpen && (
-                                                <div className={styles['assignee-dropdown-list']}>
-                                                    {assignees.map(name => (
-                                                        <div 
-                                                            key={name} 
-                                                            className={styles['dropdown-item']} 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleAssigneeSelect(name);
-                                                            }}
-                                                        >
-                                                            {name}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
                                     </div>
                                 </div>
                             </div>

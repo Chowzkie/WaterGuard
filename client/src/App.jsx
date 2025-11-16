@@ -209,7 +209,6 @@ function App() {
     const [latestReading, setLatestReading] = useState(null);
     const backToNormalTimers = useRef(new Map());
     const maxSeenId = useRef(0);
-    const [assigneeList, setAssigneeList] = useState([]);
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
 
@@ -607,17 +606,6 @@ setPumpingStations(stationsRes.data);
         }
     }, [deviceLocations]);
 
-    // --- NEW --- This useEffect automatically creates a unique list of assignees for the filter
-    useEffect(() => {
-        if (alertsHistory && alertsHistory.length > 0) {
-            const uniqueAssignees = [...new Set(
-                alertsHistory
-                .map(alert => alert.acknowledgedBy ?.name)
-                .filter(Boolean)
-            )];
-            setAssigneeList(uniqueAssignees);
-        }
-    }, [alertsHistory]);
 
     // =================================================================================
     // --- NEW: Handlers for managing notification read status ---
@@ -676,7 +664,6 @@ setPumpingStations(stationsRes.data);
         activeAlerts,
         recentAlerts,
         alertsHistory,
-        assigneeList,
         devices: deviceLocations,
         pumpingStations,
         activeFilterDevice,

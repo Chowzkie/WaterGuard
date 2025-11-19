@@ -4,64 +4,62 @@
  * It's designed to be a pure function that uses configurations passed to it.
  */
 
-
 // --- HELPER FUNCTIONS ---
 
 /**
- * Evaluates a single parameter against its thresholds.
- * @param {string} parameter - The name of the parameter 
+ * Evaluates a single parameter against its thresholds and automation controls.
+ * @param {string} parameter - The name of the parameter (pH, turbidity, etc.)
  * @param {number} value - The sensor reading value.
- * @param {object} thresholds - The device-specific thresholds object 
+ * @param {object} configs - The full device configuration object (thresholds + controls).
  * @returns {{severity: string, message: string, note?: string}} The evaluation result.
  */
-const evaluateParameter = (parameter, value, thresholds) => {
-  // Get the specific rules for the parameter from the passed-in thresholds
-  const rules = thresholds[parameter.toLowerCase()]; // Use toLowerCase() to match schema keys (pH -> ph)
-  if (!rules) {
-      // If no configuration exists for this parameter, return Normal.
+const evaluateParameter = (parameter, value, configs) => {
+  // 1. Extract Thresholds for Severity Evaluation
+  const thresholds = configs.thresholds[parameter.toLowerCase()]; 
+  
+  if (!thresholds) {
+      // No configuration exists for this parameter; return Normal.
       return { severity: 'Normal', message: `No configuration for ${parameter}.` };
   }
 
-  let result = { severity: 'Normal', message: `${parameter} is within the normal range.` };
-  let note;
+  let result = { severity: 'Normal', message: `${parameter} is within the normal range (${value}).` };
+  let note = null;
 
+  // 2. Determine Severity (Critical vs Warning vs Normal) based on 'thresholds'
   switch (parameter) {
     case 'pH':
-      if (value < rules.critLow) {
+      if (value < thresholds.critLow) {
         result = { severity: 'Critical', message: `Critical Low pH level detected (${value})` };
-        note = 'Valve shut off';
-      } else if (value > rules.critHigh) {
+      } else if (value > thresholds.critHigh) {
         result = { severity: 'Critical', message: `Critical High pH level detected (${value})` };
-        note = 'Valve shut off';
-      } else if ((value >= rules.critLow && value <= rules.warnLow) || (value >= rules.warnHigh && value <= rules.critHigh)) {
+      } else if ((value >= thresholds.critLow && value <= thresholds.warnLow) || (value >= thresholds.warnHigh && value <= thresholds.critHigh)) {
         result = { severity: 'Warning', message: `pH level is nearing critical levels (${value})` };
       }
       break;
 
     case 'turbidity':
-      if (value > rules.crit) {
+      if (value > thresholds.crit) {
         result = { severity: 'Critical', message: `Critical turbidity level detected (${value} NTU)` };
-        note = 'Valve shut off';
-      } else if (value > rules.warn && value <= rules.crit) {
+      } else if (value > thresholds.warn && value <= thresholds.crit) {
         result = { severity: 'Warning', message: `High turbidity detected (${value} NTU)` };
       }
       break;
 
     case 'tds':
-      if (value > rules.crit) {
+      if (value > thresholds.crit) {
         result = { severity: 'Critical', message: `Critical TDS level detected (${value} mg/L)` };
-        note = 'Valve shut off';
-      } else if (value > rules.warn && value <= rules.crit) {
+      } else if (value > thresholds.warn && value <= thresholds.crit) {
         result = { severity: 'Warning', message: `High TDS detected (${value} mg/L)` };
       }
       break;
 
     case 'temp':
-      if (value < rules.critLow) {
+      // Temp usually doesn't trigger valves, but follows standard logic
+      if (value < thresholds.critLow) {
         result = { severity: 'Critical', message: `Critical Low Temperature detected (${value}°C)` };
-      } else if (value > rules.critHigh) {
+      } else if (value > thresholds.critHigh) {
         result = { severity: 'Critical', message: `Critical High Temperature detected (${value}°C)` };
-      } else if ((value >= rules.critLow && value <= rules.warnLow) || (value >= rules.warnHigh && value <= rules.critHigh)) {
+      } else if ((value >= thresholds.critLow && value <= thresholds.warnLow) || (value >= thresholds.warnHigh && value <= thresholds.critHigh)) {
         result = { severity: 'Warning', message: `Temperature is nearing critical levels (${value}°C)` };
       }
       break;
@@ -70,6 +68,39 @@ const evaluateParameter = (parameter, value, thresholds) => {
       break;
   }
 
+  // 3. Determine "Valve shut off" Note based on 'controls'
+  // The note is added ONLY if the automation system is actually configured to act on this reading.
+  if (configs.controls && configs.controls.valveShutOff) {
+    const shutOff = configs.controls.valveShutOff;
+    
+    // Proceed only if Master Shutoff is ENABLED
+    if (shutOff.enabled) {
+      
+      // Check pH Logic
+      if (parameter === 'pH' && shutOff.triggerPH) {
+        // Compare against the specific shutoff limits, not the general thresholds
+        if (value < shutOff.phLow || value > shutOff.phHigh) {
+          note = 'Valve shut off';
+        }
+      }
+
+      // Check Turbidity Logic
+      if (parameter === 'turbidity' && shutOff.triggerTurbidity) {
+        if (value > shutOff.turbidityCrit) {
+          note = 'Valve shut off';
+        }
+      }
+
+      // Check TDS Logic
+      if (parameter === 'tds' && shutOff.triggerTDS) {
+        if (value > shutOff.tdsCrit) {
+          note = 'Valve shut off';
+        }
+      }
+    }
+  }
+
+  // Attach the note if one was generated
   if (note) {
     result.note = note;
   }
@@ -87,19 +118,21 @@ const evaluateParameter = (parameter, value, thresholds) => {
  */
 const evaluateSensorReading = (reading, deviceConfigs) => {
   const alerts = [];
-  // Ensure we have thresholds to work with
+  
+  // Ensure configs exist
   if (!deviceConfigs || !deviceConfigs.thresholds) {
       console.error("Device configuration or thresholds are missing.");
       return [];
   }
-  const deviceThresholds = deviceConfigs.thresholds;
+
   const parameters = ['pH', 'turbidity', 'temp', 'tds'];
 
   parameters.forEach(param => {
     if (reading[param] !== undefined) {
       const value = reading[param];
-      // Pass the device-specific thresholds to the evaluation function
-      const result = evaluateParameter(param, value, deviceThresholds);
+      
+      // Pass the FULL configuration object (thresholds + controls)
+      const result = evaluateParameter(param, value, deviceConfigs);
 
       const alert = {
         parameter: param,

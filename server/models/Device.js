@@ -103,7 +103,12 @@ const deviceSchema = new mongoose.Schema({
       },
     },
     controls: {
-      valveShutOff: {
+      pumpCycleIntervals: {
+        drain: { type: Number, default: 3 },
+        delay: { type: Number, default: 1 },
+        fill: { type: Number, default: 3 },
+      },
+       valveShutOff: {
         enabled: { type: Boolean, default: true },
         //Specific triggers for Shut-off
         triggerPH: { type: Boolean, default: true },
@@ -114,11 +119,6 @@ const deviceSchema = new mongoose.Schema({
         phHigh: { type: Number, default: 9.1 },
         turbidityCrit: { type: Number, default: 13 },
         tdsCrit: { type: Number, default: 1200 },
-      },
-      pumpCycleIntervals: {
-        drain: { type: Number, default: 3 },
-        delay: { type: Number, default: 1 },
-        fill: { type: Number, default: 3 },
       },
       valveOpenOnNormal: {
         enabled: { type: Boolean, default: true },

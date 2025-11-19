@@ -52,7 +52,7 @@ exports.loginUser = async (req, res) => {
         };
 
         // call the helper to store the log after successful login
-        await createUserlog(user._id, `User ${user.username} logged in`, "Login")
+        await createUserlog(user._id, `${user.username} logged in to the System`, "Login")
 
         res.json({
             message: "Login successful!",

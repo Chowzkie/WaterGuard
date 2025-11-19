@@ -248,6 +248,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                     deviceReadings={currentDevice.latestReading}
                     deviceId={deviceId}
                     deviceStatus={currentDevice.currentState?.status}
+                    thresholds={currentDevice.configurations?.thresholds}
                 />
                 <div className={Style['bottom-left-wrapper']}>
                     <SensorStatusPanel device={currentDevice} />

@@ -120,8 +120,9 @@
 .user, .eye-button {
     position: absolute;
     right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+    /* top: 50%;
+    transform: translateY(-50%); */
+    top: 10px; /* Adjusted for better mobile UX/alignment */
     color: #666;
 }
 
@@ -156,7 +157,7 @@
 }
 
 /* --- MEDIA QUERY FOR LARGER SCREENS --- */
-/* This will apply on screens 992px wide or larger (laptops/desktops) */
+/* This will apply on screens 1440px wide or larger (laptops/desktops) */
 @media (min-width: 1440px) {
     .Container {
         max-width: 480px; /* Increase the max-width */

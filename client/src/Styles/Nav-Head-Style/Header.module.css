@@ -195,3 +195,55 @@
   background-color: hsla(0, 0%, 60%, 0.13);
   font-weight: 500;
 }
+
+/* --- MOBILE RESPONSIVENESS (Max Width 768px) --- */
+@media (max-width: 768px) {
+    /* Main Header adjustments */
+    .appHeader {
+        height: 60px; /* Taller height to accommodate stacked titles */
+        padding: 0 10px;
+    }
+
+    /* Left Side Adjustments */
+    .headerLogo img {
+        width: 40px; /* Slightly smaller logo */
+        margin-right: 0px;
+    }
+
+    /* Stack the Title and Subtitle */
+    .titleWrapper {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 5;
+        margin-left: 5px;
+    }
+
+    .headerTitle p, .headerSubTitle p {
+        font-size: 13px; /* Smaller font size for titles */
+        line-height: 1.2;
+    }
+
+    /* Right Side Adjustments (Keep items compact) */
+    .headerRight {
+        margin-right: 0;
+    }
+    
+    .notificationWrapper {
+      margin-right: 8px; /* Reduce space between notif and user button */
+    }
+
+    /* User Button Adjustments */
+    .userBtn {
+        gap: 5px; /* Reduce gap */
+    }
+
+    .userBtn p {
+        /* Hide username on tiny screens to save space */
+        display: none; 
+    }
+    
+    .profileImg {
+        width: 26px; /* Slightly smaller profile image */
+        height: 26px;
+    }
+}

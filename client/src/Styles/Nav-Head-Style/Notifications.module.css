@@ -161,3 +161,25 @@
     scrollbar-width: thin;
     scrollbar-color: #999 #f0f0f0;
 }
+
+/* --- MOBILE RESPONSIVENESS (Max Width 480px) --- */
+@media (max-width: 480px) {
+    .notifDropdown {
+        width: 280px; /* Reduced width for very small screens */
+        right: 5px; /* Adjust position to avoid hitting screen edge */
+        top: 65px; /* Adjusted top position to account for the new 60px header */
+    }
+
+    .dropdownTitle, .markAllBtn {
+        font-size: 12px;
+    }
+    
+    .dropdownItemN {
+        font-size: 12px; 
+        padding: 8px;
+    }
+    
+    .itemRight .meta small, .itemRight .meta button {
+        font-size: 10px;
+    }
+}

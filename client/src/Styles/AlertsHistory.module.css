@@ -166,7 +166,7 @@
 
 /*
  ===================================================================
-  NEW STYLES for the 2-Column Compact Filter Panel
+  STYLES for the 2-Column Compact Filter Panel
  ===================================================================
 */
 
@@ -228,10 +228,10 @@
 
 /* Body of the panel: Reduced padding and gap between rows */
 .filter-body {
-    padding: 20px; /* <-- UPDATED from 24px */
+    padding: 20px; 
     display: flex;
     flex-direction: column;
-    gap: 16px; /* <-- UPDATED from 20px */
+    gap: 16px; 
 }
 
 /* Each row in the filter panel (Label + Control) */
@@ -239,7 +239,7 @@
     display: grid;
     grid-template-columns: 140px 1fr;
     align-items: start;
-    gap: 12px; /* <-- UPDATED from 16px */
+    gap: 12px; 
 }
 
 /* Label for each filter group: Reduced top padding */
@@ -247,7 +247,7 @@
     font-weight: 500;
     font-size: 0.9rem;
     color: #495057;
-    padding-top: 5px; /* <-- UPDATED from 6px to better align with pills */
+    padding-top: 5px; 
 }
 
 .filter-control {
@@ -295,8 +295,6 @@
     border-radius: 6px;
     cursor: text;
     box-sizing: border-box;
-    
-    /* --- ADD THESE NEW PROPERTIES --- */
     max-height: 85px; /* Sets a max height equivalent to about two rows of pills */
     overflow-y: auto; /* Adds a vertical scrollbar ONLY when content exceeds the max-height */
 }
@@ -356,8 +354,6 @@
     overflow-y: auto;
     z-index: 30;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-
-    /* --- ADD THIS LINE --- */
     animation: fadeInDown 0.2s ease-out;
 }
 
@@ -400,7 +396,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    padding: 12px 20px; /* <-- UPDATED from 16px */
+    padding: 12px 20px; 
     border-top: 1px solid #e9ecef;
     background-color: #f8f9fa;
 }
@@ -433,8 +429,6 @@
 .apply-btn:hover {
     background-color: #0056b3;
 }
-
-/* ADD THESE NEW STYLES for the Date Range filter */
 
 .date-range-group {
     display: flex;
@@ -471,10 +465,6 @@
     transform: translateY(0);
   }
 }
-
-
-/* --- ADD THESE NEW STYLES for the Delete functionality --- */
-
 
 /* Container for the delete mode UI */
 .delete-controls {
@@ -749,11 +739,7 @@
         border-radius: 0; /* Remove rounded corners for full-screen */
         z-index: 9999; /* Ensure it's on top of everything */
         background: #fff;
-        
-        /* Make the panel itself scrollable if content overflows */
         overflow-y: auto; 
-        
-        /* Add some padding for the content inside */
         padding: 20px;
         box-sizing: border-box;
     }
@@ -827,7 +813,7 @@
 }
 
 /* ===================================================================
-  NEW RESPONSIVE STYLES FOR TABLE
+RESPONSIVE STYLES FOR TABLE
 ===================================================================
 */
 @media (max-width: 768px) {

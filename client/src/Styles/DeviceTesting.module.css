@@ -1,7 +1,4 @@
-/* DeviceTesting.module.css */
-
-/* --- Styles for Container, Title, and Controls remain mostly unchanged --- */
-/* --- UPDATED: Main container redesigned for a cleaner, card-like feel --- */
+/* --- Main container redesigned for a cleaner, card-like feel --- */
 .container {
     background-color: #ffffff; /* Changed to white for a cleaner base */
     border-radius: 12px;
@@ -10,14 +7,14 @@
     /* Removed border and direct padding, will be handled internally */
 }
 
-/* --- UPDATED: Renamed for clarity and to better hold header/list --- */
+/* --- Renamed for clarity and to better hold header/list --- */
 .table {
     width: 100%;
     display: flex;
     flex-direction: column;
 }
 
-/* --- UPDATED: Header/Title section is now visually distinct --- */
+/* --- Header/Title section is now visually distinct --- */
 .table-title {
     display: flex;
     justify-content: space-between;
@@ -127,10 +124,10 @@
 #maintenance { color: #f59e0b; }
 
 /* ========================================================= */
-/* --- NEW & UPDATED STYLES for Card-Based Device List --- */
+/* --- STYLES for Card-Based Device List --- */
 /* ========================================================= */
 
-/* --- UPDATED: This container now acts as the scrollable panel --- */
+/* --- This container now acts as the scrollable panel --- */
 .device-list-container {
     display: flex;
     flex-direction: column;
@@ -159,7 +156,7 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
 
-/* --- New styles for the card's internal layout --- */
+/* --- styles for the card's internal layout --- */
 .card-icon {
     flex-shrink: 0;
     color: #3b82f6;

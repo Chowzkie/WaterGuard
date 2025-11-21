@@ -206,7 +206,7 @@
 @media (max-width: 600px) {
     .alerts-header-row,
     .alerts-row {
-        /* 4 columns: Date/Time, Type, Severity, Action. Origin (2) and Status (5) are hidden below. */
+        /* Date/Time, Type, Severity, Action. Origin (2) and Status (5) are hidden below. */
         grid-template-columns: 1.2fr 1.8fr 1fr 1fr; 
         column-gap: 8px;
         padding: 6px 5px;

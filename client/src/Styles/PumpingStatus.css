@@ -2,9 +2,6 @@
 .component-wrapper-pumpingstatus {
   width: 100%; /* Fill the width of the grid cell */
   height: 100%; /* Fill the height of the grid cell */
-  /* REMOVE these lines */
-  /* max-width: 550px; */
-  /* max-height: 330px; */
 
   /* Add this to make the inner card also fill the space */
   display: flex;

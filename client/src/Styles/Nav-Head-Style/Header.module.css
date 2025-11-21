@@ -196,7 +196,7 @@
   font-weight: 500;
 }
 
-/* --- MOBILE RESPONSIVENESS (Max Width 768px) --- */
+/* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
     /* Main Header adjustments */
     .appHeader {

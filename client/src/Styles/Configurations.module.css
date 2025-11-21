@@ -1,6 +1,3 @@
-/* =================================================
-   Styles/Configurations.module.css (Updated)
-   ================================================= */
 .component-wrapper-configurations {
     height: calc(100vh - 100px); /* Adjust 100px to match your header/nav height */
     width: 100%;
@@ -16,14 +13,14 @@
     display: flex;
     align-items: baseline;
     gap: 12px;
-    margin-bottom: 15px; /* REDUCED */
-    padding-bottom: 12px; /* REDUCED */
+    margin-bottom: 15px; 
+    padding-bottom: 12px; 
     border-bottom: 1px solid #dcdcdc;
 }
 
 .header h1 {
     margin: 0;
-    font-size: 18px; /* REDUCED */
+    font-size: 18px; 
     font-weight: 600;
     color: #1f2937;
 }
@@ -31,7 +28,7 @@
 
 
 .breadcrumb {
-    font-size: 16px; /* REDUCED */
+    font-size: 16px; 
     font-weight: 500;
     color: #007bff;
 }

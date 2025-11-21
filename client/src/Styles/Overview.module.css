@@ -9,9 +9,6 @@
   overflow-y: scroll;
 
   display: grid;
-  /* --- KEY CHANGE HERE --- */
-  /* This creates two proportional columns. The first is 20% larger than the second. */
-  /* This will scale perfectly on large monitors. */
   grid-template-columns: 1fr 1fr; 
 
   /* This creates two equal-height rows that fill the available space */

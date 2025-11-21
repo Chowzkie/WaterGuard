@@ -2,13 +2,6 @@
 .component-wrapper-mapapi {
   width: 100%; /* Fill the width of the grid cell */
   height: 100%; /* Fill the height of the grid cell */
-  /* REMOVE these lines as the parent grid now handles sizing and position */
-  /* max-width: 700px; */ 
-  /* height: 330px; */
-  /* margin-left: 40px
-  position: relative; 
-
-  /* Add this to make the inner card also fill the space */
   display: flex;
   flex-direction: column;
 }
@@ -24,13 +17,7 @@
   background-color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
-
-  /* No need for margin-top if the parent grid has a 'gap' */
-  /* margin-top: 5px; */
 }
-
-/* --- REMOVE the media query from this file --- */
-/* The parent Overview.css now handles all layout changes. */
 
 .leaflet-container {
     height: 100%;
@@ -558,7 +545,7 @@
     animation: pulse 1.75s infinite ease-in-out;
 }
 
-/* New style for Offline pins */
+/*  style for Offline pins */
 .marker-pin.offline {
     background: #ef4444; /* Red color */
 }

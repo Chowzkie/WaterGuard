@@ -2,12 +2,10 @@
 .readings-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    /* KEY CHANGE: Create 2 rows that share the available height equally */
     grid-template-rows: repeat(2, 1fr); 
     gap: 20px;
     height: 100%;
     animation: fadeIn 0.5s ease-in-out;
-    /* REMOVED: No longer need overflow or scrollbar styling */
 }
 
 @keyframes fadeIn {
@@ -25,7 +23,6 @@
     border-radius: 8px;
     padding: 10px;
     font-family: 'Poppins', sans-serif;
-    /* REMOVED: min-height is no longer needed, allowing cards to be flexible */
 }
 
 /* Header section of the card */
@@ -54,7 +51,6 @@
     align-items: center;
     width: 100%;
     margin: 10px 0;
-    /* Allow the diagram to shrink if space is limited */
     flex-grow: 1;
     overflow: hidden;
 }

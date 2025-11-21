@@ -22,7 +22,7 @@
     border-radius: 1em;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
-    height: auto; /* CRITICAL: Let content define the height */
+    height: auto; /* Let content define the height */
 }
 
 .logo {
@@ -120,8 +120,6 @@
 .user, .eye-button {
     position: absolute;
     right: 10px;
-    /* top: 50%;
-    transform: translateY(-50%); */
     top: 10px; /* Adjusted for better mobile UX/alignment */
     color: #666;
 }

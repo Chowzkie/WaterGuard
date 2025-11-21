@@ -141,7 +141,7 @@
   margin-left: 7px;
 }
 
-/* NEW STYLE: This class will be applied to alerts with the `acknowledged: true` flag.
+/* 
   It lowers the opacity to make the alert appear "muted" or "grayed out".
 */
 .alert-acknowledged {
@@ -224,7 +224,7 @@
   background-color: #0056b3;
 }
 
-/* NEW STYLE: Style for the button when it's disabled */
+/* Style for the button when it's disabled */
 .acknowledge-btn:disabled {
   background-color: #6c757d; /* A muted gray */
   cursor: not-allowed;
@@ -237,7 +237,7 @@
   text-align: center;
 }
 
-/* NEW ANIMATION: Option 1 - Slide, Fade & Highlight
+/* Slide, Fade & Highlight
   Replace your old @keyframes bounceIn with this.
 */
 @keyframes slideFadeInHighlight {
@@ -252,10 +252,6 @@
     background-color: #fff; /* The default row color */
   }
 }
-
-/* Replace your old .new-alert class with this. 
-  The ease-out curve makes the end of the animation smooth.
-*/
 
 .new-alert {
   animation: slideFadeInHighlight 1.2s ease-out;
@@ -272,7 +268,7 @@
   color: #c92a2a; /* A noticeable red */
 }
 
-/* --- MOBILE RESPONSIVENESS (Max Width 600px) --- */
+/* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 600px) {
     .alerts-header-row,
     .alerts-row {

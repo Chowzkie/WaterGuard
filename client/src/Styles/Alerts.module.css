@@ -1,7 +1,4 @@
-/* src/Styles/Alerts.module.css */
-
 .component-wrapper-alerts {
-    /* DESKTOP: Fixed height and no scrolling */
     height: calc(100vh - 100px);
     overflow: hidden;
 
@@ -63,10 +60,8 @@
 @media (max-width: 1024px) {
     .component-wrapper-alerts {
         flex-direction: column;
-        /* KEY CHANGE: Make this wrapper the scroll container on mobile */
         overflow-y: auto;
-        /* It still needs a fixed height to enable scrolling */
-        height: calc(100vh - 80px); /* Adjust header height for mobile if needed */
+        height: calc(100vh - 80px); 
     }
 
     /* Disable internal scrolling on children */
@@ -78,7 +73,6 @@
         flex-shrink: 0;
     }
 
-    /* --- NEW RULES TO REORDER ON MOBILE --- */
     .alerts-column {
         /* Set to a higher order to appear second */
         order: 2;

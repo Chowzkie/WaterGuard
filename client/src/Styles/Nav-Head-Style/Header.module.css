@@ -223,6 +223,11 @@
         line-height: 1.2;
     }
 
+    .headerSubTitle p{
+      width: 250px;
+    }
+
+
     /* Right Side Adjustments (Keep items compact) */
     .headerRight {
         margin-right: 0;

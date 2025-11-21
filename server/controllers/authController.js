@@ -1,3 +1,5 @@
+// controllers/authController.js
+
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User");
 const jwt = require("jsonwebtoken"); 
@@ -7,43 +9,54 @@ const fs = require("fs")
 const {createUserlog} = require('../helpers/createUserlog')
 
 
-// call the .env file 
+// Load secret key from environment variables or fallback to a default (only for development)
 const JWT_SECRET = process.env.JWT_SECRET || 'Waterguard@2025';
 
-
-
-// Login User
+/**
+ * @desc    Login User
+ * @route   POST /api/auth/login
+ * @access  Public
+ * Function to authenticate a user, generate a JWT, and initiate a session.
+ */
 exports.loginUser = async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Find user in the database
+        // --- User Lookup ---
+        // Query the database for a user with the provided username
         const user = await UserModel.findOne({ username });
+        
         if (!user) {
-            //Return a error for invalid credentials
+            // If no user is found, return a generic error to prevent user enumeration attacks
             return res.status(401).json({ message: "Please check your username and password." });
         }
 
-        // Check the inputted password against the password stored in the database
+        // --- Password Verification ---
+        // Use bcrypt to compare the plaintext password from the request 
+        // with the hashed password stored in the database.
         const isMatch = await bcrypt.compare(password, user.password);
+        
         if (!isMatch) {
-            // Return the same message for security reasons
+            // Return the same generic error message for security consistency
             return res.status(401).json({ message: "Please check your username and password." });
         }
 
-        // Generate a JSON Web Token (JWT) 
-        // Create a payload for the token that includes the user's ID
+        // --- Token Generation ---
+        // Create a payload object containing non-sensitive user identification data
         const payload = { 
             userID: user.id,
             username: user.username,
             name: user.name,
             profileImage: user.profileImage
         };
-        // Sign the token. It will expire in 24 hours.
+        
+        // Sign the JWT with the secret key. 
+        // Set expiration to 24 hours to enforce periodic re-authentication.
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 
-        // Send a successful response with the token and a user object
-        // select only the data the frontend needs, excluding the password.
+        // --- Response Preparation ---
+        // Construct a user object that excludes sensitive fields (like the password hash)
+        // for use by the frontend application.
         const userWithoutPassword = {
             id: user._id,
             username: user.username,
@@ -51,13 +64,15 @@ exports.loginUser = async (req, res) => {
             contact: user.contact
         };
 
-        // call the helper to store the log after successful login
+        // --- Audit Logging ---
+        // Record the successful login event
         await createUserlog(user._id, `${user.username} logged in to the System`, "Login")
 
+        // Return success response with the JWT and user details
         res.json({
             message: "Login successful!",
-            token, // Send the token
-            user: userWithoutPassword // Send the user data
+            token, 
+            user: userWithoutPassword 
         });
 
     } catch (error) {
@@ -65,17 +80,27 @@ exports.loginUser = async (req, res) => {
         res.status(500).json({ message: "An error occurred during login. Please try again." });
     }
 };
-// Logout user
+
+/**
+ * @desc    Logout User
+ * @route   POST /api/auth/logout
+ * @access  Private
+ * Function to log the logout event. 
+ * Note: JWT invalidation is typically handled on the client side (deleting the token).
+ */
 exports.logoutUser = async (req, res) => {
   try {
+    // Retrieve user ID extracted by the auth middleware
     const userId = req.userID;
 
     if (!userId) return res.status(400).json({ msg: "User ID required" });
 
+    // Verify user exists
     const user = await UserModel.findById(userId);
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
+    // Log the logout action
     await createUserlog(user._id, `User ${user.username} logged out`, "Logout");
 
     res.json({ msg: "Logout successful" });
@@ -85,52 +110,73 @@ exports.logoutUser = async (req, res) => {
   }
 }
 
-// Get the user into database
-// This function needs a middleware to work.
+/**
+ * @desc    Get User Data
+ * @route   GET /api/auth/user
+ * @access  Private
+ * Function to retrieve the currently authenticated user's profile.
+ * Relies on middleware to populate req.userID.
+ */
 exports.getUser = async (req, res) => {
-    // A JWT authentication middleware will populate req.userID from the token
+    // Ensure request is authenticated (redundant if middleware is used properly, but good for safety)
     if (!req.userID) {
         return res.status(401).json({ message: "Unauthorized" });
     }
     
+    // Fetch user data, explicitly excluding the password field
     const user = await UserModel.findById(req.userID).select("-password");
+    
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
+    
     res.json(user);
 };
-// Update the name of user
+
+/**
+ * @desc    Update User Name
+ * @route   PUT /api/auth/update-name
+ * @access  Private
+ * Function to update the display name of the user.
+ */
 exports.updateName = async (req, res) => {
     const { name } = req.body;
     const userID = req.userID;
-    // check if there is a name
+
+    // Basic input check
     if (!name) {
         return res.status(400).json({ message: "No name provided for the update." });
     }
-    // validate name using the helper
+    
+    // --- Validation ---
+    // Use external validator to check format requirements
     const nameValidation = validateName(name);
     if (!nameValidation.isValid) {
         return res.status(400).json({ message: nameValidation.message });
     }
+
     try {
-        //find the id(name to the database)
+        // Retrieve current user data
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-        // check if the inputted name is equal to the name in the db
+
+        // Check if the new name is actually different
         if (name === user.name) {
             return res.status(200).json({ message: "Name is already up to date." });
         }
 
-        const oldname = user.name; // use to store the old name
-        user.name = name; // update the name in the db to the new name
+        const oldname = user.name; // Cache old name for logging
+        user.name = name; // Apply update
 
-        //Saving data to the DB
+        // --- Database Storage ---
         await user.save();
-        //Call the helper for changing 
+        
+        // Log the specific change made
         await createUserlog(userID, `Changed name fron ${oldname} to ${name}`)
 
+        // Return updated user object (without password)
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser); 
 
@@ -139,42 +185,55 @@ exports.updateName = async (req, res) => {
         res.status(500).json({ message: "Server error during name update." });
     }
 };
-// update the username
+
+/**
+ * @desc    Update Username
+ * @route   PUT /api/auth/update-username
+ * @access  Private
+ * Function to update the user's login identifier.
+ * Includes checks for uniqueness to prevent duplicates.
+ */
 exports.updateUsername = async (req, res) => {
     const { username } = req.body;
     const userID = req.userID;
 
-    // check if there is a username provided
+    // Basic input check
     if (!username) {
         return res.status(400).json({ message: "No username provided for the update." });
     }
-    // validate the username using the helper
+    
+    // --- Validation ---
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.isValid) {
         return res.status(400).json({ message: usernameValidation.message });
     }
 
     try {
-        // find the user in db
+        // Retrieve user
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-        //check if the updated username is equal to the db username
+
+        // Check if identical
         if (username === user.username) {
             return res.status(200).json({ message: "Username is already up to date." });
         }
         
+        // --- Uniqueness Check ---
+        // Ensure the requested username is not already in use by another account
         const existingUsername = await UserModel.findOne({ username });
         if (existingUsername) {
             return res.status(409).json({ message: "Username is already taken." });
         }
 
-        const oldUsername = user.username; //store the oldusername
-        user.username = username; // update the old username to new username
-         // Saving the data to the DB
+        const oldUsername = user.username; // Cache old value
+        user.username = username; // Apply update
+        
+        // --- Database Storage ---
         await user.save();
-        // call the helper for changing
+        
+        // Log the change
         await createUserlog(userID, `Changed username from ${oldUsername} to ${username}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
@@ -185,40 +244,54 @@ exports.updateUsername = async (req, res) => {
         res.status(500).json({ message: "Server error during username update." });
     }
 };
-// update contact
+
+/**
+ * @desc    Update Contact Number
+ * @route   PUT /api/auth/update-contact
+ * @access  Private
+ * Function to update the user's contact information.
+ * Includes checks for uniqueness.
+ */
 exports.updateContact = async (req, res) => {
     const { contact } = req.body;
     const userID = req.userID;
-    // find if there is a contact in body
+    
+    // Basic input check
     if (!contact) {
         return res.status(400).json({ message: "No contact provided for the update." });
     }
-    // validate the contact using the helper
+    
+    // --- Validation ---
     const contactValidation = validateContact(contact);
     if (!contactValidation.isValid) {
         return res.status(400).json({ message: contactValidation.message });
     }
 
     try {
-        //find the user in db
+        // Retrieve user
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-        //check if the contact in db is equal to the inputted contact
+
+        // Check if identical
         if (contact === user.contact) {
             return res.status(200).json({ message: "Contact is already up to date." });
         }
         
+        // --- Uniqueness Check ---
         const existingContact = await UserModel.findOne({ contact });
         if (existingContact) {
             return res.status(409).json({ message: "Contact number is already taken." });
         }
 
-        const oldContact = user.contact; //store the old contact in db
-        user.contact = contact; // update the old contact to the new in db
-        //call the helper for changing
+        const oldContact = user.contact; // Cache old value
+        user.contact = contact; // Apply update
+        
+        // --- Database Storage ---
         await user.save();
+        
+        // Log the change
         await createUserlog(userID, `Changed contact from ${oldContact} to ${contact}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
@@ -229,38 +302,54 @@ exports.updateContact = async (req, res) => {
         res.status(500).json({ message: "Server error during contact update." });
     }
 };
-// update password
+
+/**
+ * @desc    Update Password
+ * @route   PUT /api/auth/update-password
+ * @access  Private
+ * Function to handle secure password changes.
+ * Requires verification of current password before allowing update.
+ */
 exports.updatePassword = async(req,res) => {
     const {currentPassword, newPassword, confirmPassword} = req.body
     const userID = req.userID
-    //check if there is a new password
+    
+    // Confirm new passwords match
     if(newPassword !== confirmPassword){
         return res.status(400).json({message: "New password does not match in Confirmation"})
     }
-    //validate the password using the helper
+    
+    // --- Validation ---
+    // Validate complexity requirements (e.g., length, special chars)
     const passwordValidation = validatePassword(newPassword);
     if(!passwordValidation.isValid){
         return res.status(400).json({message: passwordValidation.message})
     }
+
     try{
-        // fint the user in db
         const user = await UserModel.findById(userID);
-        //Check if new password is the same as the current password
+        
+        // Prevent reusing the exact same password
         if(newPassword === currentPassword){
             return res.status(400).json({message: "password should not be the same"})
         }
-        //Authentucate the current password
+        
+        // --- Verification ---
+        // Authenticate the user by verifying the current password matches the hash
         const isMatch = await bcrypt.compare(currentPassword, user.password)
         if(!isMatch){
             return res.status(401).json({ message: "Invalid current password." });
         }
 
-        //hash the new password to be update in database
+        // --- Hashing ---
+        // Generate a new salt and hash the new password before storage
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt)
+        
+        // --- Database Storage ---
         await user.save()
         
-        //Calls helper for password change
+        // Log the security event
         await createUserlog(userID, `Changed password`);
 
         return res.status(200).json({ message: "Password updated successfully." });
@@ -270,12 +359,18 @@ exports.updatePassword = async(req,res) => {
         res.status(500).json({message :"server error during password update"})
     }
 }
-//update the user profile
+
+/**
+ * @desc    Upload Profile Image
+ * @route   POST /api/auth/:userId/upload-image
+ * @access  Private
+ * Function to handle file uploads to Cloudinary and update user profile URL.
+ */
 exports.uploadProfileImage = async (req, res) => {
     try {
         console.log("Starting image upload process...");
 
-        // Check if the file was successfully received by Multer
+        // Check if Multer middleware successfully processed the file
         if (!req.file) {
             console.log("Error: No file provided in the request.");
             return res.status(400).json({ message: 'No image file was provided.' });
@@ -286,12 +381,14 @@ exports.uploadProfileImage = async (req, res) => {
 
         console.log(`Received file path from Multer: ${imagePath}`);
 
-        // Upload the temporary file to Cloudinary
+        // --- Cloud Upload ---
+        // Upload the local temporary file to Cloudinary storage service
         console.log("Attempting to upload file to Cloudinary...");
         const result = await cloudinary.uploader.upload(imagePath);
         console.log("Successfully uploaded to Cloudinary. URL:", result.secure_url);
 
-        // Once uploaded, delete the temporary file from your server
+        // --- Cleanup ---
+        // Delete the temporary file from the server's filesystem to save space
         try {
             fs.unlinkSync(imagePath);
             console.log("Successfully deleted temporary file.");
@@ -299,7 +396,8 @@ exports.uploadProfileImage = async (req, res) => {
             console.error("Failed to delete temporary file:", unlinkError);
         }
 
-        // Find the user and update the profileImage field
+        // --- Database Update ---
+        // Find user and update the profileImage field with the new Cloudinary URL
         const user = await UserModel.findByIdAndUpdate(
             userId,
             { profileImage: result.secure_url },

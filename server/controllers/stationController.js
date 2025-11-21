@@ -1,12 +1,19 @@
+// controllers/stationController.js
+
 const Station = require('../models/Station');
 const mongoose = require('mongoose');
 const { createUserlog } = require('../helpers/createUserlog');
 
-// @desc    Get all pumping stations
-// @route   GET /api/stations
-// @access  Public
+/**
+ * @desc    Get all pumping stations
+ * @route   GET /api/stations
+ * @access  Public
+ * Function to retrieve all configured pumping stations.
+ * Uses 'populate' to replace the 'deviceId' reference with actual device details (label, _id).
+ */
 exports.getStations = async (req, res) => {
     try {
+        // Fetch all stations and join with the Device collection
         const stations = await Station.find({}).populate('deviceId', '_id label');
         res.status(200).json(stations);
     } catch (error) {
@@ -15,20 +22,32 @@ exports.getStations = async (req, res) => {
     }
 };
 
-// @desc    Batch update stations (add, update, delete) with audit trailing
-// @route   POST /api/stations/batch-update
-// @access  Private
+/**
+ * @desc    Batch update stations (add, update, delete) with audit trailing
+ * @route   POST /api/stations/batch-update
+ * @access  Private
+ * complex synchronization function. 
+ * Accepts the client's full list of stations and reconciles it with the database:
+ * 1. Deletes stations missing from the payload.
+ * 2. Updates existing stations.
+ * 3. Creates new stations for entries without IDs.
+ */
 exports.batchUpdateStations = async (req, res) => {
-    // The userID is now expected in the request body for logging purposes.
+    // Extract payload and the ID of the user performing the action
     const { stationsFromClient, userID } = req.body;
 
+    // --- Validation ---
+    // Ensure strict accountability for sensitive infrastructure changes
     if (!userID) {
         return res.status(400).json({ message: 'A User ID is required to perform this action.' });
     }
 
     try {
-        // 1. Fetch the current state of stations from the DB for comparison
+        // --- 1. Snapshot & Comparison ---
+        // Fetch the current state of the database to calculate differences (diffing)
         const stationsInDb = await Station.find({});
+        
+        // Create Sets for O(1) lookup performance when comparing IDs
         const dbStationIds = new Set(stationsInDb.map(s => s._id.toString()));
         const clientStationIds = new Set(
             stationsFromClient
@@ -36,51 +55,68 @@ exports.batchUpdateStations = async (req, res) => {
                 .filter(id => mongoose.Types.ObjectId.isValid(id))
         );
 
-        // 2. Log and Handle Deletions
+        // --- 2. Deletion Logic ---
+        // Identify stations present in the DB but missing from the client payload.
+        // Absence implies the user deleted them on the frontend.
         const stationsToDelete = stationsInDb.filter(s => !clientStationIds.has(s._id.toString()));
+        
         if (stationsToDelete.length > 0) {
             const deleteIds = stationsToDelete.map(s => s._id);
+            
+            // Execute bulk deletion
             await Station.deleteMany({ _id: { $in: deleteIds } });
-            // Log each deletion
+            
+            // Log each deletion event individually for the audit trail
             for (const station of stationsToDelete) {
                 await createUserlog(userID, `Deleted station: '${station.label}'`, 'Deletion');
             }
         }
 
-        // 3. Log and Handle Additions and Updates
+        // --- 3. Creation & Update Logic ---
+        // Iterate through the incoming payload to handle modifications
         for (const station of stationsFromClient) {
-            // It's an update if it has a valid ID that we know exists in the DB
+            
+            // CASE: UPDATE
+            // Check if the station has a valid ID that exists in the database snapshot
             if (mongoose.Types.ObjectId.isValid(station._id) && dbStationIds.has(station._id)) {
+                
                 const originalStation = stationsInDb.find(s => s._id.toString() === station._id);
 
-                // LOGIC: Check for status change to "Maintenance"
+                // Audit Logic: Status Change Detection
+                // Specifically check if the status is transitioning TO 'Maintenance'
                 if (originalStation && originalStation.operation !== 'Maintenance' && station.operation === 'Maintenance') {
                     await createUserlog(
                         userID,
                         `Set station '${station.label}' to Maintenance`,
                         'Maintenance',
-                        station.maintenanceInfo
+                        station.maintenanceInfo // Include maintenance details in log
                     );
                 }
-                // Perform the update
+                
+                // Persist the update to MongoDB
                 await Station.findByIdAndUpdate(station._id, station);
             }
-            // It's an addition if it has no valid ID
+            // CASE: CREATION
+            // If the entry has no ID or an invalid ID, treat it as a new record
             else {
                 const newStation = new Station({
                     label: station.label,
                     location: station.location,
                     operation: station.operation,
                     maintenanceInfo: station.maintenanceInfo || null,
-                    deviceId: station.deviceId || null // Add the deviceId
+                    deviceId: station.deviceId || null // Link to physical device
                 });
+                
                 const savedStation = await newStation.save();
-                // Log the addition
+                
+                // Log the creation event
                 await createUserlog(userID, `Added new station: '${savedStation.label}'`, 'Station');
             }
         }
 
-        // Return the fresh, complete list from the DB, *with device info populated*.
+        // --- 4. Response ---
+        // Return the fresh, fully populated list from the DB.
+        // This ensures the frontend state is perfectly synchronized with the backend result.
         const updatedStations = await Station.find({}).populate('deviceId', '_id label');
         res.status(200).json(updatedStations);
 

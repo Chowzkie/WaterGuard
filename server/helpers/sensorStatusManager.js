@@ -2,50 +2,49 @@ const cron = require("node-cron");
 const Device = require("../models/Device");
 const { createSystemLogs } = require("./createSystemLogs");
 
+// Timeout threshold (1 min) for individual sensors to be considered offline
 const SENSOR_OFFLINE_THRESHOLD_MS = 1 * 60 * 1000;
 
 const initializeSensorStatusCheck = (io) => {
   console.log("✅ Initializing sensor status (offline) check...");
 
-  // Run this check every minute
+  // Schedule job to run every minute
   cron.schedule("* * * * *", async () => {
     try {
+      // Calculate the cutoff timestamp
       const cutoff = new Date(Date.now() - SENSOR_OFFLINE_THRESHOLD_MS);
       
-      // We only care about devices that are themselves Online
+      // Retrieve only currently 'Online' devices to check their sub-components
       const devices = await Device.find({ "currentState.status": "Online" });
       
       for (const device of devices) {
-        let sensorStatusChanged = false;
+        let sensorStatusChanged = false; // Flag to track if updates are needed
         const deviceId = device._id.toString();
 
         const sensors = device.currentState.sensorStatus;
 
-        
-        //  Add safety check for old device documents
+        // Validate sensor object existence to prevent crashes on old data
         if (!sensors) {
           console.warn(`[SensorCheck] Device ${deviceId} is missing 'currentState.sensorStatus' object. Skipping.`);
-          continue; // Go to the next device
+          continue; 
         }
 
+        // Iterate through each supported sensor type
         for (const sensorKey of ['PH', 'TEMP', 'TDS', 'TURBIDITY']) {
           const sensor = sensors[sensorKey];
-    
 
-          //  Add safety check for 'sensor' object
-          // If sensor is 'Online' but its last reading is older than the cutoff...
+          // Check if sensor is marked 'Online' but has stopped sending data
           if (sensor && sensor.status === 'Online' && sensor.lastReadingTimestamp < cutoff) {
             
-            // Mark it 'Offline'
+            // Mark specific sensor as Offline
             sensor.status = 'Offline';
             sensorStatusChanged = true;
-            device.latestReading[sensorKey] = 0;
+            device.latestReading[sensorKey] = 0; // Reset reading value
      
-            
             console.warn(`[SensorCheck] Marking ${sensorKey} sensor for device ${deviceId} as Offline.`);
 
-            // Determine the correct component label
-            let componentLabel = "Sensor"; // Default
+            // Map internal key to human-readable label for logging
+            let componentLabel = "Sensor"; 
             switch (sensorKey) {
               case 'PH':
                 componentLabel = "Ph Sensor";
@@ -61,7 +60,7 @@ const initializeSensorStatusCheck = (io) => {
                 break;
             }
 
-            // Use the new componentLabel
+            // Log the specific sensor failure
             createSystemLogs(
               null,
               deviceId,
@@ -72,7 +71,7 @@ const initializeSensorStatusCheck = (io) => {
           }
         }
 
-        // If any sensor status changed, save the device and notify the frontend
+        // Persist changes and notify frontend only if a status change occurred
         if (sensorStatusChanged) {
           await device.save();
           io.emit("deviceUpdate", device);

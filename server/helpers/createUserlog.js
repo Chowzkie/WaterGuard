@@ -5,7 +5,7 @@ const createUserlog = async (userID, action, type ="Account", details = null) =>
         userID,
         action,
         type,
-        details // Pass details into the log creation
+        details 
     })
 };
 

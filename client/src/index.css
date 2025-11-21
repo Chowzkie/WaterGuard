@@ -23,3 +23,15 @@ html::-webkit-scrollbar-thumb {
   background-color: #bbb;
   border-radius: 4px;
 }
+
+@media(max-width: 600px){
+  html, body, #root {
+  height: auto;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f0f2f5;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+}

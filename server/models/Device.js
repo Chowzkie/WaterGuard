@@ -104,9 +104,9 @@ const deviceSchema = new mongoose.Schema({
     },
     controls: {
       pumpCycleIntervals: {
-        drain: { type: Number, default: 3 },
+        drain: { type: Number, default: 1 },
         delay: { type: Number, default: 1 },
-        fill: { type: Number, default: 3 },
+        fill: { type: Number, default: 1 },
       },
        valveShutOff: {
         enabled: { type: Boolean, default: true },

@@ -4,9 +4,10 @@ import { Chart as ChartJS, LineElement, PointElement, CategoryScale, LinearScale
 import Style from '../../../Styles/SpecificDeviceStyle/ParameterChart.module.css';
 import { WifiOff } from 'lucide-react';
 
-// Register the 'Filler' plugin to draw the shaded min/max range
+// Register ChartJS components, including 'Filler' for the min/max area shading
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler);
 
+// Configuration map linking UI state strings to Backend API keys and Colors
 const PARAM_MAP = {
     ph: { key: 'PH', label: 'pH', color: '#FFA500' },
     turbidity: { key: 'TURBIDITY', label: 'Turbidity', color: '#4CAF50' },
@@ -18,6 +19,8 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
     const [selectedParam, setSelectedParam] = useState('ph');
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
+    // Effect: Transforms raw historical data into Chart.js compatible datasets
+    // Re-runs whenever the selected parameter or the data source changes
     useEffect(() => {
         if (!historicalData || historicalData.length === 0) {
             setChartData({ labels: [], datasets: [] });
@@ -27,6 +30,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         const paramConfig = PARAM_MAP[selectedParam];
         const dataKey = paramConfig?.key;
 
+        // Format timestamps for the X-axis
         const labels = historicalData.map(r => 
             new Date(r.timestamp).toLocaleString('en-US', { 
                 month: 'short', 
@@ -36,6 +40,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
             })
         );
         
+        // Extract specific metrics
         const avgData = historicalData.map(r => r[dataKey]?.avg);
         const minData = historicalData.map(r => r[dataKey]?.min);
         const maxData = historicalData.map(r => r[dataKey]?.max);
@@ -43,27 +48,30 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         setChartData({
             labels: labels,
             datasets: [
+                // Dataset 0: Max Value (Top boundary of the shaded area)
                 {
                     label: 'Range (Max)',
                     data: maxData,
                     borderColor: 'transparent',
-                    backgroundColor: `${paramConfig?.color}33`, // Light, transparent fill
+                    backgroundColor: `${paramConfig?.color}33`, // 33 = 20% opacity hex
                     pointRadius: 0,
-                    fill: '+1', // Fill to the next dataset in the array (the min dataset)
+                    fill: '+1', // Fills the area between this dataset and the next one (Dataset 1)
                 },
+                // Dataset 1: Min Value (Bottom boundary of the shaded area)
                  {
                     label: 'Range (Min)',
                     data: minData,
                     borderColor: 'transparent',
-                    backgroundColor: 'transparent', // No fill for the bottom line
+                    backgroundColor: 'transparent', 
                     pointRadius: 0,
                     fill: false,
                 },
+                // Dataset 2: Average Value (The main visible line)
                 {
                     label: `${paramConfig?.label} (Avg)`,
                     data: avgData,
                     borderColor: paramConfig?.color,
-                    tension: 0.4,
+                    tension: 0.4, // Smooth curve
                     pointRadius: 0,
                     fill: false,
                 },
@@ -81,15 +89,16 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
                 mode: 'index',
                 intersect: false,
                 callbacks: {
-                    // Custom tooltip to show Avg, Min, and Max
+                    // Custom tooltip: Shows Avg, Min, and Max simultaneously
+                    // Pulls data from all three datasets using context.dataIndex
                     label: function(context) {
-                        const label = context.dataset.label || '';
-                        const avgValue = context.chart.data.datasets[2].data[context.dataIndex];
-                        const minValue = context.chart.data.datasets[1].data[context.dataIndex];
-                        const maxValue = context.chart.data.datasets[0].data[context.dataIndex];
-                        
-                        // Only show the full tooltip for the main average line
+                        // Only trigger logic when hovering the main Average line (index 2)
+                        // to prevent duplicate tooltips or confusion
                         if (context.datasetIndex === 2) {
+                            const avgValue = context.chart.data.datasets[2].data[context.dataIndex];
+                            const minValue = context.chart.data.datasets[1].data[context.dataIndex];
+                            const maxValue = context.chart.data.datasets[0].data[context.dataIndex];
+
                              return [
                                 `Avg: ${avgValue?.toFixed(2)}`,
                                 `Max: ${maxValue?.toFixed(2)}`,
@@ -107,15 +116,15 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
             },
             x: {
                 ticks: {
-                    maxTicksLimit: 10 // Limit the number of visible timestamps to avoid clutter
+                    maxTicksLimit: 10 // Prevents label overlap on smaller screens
                 }
             }
         },
     };
 
+    // Early return: Do not show historical data controls if device is offline
     if (deviceStatus === 'Offline') {
         return (
-
             <div className={Style.container}>
                 <div className={Style.statusMessage}>
                     <div className={Style['offline-card']}>
@@ -135,6 +144,8 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
             <div className={Style['panel-header']}>
                 <button className={Style['back-button']} onClick={onGoBack}>Go Back</button>
                 <h2 className={Style['panel-title']}>Historical Data</h2>
+                
+                {/* Time Range Filters */}
                 <div className={Style['time-range-selector']}>
                     <button onClick={() => setTimeRange('24h')} className={timeRange === '24h' ? Style.active : ''}>24H</button>
                     <button onClick={() => setTimeRange('7d')} className={timeRange === '7d' ? Style.active : ''}>7D</button>
@@ -142,6 +153,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
                 </div>
             </div>
 
+            {/* Parameter Selection Tabs */}
             <div className={Style['param-tabs']}>
                 {Object.keys(PARAM_MAP).map(paramKey => (
                     <button key={paramKey} onClick={() => setSelectedParam(paramKey)} className={`${Style.tab} ${selectedParam === paramKey ? Style.active : ''}`}>
@@ -150,6 +162,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
                 ))}
             </div>
 
+            {/* Chart Rendering Area */}
             <div className={Style['chart-wrapper']}>
                 {isLoading ? (
                     <div className={Style['no-data-message']}>Loading Chart Data...</div>

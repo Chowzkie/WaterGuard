@@ -8,7 +8,7 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, ad
     const [cooldown, setCooldown] = useState(0);
     const cooldownRef = useRef(null);
 
-    // --- NEW STATE FOR COUNTDOWN ---
+    // --- STATE FOR COUNTDOWN ---
     const [remainingTime, setRemainingTime] = useState(0);
     const [totalDuration, setTotalDuration] = useState(0);
     const timerRef = useRef(null); // Ref for the interval timer
@@ -23,7 +23,7 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, ad
         setIsPumpOn(activeStates.includes(pumpState));
     }, [pumpState]);
 
-    // --- NEW EFFECT FOR SERVER COUNTDOWN ---
+    // --- EFFECT FOR SERVER COUNTDOWN ---
     useEffect(() => {
         // Clear any existing timer when component updates
         if (timerRef.current) {

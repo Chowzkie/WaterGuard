@@ -1,9 +1,8 @@
-    // server/routes/readings.js
-    const express = require('express');
-    const router = express.Router();
-    const { getReadingsByDevice } = require('../controllers/historicalReadingController');
+const express = require('express');
+const router = express.Router();
+const { getReadingsByDevice } = require('../controllers/historicalReadingController');
 
-    router.get('/:deviceId', getReadingsByDevice);
+router.get('/:deviceId', getReadingsByDevice);
 
-    module.exports = router;
+module.exports = router;
     

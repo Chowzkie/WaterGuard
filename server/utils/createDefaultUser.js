@@ -1,4 +1,3 @@
-// server/utils/createDefaultUser.js
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User.js");
 

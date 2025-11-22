@@ -69,7 +69,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     const [showSyncPrompt, setShowSyncPrompt] = useState(false);
     const [mismatchData, setMismatchData] = useState(null);
     
-    // --- NEW: Imbalance Modal State ---
+    // --- Imbalance Modal State ---
     const [showImbalancePrompt, setShowImbalancePrompt] = useState(false);
     const [imbalanceDetails, setImbalanceDetails] = useState(null); 
 
@@ -176,7 +176,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
         });
     };
 
-    // --- NEW: VALIDATION ALGORITHMS ---
+    // --- VALIDATION ALGORITHMS ---
 
     /**
      * Generates a corrected configuration object by enforcing standard logic.
@@ -330,7 +330,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
         // Rule: If Shut-off is Enabled, at least one shut-off trigger must be true
         if (shutOff.enabled && !(shutOff.triggerPH || shutOff.triggerTurbidity || shutOff.triggerTDS)) {
-            // NOTE: Using alert() here because we are not in a React render prop.
+            // Using alert() here because we are not in a React render prop.
             // A more robust solution would be a modal or error message state.
            setValidationError("'Auto Shut-off' is enabled, but no parameters (pH, Turbidity, TDS) are selected to trigger it.");
             return false;
@@ -443,7 +443,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     };
 
 
-    // --- NEW: IMBALANCE MODAL HANDLERS ---
+    // --- IMBALANCE MODAL HANDLERS ---
 
     const handleOptimizeAndSave = () => {
         // 1. Apply optimized configs

@@ -1,5 +1,3 @@
-// controllers/LogsController.js
-
 const UserLogModel = require('../models/UserLogs');
 const SystemLogModel = require('../models/SystemLogs');
 

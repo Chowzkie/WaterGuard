@@ -1,5 +1,3 @@
-// controllers/alertController.js
-
 const Alert = require('../models/Alert'); 
 const User = require('../models/User');
 const {createUserlog} = require('../helpers/createUserlog');

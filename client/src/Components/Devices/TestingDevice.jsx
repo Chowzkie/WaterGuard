@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// --- Added Cpu icon for the cards ---
 import { Menu, Cpu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Style from '../../Styles/DeviceTesting.module.css';
@@ -48,7 +47,7 @@ function TestingDevice({ deviceData }) {
                     </div>
                 </div>
 
-                {/* --- UPDATED: Table structure changed to a list of cards --- */}
+                {/* --- Table structure changed to a list of cards --- */}
                 <div className={Style['device-list-container']}>
                     {filterDevice.length === 0 ? (
                         <div className={Style['no-devices']}>No devices found.</div>

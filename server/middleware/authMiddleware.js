@@ -1,4 +1,3 @@
-// server/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
 // Ensure you have a JWT_SECRET defined in your environment variables.

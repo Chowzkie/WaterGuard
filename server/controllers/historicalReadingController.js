@@ -1,5 +1,3 @@
-// controllers/historicalReadingController.js
-
 const Reading = require('../models/HistoricalReading');
 
 /**

@@ -16,7 +16,6 @@ const Alerts = () => {
         alertsHistory,
         devices,
         onAcknowledgeAlert,
-        // CHANGE: Get delete and restore functions from context
         onDeleteHistoryAlerts,
         onRestoreHistoryAlerts,
         newlyAddedId,
@@ -78,7 +77,6 @@ const Alerts = () => {
                     <AlertsHistory
                         // Pass the pre-filtered list
                         historyAlerts={filteredHistoryAlerts}
-                        // CHANGE: Pass delete and restore functions down as props
                         onDeleteHistoryAlerts={onDeleteHistoryAlerts}
                         onRestoreHistoryAlerts={onRestoreHistoryAlerts}
                     />

@@ -1,5 +1,3 @@
-// controllers/deviceController.js
-
 const Device = require('../models/Device');
 const {createUserlog} = require('../helpers/createUserlog');
 const {compareConfigs} = require('../helpers/configDiff');

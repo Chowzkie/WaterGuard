@@ -109,7 +109,7 @@ function App() {
         document.title = `WaterGuard | ${currentTitle}`;
     }, [location.pathname, headerDeviceLabel]);
 
-    //// State for the currently logged-in user
+    // State for the currently logged-in user
     // Initialize from localStorage if available
     const [loggedInUser, setLoggedInUser] = useState(() => {
         const savedUser = localStorage.getItem("user");
@@ -224,8 +224,6 @@ function App() {
     const [activeFilterDevice, setActiveFilterDevice] = useState('All Devices');
     const [recentFilterDevice, setRecentFilterDevice] = useState('All Devices');
 
-    const backToNormalTimers = useRef(new Map());
-    const maxSeenId = useRef(0);
     const lastPlayedSoundId = useRef(null);
     const [newlyAddedId, setNewlyAddedId] = useState(null);
 
@@ -441,30 +439,7 @@ function App() {
     const handleAnimationComplete = () => {
         setNewlyAddedId(null);
     };
-
-    // --- Timer Management ---
     
-    /**
-     * Starts a timer to automatically clear 'Back to Normal' alerts.
-     * @param {string} alertId - The ID of the alert to clear.
-     */
-    const startTimer = (alertId) => {
-        const timerId = setTimeout(() => {
-            dispatch({ type: 'AUTO_CLEAR_NORMAL_ALERT', payload: { alertId } });
-        }, 30000);
-        backToNormalTimers.current.set(alertId, timerId);
-    };
-
-    /**
-     * Clears an existing timer for an alert.
-     * @param {string} alertId - The ID of the alert whose timer should be cleared.
-     */
-    const clearTimer = (alertId) => {
-        if (backToNormalTimers.current.has(alertId)) {
-            clearTimeout(backToNormalTimers.current.get(alertId));
-            backToNormalTimers.current.delete(alertId);
-        }
-    };
 
     /**
      * Effect hook to fetch initial device and station data on component mount.
@@ -478,7 +453,7 @@ function App() {
                     axios.get(`${API_BASE_URL}/api/stations`)
                 ]);
                 setDevices(devicesRes.data);
-setPumpingStations(stationsRes.data);
+                setPumpingStations(stationsRes.data);
                 // --- Prime the ref with the initial device state ---
                 previousDevicesRef.current = devicesRes.data;
             } catch (error) {
@@ -545,9 +520,6 @@ setPumpingStations(stationsRes.data);
                 userID
             });
 
-            // Instead of filtering the alert out, we now MAP over the array and
-            // update the specific alert that was acknowledged. This will make the
-            // checkmark appear without removing the alert from the list.
             setActiveAlerts(prevAlerts => 
                 prevAlerts.map(alert => 
                     alert._id === alertId 
@@ -829,9 +801,8 @@ setPumpingStations(stationsRes.data);
                     onLogout={handleLogout}
                     deviceLabelForHeader={headerDeviceLabel}
                     username={loggedInUser?.username}
-                    // --- Pass notification state and handlers to Header ---
                     notifications={notifications}
-                    unreadCount={unreadCount} // Pass the new unreadCount state
+                    unreadCount={unreadCount} 
                     onMarkNotificationAsRead={handleMarkNotificationAsRead}
                     onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
                 />

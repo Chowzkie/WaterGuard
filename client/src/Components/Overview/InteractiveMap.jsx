@@ -325,7 +325,7 @@ const InteractiveMap = ({ devices, selectedDeviceId, onSelectDevice, onAddDevice
                         </div>
                     </div>
                 </div>
-                <MapContainer center={[15.61, 120.6]} zoom={13} scrollWheelZoom={true} zoomControl={false}>
+                <MapContainer center={[15.73, 120.57]} zoom={13} scrollWheelZoom={true} zoomControl={false}>
                     <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <ZoomControl position="topright" />
                     {devices && devices.map(device => <Marker key={device._id} position={device.position} icon={createCustomIcon(device.label, device.currentState.status)} eventHandlers={{ click: () => handleRedirect(device._id) }} />)}

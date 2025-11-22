@@ -1,4 +1,3 @@
-// server/models/Reading.js
 const mongoose = require('mongoose');
 
 const ReadingSchema = new mongoose.Schema({

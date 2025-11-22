@@ -20,15 +20,7 @@ import AccountSettings from './Components/AccountSettings/AccountSettings';
 
 import routeTitleMap from './utils/routeTitleMap';
 
-// Define your backend API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Make sure this matches your backend port
-
-/**
- * Generates a list of human-readable log messages by comparing old and new configuration objects.
- * @param {object} oldConfigs - The configuration object before changes.
- * @param {object} newConfigs - The configuration object after changes.
- * @returns {string[]} An array of log message strings.
- */
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // =================================================================================
 // APP COMPONENT
@@ -45,6 +37,10 @@ function App() {
 
     const navigate = useNavigate();
 
+    /**
+     * Effect hook to reset the header device label when navigating to main paths.
+     * Ensures that specific device labels don't persist on general overview pages.
+     */
     useEffect(() => {
         // List of paths where the header should reset to default (no device label)
         const mainPaths = [
@@ -63,12 +59,16 @@ function App() {
     }, [location.pathname]);
 
 
+    /**
+     * Effect hook to manage socket event listeners.
+     * Listens for 'deviceUpdate' events to update the local devices state in real-time.
+     */
     useEffect(() => {
         //socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
         //socket.on("disconnect", () => console.log("❌ Socket disconnected"));
 
         socket.on("deviceUpdate", (updatedDevice) => {
-            setDeviceLocations(prev => {
+            setDevices(prev => {
             const idx = prev.findIndex(d => d._id === updatedDevice._id);
             if (idx === -1) return [...prev, updatedDevice];
             const copy = [...prev];
@@ -86,6 +86,10 @@ function App() {
         };
     }, []);
 
+    /**
+     * Effect hook to dynamically update the document title based on the current route.
+     * Handles specific titles for device details and configuration pages.
+     */
     // Use to dynamically change the document title when logging out
     useEffect(() => {
         let currentTitle = "WaterGuard";
@@ -114,6 +118,10 @@ function App() {
 
     const userID = loggedInUser?._id //A helper to set the loggedin user
 
+    /**
+     * Effect hook to fetch the user profile from the backend using the stored token.
+     * Verifies authentication and updates user state or clears session on failure.
+     */
     useEffect(() => {
         //fetch the user details into the backend
         const fetchUserProfile = async() => {
@@ -149,6 +157,13 @@ function App() {
     }, [])
     // Check if a user is authenticated
     const isAuthenticated = loggedInUser ? true : false;
+    
+    /**
+     * Handler for user login.
+     * Stores the JWT token and user data in local storage and updates state.
+     * @param {string} token - The JWT authentication token.
+     * @param {object} user - The user data object.
+     */
     // Called after successful login with JWT token
     const handleLogin = (token, user) => { // Expect the JWT token from the Login component
     try {
@@ -162,6 +177,10 @@ function App() {
     }
     };
 
+    /**
+     * Handler for user logout.
+     * Calls the logout API, clears local storage and application state, and navigates to login.
+     */
     const handleLogout = async() => {
         try{
             await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
@@ -178,12 +197,16 @@ function App() {
             setActiveAlerts([]);
             setRecentAlerts([]);
             setAlertsHistory([]);
-            setDeviceLocations([]);
+            setDevices([]);
             setPumpingStations([]);
             navigate('/login');
         }
     };
 
+    /**
+     * Handler to update user data in state and local storage after profile changes.
+     * @param {object} updatedUserData - The updated user data object.
+     */
     // Update user data after profile changes
     const handleUserUpdate = (updatedUserData) => {
         setLoggedInUser(updatedUserData);
@@ -192,7 +215,7 @@ function App() {
 
     // --- State Management ---
 
-    const [deviceLocations, setDeviceLocations] = useState([]);
+    const [devices, setDevices] = useState([]);
     const [pumpingStations, setPumpingStations] = useState([]);
 
     const [selectedMapDeviceId, setSelectedMapDeviceId] = useState(null);
@@ -223,6 +246,10 @@ function App() {
     // --- SEPARATE SOUND FUNCTIONS ---
     // =================================================================================
 
+    /**
+     * Plays the audio sound specifically for active alerts.
+     * Includes error handling if playback fails (e.g., browser restrictions).
+     */
     // Sound for the ACTIVE ALERTS UI
     const playAlertSound = useCallback(() => {
         const audio = new Audio('/Notification.mp3');
@@ -234,6 +261,9 @@ function App() {
         }
     }, []);
 
+    /**
+     * Plays the audio sound for general system notifications.
+     */
     // Sound for the NOTIFICATION COMPONENT (dropdown)
     const playNotificationSound = useCallback(() => {
         const audio = new Audio('/Notification-2.mp3'); // Your new sound file
@@ -248,6 +278,11 @@ function App() {
     // =================================================================================
     // LIVE ALERT POLLING (Sound only)
     // =================================================================================
+    
+    /**
+     * Effect hook to poll for active, recent, and history alerts.
+     * Detects new or updated active alerts to trigger sound notifications and highlight new items.
+     */
     useEffect(() => {
         const fetchAlerts = async () => {
             try {
@@ -296,11 +331,13 @@ function App() {
         const intervalId = setInterval(fetchAlerts, 5000);
         return () => clearInterval(intervalId);
     }, [playAlertSound, isAuthenticated]); // --- Dependency updated
-
-    // --- old addNotification function ---
     
     // --- Utility function for creating System Logs (from original file) ---
-    // ---  Removed call to setSystemLogs which is not defined ---
+    
+    /**
+     * Helper function to log system events to the console.
+     * @param {object} logData - The data associated with the system event.
+     */
     const logSystemEvent = useCallback((logData) => {
         const newLog = {
             id: Date.now() + Math.random(),
@@ -314,10 +351,15 @@ function App() {
     // =================================================================================
     // --- NOTIFICATION POLLING FROM DATABASE ---
     // =================================================================================
+    
+    /**
+     * Effect hook to poll for system logs and map them to user notifications.
+     * Fetches unread logs, updates the unread count badge, and plays notification sounds.
+     */
     useEffect(() => {
         // This function maps a system log from the DB to a notification object
         const mapLogToNotification = (log) => {
-            const device = deviceLocations.find(d => d._id === log.deviceId);
+            const device = devices.find(d => d._id === log.deviceId);
             const deviceLabel = device ? device.label : 'System';
 
             let notifType = 'Info';
@@ -341,7 +383,7 @@ function App() {
         };
 
         const fetchNotifications = async () => {
-            if (deviceLocations.length === 0) return; // Wait for devices to load
+            if (devices.length === 0) return; // Wait for devices to load
 
             try {
                 // Fetch all logs from the last 24 hours
@@ -388,15 +430,24 @@ function App() {
         const intervalId = setInterval(fetchNotifications, 7000); // Poll every 7 seconds
         return () => clearInterval(intervalId);
 
-    }, [deviceLocations, playNotificationSound, isAuthenticated]); // Re-run if devices load
+    }, [devices, playNotificationSound, isAuthenticated]); // Re-run if devices load
 
 
+    /**
+     * Resets the newly added ID state after animation completion.
+     * Used for highlighting new alerts in the UI.
+     */
     //  handler to allow child components to signal animation completion
     const handleAnimationComplete = () => {
         setNewlyAddedId(null);
     };
 
     // --- Timer Management ---
+    
+    /**
+     * Starts a timer to automatically clear 'Back to Normal' alerts.
+     * @param {string} alertId - The ID of the alert to clear.
+     */
     const startTimer = (alertId) => {
         const timerId = setTimeout(() => {
             dispatch({ type: 'AUTO_CLEAR_NORMAL_ALERT', payload: { alertId } });
@@ -404,6 +455,10 @@ function App() {
         backToNormalTimers.current.set(alertId, timerId);
     };
 
+    /**
+     * Clears an existing timer for an alert.
+     * @param {string} alertId - The ID of the alert whose timer should be cleared.
+     */
     const clearTimer = (alertId) => {
         if (backToNormalTimers.current.has(alertId)) {
             clearTimeout(backToNormalTimers.current.get(alertId));
@@ -411,6 +466,9 @@ function App() {
         }
     };
 
+    /**
+     * Effect hook to fetch initial device and station data on component mount.
+     */
     // ---  fetches all initial data required for the application ---
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -419,7 +477,7 @@ function App() {
                     axios.get(`${API_BASE_URL}/api/devices`),
                     axios.get(`${API_BASE_URL}/api/stations`)
                 ]);
-                setDeviceLocations(devicesRes.data);
+                setDevices(devicesRes.data);
 setPumpingStations(stationsRes.data);
                 // --- Prime the ref with the initial device state ---
                 previousDevicesRef.current = devicesRes.data;
@@ -430,6 +488,10 @@ setPumpingStations(stationsRes.data);
         fetchInitialData();
     }, []);
 
+    /**
+     * Effect hook to periodically poll for device status changes and log system events.
+     * Compares current device status with previous state to detect changes.
+     */
    // --- This useEffect ONLY logs events. It no longer adds notifications. ---
     useEffect(() => {
         const pollDeviceStatus = async () => {
@@ -456,7 +518,7 @@ setPumpingStations(stationsRes.data);
                 });
 
                 // Update the main state and the ref for the next poll
-                setDeviceLocations(latestDevices);
+                setDevices(latestDevices);
                 previousDevicesRef.current = latestDevices;
 
             } catch (error) {
@@ -472,6 +534,11 @@ setPumpingStations(stationsRes.data);
     //  UPDATED EVENT HANDLERS (API-DRIVEN with Full Logging)
     // =================================================================================
 
+    /**
+     * Handles the acknowledgement of an alert.
+     * Calls the backend API and updates the local state to reflect the change.
+     * @param {string} alertId - The ID of the alert to acknowledge.
+     */
     const handleAcknowledgeAlert = async (alertId) => {
         try {
             await axios.post(`${API_BASE_URL}/api/alerts/acknowledge/${alertId}`, {
@@ -494,6 +561,11 @@ setPumpingStations(stationsRes.data);
         }
     };
 
+    /**
+     * Handles the deletion of historical alerts.
+     * Calls the backend API to perform soft deletion and updates local state.
+     * @param {Set} idsToDelete - A set of alert IDs to be deleted.
+     */
     const handleDeleteHistoryAlerts = useCallback(async (idsToDelete) => {
         const alertsToDelete = alertsHistory.filter(alert => idsToDelete.has(alert._id));
         if (alertsToDelete.length === 0) return;
@@ -507,8 +579,13 @@ setPumpingStations(stationsRes.data);
         } catch (error) {
             console.error("Failed to delete alerts:", error);
         }
-    }, [alertsHistory, deviceLocations]); // Dependencies
+    }, [alertsHistory, devices]); // Dependencies
 
+    /**
+     * Handles the restoration of soft-deleted alerts.
+     * Calls the backend API and updates local state with restored alerts.
+     * @param {Array} alertsToRestore - An array of alert objects to restore.
+     */
     const handleRestoreHistoryAlerts = useCallback(async (alertsToRestore) => {
         // Guard clause in case it's empty or undefined
         if (!alertsToRestore || alertsToRestore.length === 0) return;
@@ -541,13 +618,32 @@ setPumpingStations(stationsRes.data);
         }
     }, [userID]);
 
+    /**
+     * Handler for changing the filter for active alerts.
+     * @param {Event} e - The change event object.
+     */
     const handleActiveFilterChange = (e) => setActiveFilterDevice(e.target.value);
+    
+    /**
+     * Handler for changing the filter for recent alerts.
+     * @param {Event} e - The change event object.
+     */
     const handleRecentFilterChange = (e) => setRecentFilterDevice(e.target.value);
+    
+    /**
+     * Handler to select a device on the map and trigger a refocus action.
+     * @param {string} deviceId - The ID of the device to select.
+     */
     const handleSelectDevice = (deviceId) => {
         setSelectedMapDeviceId(deviceId);
         setRefocusTrigger(p => p + 1);
     };
 
+    /**
+     * Handles adding a new device.
+     * Posts new device data to the backend and updates local state on success.
+     * @param {object} newDeviceData - The data for the new device.
+     */
     const handleAddDevice = async (newDeviceData) => {
         try {
             // Send the new device data to the backend API
@@ -556,7 +652,7 @@ setPumpingStations(stationsRes.data);
             // Add the device *returned by the server* to our state
             // This is important because the server response includes the new _id from MongoDB
             const deviceFromServer = response.data;
-            setDeviceLocations(prev => [...prev, deviceFromServer]);
+            setDevices(prev => [...prev, deviceFromServer]);
             setSelectedMapDeviceId(deviceFromServer._id);
 
         } catch (error) {
@@ -566,6 +662,11 @@ setPumpingStations(stationsRes.data);
         }
     };
 
+    /**
+     * Handles deleting a device.
+     * Sends a delete request to the backend and removes the device from local state.
+     * @param {string} deviceId - The ID of the device to delete.
+     */
     const handleDeleteDevice = async (deviceId) => {
         try {
             // Send a delete request to the backend API
@@ -574,7 +675,7 @@ setPumpingStations(stationsRes.data);
             });
 
             // If the delete was successful, remove the device from our local state
-            setDeviceLocations(prev => prev.filter(d => d._id !== deviceId));
+            setDevices(prev => prev.filter(d => d._id !== deviceId));
             setSelectedMapDeviceId(null);
 
         } catch (error) {
@@ -582,6 +683,11 @@ setPumpingStations(stationsRes.data);
         }
     };
     
+    /**
+     * Handles batch updating pumping stations.
+     * Sends the full list of stations to the backend for synchronization.
+     * @param {Array} updatedStations - The updated list of pumping stations.
+     */
     const handleSaveStations = async (updatedStations) => {
         try {
             // Send the required payload structure with userID for logging
@@ -599,6 +705,13 @@ setPumpingStations(stationsRes.data);
         }
     };
 
+    /**
+     * Handles saving device configuration changes.
+     * Sends a PUT request to the backend and updates local state.
+     * @param {string} deviceId - The ID of the device being configured.
+     * @param {object} newConfigs - The new configuration settings.
+     * @returns {Promise} - A promise that resolves on success or rejects on failure.
+     */
     // --- handleSaveConfiguration sends a PUT request and logs changes ---
     const handleSaveConfiguration = useCallback(async (deviceId, newConfigs) => {
 
@@ -607,7 +720,7 @@ setPumpingStations(stationsRes.data);
             const response = await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/configurations`, {newConfigs, userID});
             
             // Update state with the exact data returned from the server
-            setDeviceLocations(prevDevices =>
+            setDevices(prevDevices =>
                 prevDevices.map(device =>
                     device._id === deviceId ? response.data.updatedDevice : device
                 )
@@ -617,12 +730,18 @@ setPumpingStations(stationsRes.data);
             console.error("Error saving configuration:", error);
             return Promise.reject(error); // Signal failure to the UI
         }
-    }, [deviceLocations]);
+    }, [devices]);
 
 
     // =================================================================================
     // --- Handlers for managing notification read status ---
     // =================================================================================
+    
+    /**
+     * Marks a single notification as read.
+     * Performs an optimistic UI update and sends a request to the backend.
+     * @param {string} notificationId - The ID of the notification to mark as read.
+     */
     const handleMarkNotificationAsRead = useCallback(async (notificationId) => {
         // Optimistic UI update: Mark as read immediately
         setNotifications(prev =>
@@ -645,6 +764,10 @@ setPumpingStations(stationsRes.data);
         }
     }, []); // Empty dependency array
 
+    /**
+     * Marks all visible unread notifications as read.
+     * Performs an optimistic UI update and sends a batch request to the backend.
+     */
     const handleMarkAllNotificationsAsRead = useCallback(async () => {
         // Find all unread IDs currently visible
         const unreadIds = notifications
@@ -677,7 +800,7 @@ setPumpingStations(stationsRes.data);
         activeAlerts,
         recentAlerts,
         alertsHistory,
-        devices: deviceLocations,
+        devices,
         pumpingStations,
         activeFilterDevice,
         handleActiveFilterChange,

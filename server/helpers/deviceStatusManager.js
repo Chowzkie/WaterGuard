@@ -4,7 +4,7 @@ const { createSystemLogs } = require("./createSystemLogs");
 
 // Timeout threshold (60s) before marking a device as offline
 // Allows for some network latency before triggering a disconnect event
-const OFFLINE_THRESHOLD_MS = 60 * 1000;
+const OFFLINE_THRESHOLD_MS = 40 * 1000;
 
 const initializeDeviceStatusCheck = (io) => {
   console.log(" Initializing device status (offline) check...");

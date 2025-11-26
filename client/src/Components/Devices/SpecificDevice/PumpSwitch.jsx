@@ -14,7 +14,7 @@ function PumpSwitch({ deviceId, deviceStatus, pumpState, pumpCycle, onToggle, ad
     const timerRef = useRef(null); // Ref for the interval timer
 
     // Customize cooldown duration
-    const COOLDOWN_ON = 60;   // seconds when turning pump ON
+    const COOLDOWN_ON = 30;   // seconds when turning pump ON
     const COOLDOWN_OFF = 30; // seconds when turning pump OFF
 
     useEffect(() => {

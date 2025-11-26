@@ -10,16 +10,21 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- Constants for Colors and Status Text ---
 const STATUS_CONFIG = {
-    SAFE: { color: '#4CAF50', text: 'Safe' }, // Green
-    WARNING: { color: '#FFA500', text: 'Potentially Unsafe' }, // Orange/Yellow
-    CRITICAL: { color: '#e91e40ff', text: 'Unsafe' }, // Red
-    UNKNOWN: { color: '#eeeeee', text: 'N/A' }, // Grey
-    NONE: { color: '#9ca3af', text: 'None' } // Darker Grey for "None"
+    SAFE: { color: '#4CAF50', text: 'Safe' },
+    WARNING: { color: '#FFA500', text: 'Potentially Unsafe' },
+    CRITICAL: { color: '#e91e40ff', text: 'Unsafe' },
+    UNKNOWN: { color: '#eeeeee', text: 'N/A' },
+    NONE: { color: '#9ca3af', text: 'None' }
 };
 
-/**
- * Determines the severity status, color, and label based on thresholds.
- */
+// --- Unit Definitions for Tooltips ---
+const UNIT_DEFINITIONS = {
+    TURBIDITY: 'Nephelometric Turbidity Units',
+    TDS: 'Parts Per Million (mg/L)',
+    TEMP: 'Degrees Celsius',
+    PH: 'Potential of Hydrogen'
+};
+
 const getSeverityStatus = (paramKey, value, thresholds) => {
     // 1. Check for specific "No Data" or "Zero" conditions first
     if (value === undefined || value === null) return STATUS_CONFIG.UNKNOWN;
@@ -58,6 +63,9 @@ const getSeverityStatus = (paramKey, value, thresholds) => {
 const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedDeviceId, thresholds }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const displayDeviceID = selectedDeviceId ? selectedDeviceId.toUpperCase() : '';
+
+    // Get the full definition text based on the parameter key
+    const unitTooltip = UNIT_DEFINITIONS[paramKey] || '';
 
     if (status === 'Offline') {
         return (
@@ -123,15 +131,21 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
                     <Doughnut data={data} options={options} />
                     <div className={ReadingsStyle["chart-center-text"]}>
                         <span className={ReadingsStyle["value"]}>
-                            {/* Keep showing 0.0 or -- */}
                             {typeof value === 'number' ? value.toFixed(1) : '--'}
                         </span>
-                        {unit && <span className={ReadingsStyle["unit"]}>{unit}</span>}
+                        {/* ADDED TITLE ATTRIBUTE HERE */}
+                        {unit && (
+                            <span 
+                                className={ReadingsStyle["unit"]} 
+                                title={unitTooltip}
+                            >
+                                {unit}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
             
-            {/* Status Label */}
             <div className={ReadingsStyle["status-label"]} style={{ color: dynamicColor }}>
                 {statusText}
             </div>

@@ -111,6 +111,12 @@
     font-size: 1.2rem;
     font-weight: 500;
     color: #444;
+    cursor: help; /* Adds the question mark cursor on hover */
+    transition: opacity 0.2s;
+}
+
+.unit:hover {
+    opacity: 0.7; /* Slight visual feedback */
 }
 
 .min-max {

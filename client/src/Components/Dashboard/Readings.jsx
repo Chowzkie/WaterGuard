@@ -59,7 +59,7 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
     const [isModalOpen, setIsModalOpen] = useState(false);
     const displayDeviceID = selectedDeviceId ? selectedDeviceId.toUpperCase() : '';
 
-    if (status === 'Online') {
+    if (status === 'Offline') {
         return (
             <div className={ReadingsStyle['offline-readings']}>
                 <div className={ReadingsStyle['offline-card']}>

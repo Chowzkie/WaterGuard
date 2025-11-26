@@ -19,11 +19,12 @@ function Dashboard() {
         label: device.label,
         location: device.location,
         status: device.currentState?.status || 'Offline',
+        thresholds: device.configurations?.thresholds,
         readings: [
-          { id: 1, title: 'pH Level', value: device.latestReading?.PH || 0, min: 0, max: 14, unit: '', color: '#FFA500' },
-          { id: 2, title: 'Turbidity', value: device.latestReading?.TURBIDITY || 0, min: 0, max: 10, unit: ' NTU', color: '#4CAF50' },
-          { id: 3, title: 'Temperature', value: device.latestReading?.TEMP || 0, min: 0, max: 50, unit: '°C', color: '#2196F3' },
-          { id: 4, title: 'TDS', value: device.latestReading?.TDS || 0, min: 0, max: 1000, unit: ' ppm', color: '#E91E63' },
+          { id: 1, title: 'pH Level', paramKey: 'PH', value: device.latestReading?.PH || 0, min: 0, max: 14, unit: '' },
+          { id: 2, title: 'Turbidity', paramKey: 'TURBIDITY', value: device.latestReading?.TURBIDITY || 0, min: 0, max: 10, unit: ' NTU' },
+          { id: 3, title: 'Temperature', paramKey: 'TEMP', value: device.latestReading?.TEMP || 0, min: 0, max: 50, unit: '°C' },
+          { id: 4, title: 'TDS', paramKey: 'TDS', value: device.latestReading?.TDS || 0, min: 0, max: 1000, unit: ' ppm' },
         ]
       }));
 
@@ -43,10 +44,10 @@ function Dashboard() {
             ? {
                 ...dev,
                 readings: [
-                  { id: 1, title: 'pH Level', value: updatedDevice.latestReading.PH, min: 0, max: 14, unit: '', color: '#FFA500' },
-                  { id: 2, title: 'Turbidity', value: updatedDevice.latestReading.TURBIDITY, min: 0, max: 10, unit: ' NTU', color: '#4CAF50' },
-                  { id: 3, title: 'Temperature', value: updatedDevice.latestReading.TEMP, min: 0, max: 50, unit: '°C', color: '#2196F3' },
-                  { id: 4, title: 'TDS', value: updatedDevice.latestReading.TDS, min: 0, max: 1000, unit: ' ppm', color: '#E91E63' },
+                  { id: 1, title: 'pH Level', paramKey: 'PH', value: updatedDevice.latestReading.PH, min: 0, max: 14, unit: '' },
+                  { id: 2, title: 'Turbidity', paramKey: 'TURBIDITY', value: updatedDevice.latestReading.TURBIDITY, min: 0, max: 10, unit: ' NTU' },
+                  { id: 3, title: 'Temperature', paramKey: 'TEMP', value: updatedDevice.latestReading.TEMP, min: 0, max: 50, unit: '°C' },
+                  { id: 4, title: 'TDS', paramKey: 'TDS', value: updatedDevice.latestReading.TDS, min: 0, max: 1000, unit: ' ppm' },
                 ]
               }
             : dev
@@ -63,7 +64,11 @@ function Dashboard() {
 
   return (
     <div className='component-wrapper-dashboard'>
-      <Readings selectedDevice={selectedDevice} deviceStatus={selectedDevice?.status} />
+      <Readings 
+        selectedDevice={selectedDevice} 
+        deviceStatus={selectedDevice?.status} 
+        thresholds={selectedDevice?.thresholds}
+      />
       <DeviceStatus devicesData={transformedDevices} selectedDeviceId={selectedDeviceId} setSelectedDeviceId={setSelectedDeviceId} />
     </div>
   );

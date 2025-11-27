@@ -1,21 +1,17 @@
 import Style from '../../../Styles/SpecificDeviceStyle/SpecificReadings.module.css';
 
 // Determines the visual severity state (Normal, Warning, Critical)
-// Compares the current sensor value against the device's configured thresholds
 const getBackgroundClass = (param, value, thresholds) => {
-    // Zero is a valid reading, but null/undefined indicates a data error
-    if (value === 0) return '';
+    if (value === 0) return ''; // Keep white background for 0
     if (value === undefined || value === null) return Style.bgOffline;
     
-    // Fallback to normal styling if no thresholds are configured
     if (!thresholds) return Style.bgNormal; 
-
     const rules = thresholds[param.toLowerCase()];
     if (!rules) return Style.bgNormal;
 
     switch (param) {
         case 'PH':
-            // pH requires range checks (Low < Value < High)
+        case 'TEMP':
             if (value < rules.critLow || value > rules.critHigh) return Style.bgCritical;
             if ((value >= rules.critLow && value <= rules.warnLow) || 
                 (value >= rules.warnHigh && value <= rules.critHigh)) {
@@ -25,18 +21,8 @@ const getBackgroundClass = (param, value, thresholds) => {
 
         case 'TURBIDITY':
         case 'TDS':
-            // These parameters only check for upper limits
             if (value > rules.crit) return Style.bgCritical;
             if (value > rules.warn) return Style.bgWarning;
-            return Style.bgNormal;
-
-        case 'TEMP':
-            // Temp requires range checks similar to pH
-            if (value < rules.critLow || value > rules.critHigh) return Style.bgCritical;
-            if ((value >= rules.critLow && value <= rules.warnLow) || 
-                (value >= rules.warnHigh && value <= rules.critHigh)) {
-                return Style.bgWarning;
-            }
             return Style.bgNormal;
 
         default:
@@ -44,7 +30,43 @@ const getBackgroundClass = (param, value, thresholds) => {
     }
 };
 
-// Maps sensor types to their specific visual identity (e.g., border colors)
+// Gets the qualitative text label (e.g., Neutral, Clear)
+const getDetailedStatusText = (param, value, thresholds) => {
+    if (value === undefined || value === null) return 'No Data';
+
+    const rules = thresholds?.[param.toLowerCase()];
+    if (!rules) return 'N/A';
+
+    switch (param) {
+        case 'PH':
+            if (value < rules.critLow) return 'Highly Acidic';
+            if (value < rules.warnLow) return 'Acidic';
+            if (value > rules.critHigh) return 'Highly Alkaline';
+            if (value > rules.warnHigh) return 'Alkaline';
+            return 'Neutral';
+
+        case 'TURBIDITY':
+            if (value > rules.crit) return 'Very Cloudy';
+            if (value > rules.warn) return 'Cloudy';
+            return 'Clear';
+
+        case 'TDS':
+            if (value > rules.crit) return 'Poor Taste';
+            if (value > rules.warn) return 'Fair Taste';
+            return 'Good Taste';
+            
+        case 'TEMP':
+            if (value < rules.critLow) return 'Freezing Risk';
+            if (value < rules.warnLow) return 'Cold';
+            if (value > rules.critHigh) return 'Heat Risk';
+            if (value > rules.warnHigh) return 'Warm';
+            return 'Cool';
+
+        default:
+            return 'N/A';
+    }
+};
+
 const getIdentityClass = (param) => {
     switch (param) {
         case 'PH': return Style.cardPH;
@@ -55,7 +77,6 @@ const getIdentityClass = (param) => {
     }
 };
 
-// Returns display units for each sensor type
 const getUnit = (param) => {
     switch (param) {
         case 'PH': return '';
@@ -68,7 +89,6 @@ const getUnit = (param) => {
 
 const SpecificReadings = ({ deviceReadings, deviceStatus, thresholds }) => {
     
-    // Early return for Offline status to prevent rendering stale or empty data cards
     if (deviceStatus === 'Offline' || !deviceReadings) {
         return (
             <div className={Style.container}>
@@ -81,7 +101,6 @@ const SpecificReadings = ({ deviceReadings, deviceStatus, thresholds }) => {
         );
     }
 
-    // Define explicit order of sensor cards
     const parameters = ['PH', 'TURBIDITY', 'TEMP', 'TDS'];
 
     return (
@@ -92,11 +111,10 @@ const SpecificReadings = ({ deviceReadings, deviceStatus, thresholds }) => {
                 {parameters.map((param) => {
                     const value = deviceReadings[param];
                     
-                    // Compose styles: Alarm state (background) + Sensor Identity (accent/border)
                     const bgClass = getBackgroundClass(param, value, thresholds);
                     const identityClass = getIdentityClass(param);
+                    const statusLabel = getDetailedStatusText(param, value, thresholds);
 
-                    // Map raw parameter keys to user-friendly labels
                     let label = param;
                     if (param === 'PH') label = 'Current pH';
                     else if (param === 'TEMP') label = 'Temperature';
@@ -106,13 +124,20 @@ const SpecificReadings = ({ deviceReadings, deviceStatus, thresholds }) => {
                     return (
                         <div 
                             key={param} 
-                            className={`${Style['reading-card']} ${bgClass} ${identityClass}`}
+                            // Ensure identityClass is always applied so borders show even if bgClass is empty
+                            className={`${Style['reading-card']} ${bgClass || ''} ${identityClass}`}
                         >
                             <div className={Style.parameter}>
                                 {label}
                             </div>
+
+                            {/* MIDDLE: Status Label */}
+                            <div className={Style.statusMiddle}>
+                                {statusLabel}
+                            </div>
+
+                            {/* RIGHT: Value */}
                             <div className={Style.value}>
-                                {/* Format to 1 decimal place, handle missing data gracefully */}
                                 {typeof value === 'number' ? value.toFixed(1) : '--'}
                                 <span style={{ fontSize: '1.1rem', color: '#374151', marginLeft: '4px' }}>
                                     {getUnit(param)}

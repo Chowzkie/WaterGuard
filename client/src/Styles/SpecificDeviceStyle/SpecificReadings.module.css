@@ -29,6 +29,7 @@
 .reading-card {
   display: flex;
   align-items: center;
+  justify-content: space-between; /* Ensures spacing between the 3 columns */
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid #e5e7eb;
@@ -37,6 +38,7 @@
   background-color: #fff; 
   border-left-width: 6px; 
   border-left-style: solid;
+  padding-right: 1.5rem; /* Add padding to right for the value */
 }
 
 .reading-card:hover {
@@ -44,70 +46,51 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.bgNormal { background-color: #ecfdf5; }
+.bgWarning { background-color: #fefce8; }
+.bgCritical { background-color: #fef2f2; }
+.bgOffline { background-color: #f3f4f6; }
 
-.bgNormal {
-  background-color: #ecfdf5; 
-}
+.cardPH { border-left-color: #f59e0b; }
+.cardPH .parameter { color: #f59e0b; }
 
-.bgWarning {
-  background-color: #fefce8; 
-}
+.cardTurbidity { border-left-color: #10b981; }
+.cardTurbidity .parameter { color: #10b981; }
 
-.bgCritical {
-  background-color: #fef2f2; 
-}
+.cardTemp { border-left-color: #3b82f6; }
+.cardTemp .parameter { color: #3b82f6; }
 
-.bgOffline {
-  background-color: #f3f4f6; 
-}
+.cardTDS { border-left-color: #ec4899; }
+.cardTDS .parameter { color: #ec4899; }
 
-.cardPH {
-  border-left-color: #f59e0b; 
-}
-
-.cardPH .parameter {
-  color: #f59e0b;
-}
-
-.cardTurbidity {
-  border-left-color: #10b981;
-}
-
-.cardTurbidity .parameter {
-  color: #10b981;
-}
-
-.cardTemp {
-  border-left-color: #3b82f6;
-}
-
-.cardTemp .parameter {
-  color: #3b82f6;
-}
-
-.cardTDS {
-  border-left-color: #ec4899;
-}
-
-.cardTDS .parameter {
-  color: #ec4899;
-}
-
+/* LEFT COLUMN: Parameter Name */
 .parameter {
   font-size: 1rem;
   font-weight: 700;
   padding: 1rem;
-  flex: 0 0 140px;
+  flex: 0 0 140px; /* Fixed width */
   text-align: left;
 }
 
+/* MIDDLE COLUMN: Status Label (New) */
+.statusMiddle {
+  flex: 1; /* Takes up remaining space */
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* RIGHT COLUMN: Value */
 .value {
   font-size: 1.8rem;
   font-weight: 700;
-  flex-grow: 1;
-  text-align: center;
-  padding: 1rem;
+  text-align: right; /* Aligned to the right */
   color: #111827;
+  min-width: 100px; /* Ensures value doesn't wrap awkwardly */
 }
 
 .statusMessage {

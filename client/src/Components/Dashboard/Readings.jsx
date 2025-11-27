@@ -160,15 +160,18 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
                 </div>
             </div>
             
-            {/* NEW STATUS DESIGN: Main Text + Sub Badge */}
             <div className={ReadingsStyle["status-container"]}>
-                <div className={ReadingsStyle["status-main"]} style={{ color: dynamicColor }}>
-                    {mainStatus}
-                </div>
-                <div className={ReadingsStyle["status-sub"]}>
-                    {subStatus}
-                </div>
+            <div className={ReadingsStyle["status-main"]} style={{ color: dynamicColor }}>
+                {mainStatus}
             </div>
+
+            <div 
+                className={ReadingsStyle["status-sub"]} 
+                style={{ backgroundColor: dynamicColor }}
+            >
+                {subStatus}
+            </div>
+        </div>
 
             <div className={ReadingsStyle["min-max"]}>
                 <p>Min: {min}{unit}</p>

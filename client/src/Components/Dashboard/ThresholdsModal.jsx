@@ -4,30 +4,10 @@ import { X, CheckCircle2, AlertTriangle, ShieldAlert, Info, ExternalLink } from 
 
 // --- CITATION SOURCES CONFIGURATION ---
 // You can switch between 'EPA' (International) and 'PNSDW' (Philippines Local)
-const SOURCE_TYPE = 'EPA'; 
+const SOURCE_TYPE = 'PNSDW'; 
 
 const SOURCES = {
-    EPA: {
-        PH: {
-            // Added definitions for Acidic/Alkaline
-            text: "EPA Secondary Regulations recommend a pH range of 6.5-8.5. Values below 6.5 are considered Acidic (corrosive), while values above 8.5 are considered Alkaline (scaling). 7.0 is Neutral.",
-            url: "https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals"
-        },
-        TURBIDITY: {
-            // Added definitions for Clear/Cloudy based on typical NTU benchmarks
-            text: "EPA Primary Regulations require very low turbidity (<1 NTU) for effective disinfection. Water <1 NTU is 'Clear'. Levels >5 NTU are visually 'Cloudy' and noticeable.",
-            url: "https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations"
-        },
-        TDS: {
-             // Added definitions for taste palatability
-            text: "EPA sets a Secondary standard of 500 mg/L. Levels below 600 mg/L are generally considered to have 'Good' palatability, while levels >1000 mg/L result in an unacceptable 'Salty' or mineral taste.",
-            url: "https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals"
-        },
-        TEMP: {
-            text: "The EPA does not set a mandatory standard. Generally, cool water is considered 'Palatable', while warm water (>25°C) can encourage bacterial growth.",
-            url: "https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals"
-        }
-    },
+
     // Philippine National Standards for Drinking Water (AO 2017-0010)
     PNSDW: {
         PH: {

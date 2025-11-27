@@ -61,6 +61,9 @@ const AlertsInfoModal = ({ isOpen, onClose }) => {
                             <li>
                                 <strong>Cleared:</strong> A "Back to Normal" alert that has been archived.
                             </li>
+                            <li>
+                                <strong>Expired:</strong> An alert that has not escalated, cleared, or resolved.
+                            </li>
                         </ul>
                     </section>
 

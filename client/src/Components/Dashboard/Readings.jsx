@@ -8,16 +8,16 @@ import ThresholdsModal from './ThresholdsModal';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// --- Constants for Colors and Status Text ---
-const STATUS_CONFIG = {
-    SAFE: { color: '#4CAF50', text: 'Safe' },
-    WARNING: { color: '#FFA500', text: 'Potentially Unsafe' },
-    CRITICAL: { color: '#e91e40ff', text: 'Unsafe' },
-    UNKNOWN: { color: '#eeeeee', text: 'N/A' },
-    NONE: { color: '#9ca3af', text: 'None' }
+// --- Constants for Colors ---
+const COLORS = {
+    SAFE: '#4CAF50',    // Green
+    WARNING: '#FFA500', // Orange/Yellow
+    CRITICAL: '#E91E63',// Red
+    UNKNOWN: '#eeeeee', // Grey
+    NONE: '#9ca3af'     // Dark Grey
 };
 
-// --- Unit Definitions for Tooltips ---
+// --- Unit Definitions ---
 const UNIT_DEFINITIONS = {
     TURBIDITY: 'Nephelometric Turbidity Units',
     TDS: 'Parts Per Million (mg/L)',
@@ -25,46 +25,66 @@ const UNIT_DEFINITIONS = {
     PH: 'Potential of Hydrogen'
 };
 
-const getSeverityStatus = (paramKey, value, thresholds) => {
-    // 1. Check for specific "No Data" or "Zero" conditions first
-    if (value === undefined || value === null) return STATUS_CONFIG.UNKNOWN;
+/**
+ * Determines status and splits it into Main (Color) and Sub (Badge) text.
+ */
+const getDetailedStatus = (paramKey, value, thresholds) => {
+    // 1. Handle Missing Data
+    if (value === undefined || value === null) {
+        return { color: COLORS.UNKNOWN, main: 'N/A', sub: 'No Data' };
+    }
     
-    // 2. Explicitly handle the '0' case as requested
-    if (value === 0) return STATUS_CONFIG.NONE;
-
-    // 3. Fallback if no thresholds exist
-    if (!thresholds || !thresholds[paramKey.toLowerCase()]) {
-         return STATUS_CONFIG.SAFE; 
+    // 2. Handle Zero values (Standby/None)
+    if (value === 0) {
+         let subText = 'Standby';
+         if (paramKey === 'TURBIDITY' || paramKey === 'TDS') subText = 'Clear';
+         else if (paramKey === 'PH') subText = 'Neutral'; 
+         else if (paramKey === 'TEMP') subText = '-';
+         
+         return { color: COLORS.NONE, main: 'NONE', sub: subText };
     }
 
-    const rules = thresholds[paramKey.toLowerCase()];
-    if (!rules) return STATUS_CONFIG.SAFE;
+    const rules = thresholds?.[paramKey.toLowerCase()];
+    // 3. Fallback if no thresholds
+    if (!rules) {
+         return { color: COLORS.SAFE, main: 'SAFE', sub: 'No Limit' }; 
+    }
 
-    switch (paramKey) {
+    const pKey = paramKey.toUpperCase();
+
+    switch (pKey) {
         case 'PH':
-        case 'TEMP':
-            // Range checks
-            if (value < rules.critLow || value > rules.critHigh) return STATUS_CONFIG.CRITICAL;
-            if ((value < rules.warnLow) || (value > rules.warnHigh)) return STATUS_CONFIG.WARNING;
-            return STATUS_CONFIG.SAFE;
+            if (value < rules.critLow) return { color: COLORS.CRITICAL, main: 'UNSAFE', sub: 'Highly Acidic' };
+            if (value < rules.warnLow) return { color: COLORS.WARNING, main: 'WARNING', sub: 'Acidic' };
+            if (value > rules.critHigh) return { color: COLORS.CRITICAL, main: 'UNSAFE', sub: 'Highly Alkaline' };
+            if (value > rules.warnHigh) return { color: COLORS.WARNING, main: 'WARNING', sub: 'Alkaline' };
+            return { color: COLORS.SAFE, main: 'SAFE', sub: 'Neutral' };
 
         case 'TURBIDITY':
+            if (value > rules.crit) return { color: COLORS.CRITICAL, main: 'UNSAFE', sub: 'Very Cloudy' };
+            if (value > rules.warn) return { color: COLORS.WARNING, main: 'WARNING', sub: 'Cloudy' };
+            return { color: COLORS.SAFE, main: 'SAFE', sub: 'Clear' };
+
         case 'TDS':
-            // Upper limit checks
-            if (value > rules.crit) return STATUS_CONFIG.CRITICAL;
-            if (value > rules.warn) return STATUS_CONFIG.WARNING;
-            return STATUS_CONFIG.SAFE;
+            if (value > rules.crit) return { color: COLORS.CRITICAL, main: 'UNSAFE', sub: 'Poor Taste' };
+            if (value > rules.warn) return { color: COLORS.WARNING, main: 'WARNING', sub: 'Fair Taste' };
+            return { color: COLORS.SAFE, main: 'SAFE', sub: 'Good Taste' };
+            
+        case 'TEMP':
+            if (value < rules.critLow) return { color: COLORS.CRITICAL, main: 'UNSAFE', sub: 'Freezing Risk' };
+            if (value < rules.warnLow) return { color: COLORS.WARNING, main: 'WARNING', sub: 'Cold' };
+            if (value > rules.critHigh) return { color: COLORS.CRITICAL, main: 'UNSAFE', sub: 'Heat Risk' };
+            if (value > rules.warnHigh) return { color: COLORS.WARNING, main: 'WARNING', sub: 'Warm' };
+            return { color: COLORS.SAFE, main: 'SAFE', sub: 'Cool' };
 
         default:
-            return STATUS_CONFIG.SAFE;
+            return { color: COLORS.SAFE, main: 'SAFE', sub: 'Normal' };
     }
 };
 
 const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedDeviceId, thresholds }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const displayDeviceID = selectedDeviceId ? selectedDeviceId.toUpperCase() : '';
-
-    // Get the full definition text based on the parameter key
     const unitTooltip = UNIT_DEFINITIONS[paramKey] || '';
 
     if (status === 'Offline') {
@@ -81,19 +101,17 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
         );
     }
 
-    // --- Calculate dynamic status ---
-    const severityInfo = getSeverityStatus(paramKey, value, thresholds);
-    const dynamicColor = severityInfo.color;
-    const statusText = severityInfo.text;
+    // --- Calculate dynamic status (Main + Sub) ---
+    const { color: dynamicColor, main: mainStatus, sub: subStatus } = getDetailedStatus(paramKey, value, thresholds);
 
-    // Chart data calculations
     const normalizedValue = (value - min) / (max - min);
-    const percentage = Math.min(Math.max(normalizedValue * 100, 0), 100);
+    // Safe guard against NaN or negative
+    const safePercentage = Math.min(Math.max((isNaN(normalizedValue) ? 0 : normalizedValue) * 100, 0), 100);
 
     const data = {
         datasets: [
             {
-                data: [percentage, 100 - percentage],
+                data: [safePercentage, 100 - safePercentage],
                 backgroundColor: [dynamicColor, '#eeeeee'], 
                 borderWidth: 0,
                 circumference: 180,
@@ -133,12 +151,8 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
                         <span className={ReadingsStyle["value"]}>
                             {typeof value === 'number' ? value.toFixed(1) : '--'}
                         </span>
-                        {/* ADDED TITLE ATTRIBUTE HERE */}
                         {unit && (
-                            <span 
-                                className={ReadingsStyle["unit"]} 
-                                title={unitTooltip}
-                            >
+                            <span className={ReadingsStyle["unit"]} title={unitTooltip}>
                                 {unit}
                             </span>
                         )}
@@ -146,8 +160,14 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
                 </div>
             </div>
             
-            <div className={ReadingsStyle["status-label"]} style={{ color: dynamicColor }}>
-                {statusText}
+            {/* NEW STATUS DESIGN: Main Text + Sub Badge */}
+            <div className={ReadingsStyle["status-container"]}>
+                <div className={ReadingsStyle["status-main"]} style={{ color: dynamicColor }}>
+                    {mainStatus}
+                </div>
+                <div className={ReadingsStyle["status-sub"]}>
+                    {subStatus}
+                </div>
             </div>
 
             <div className={ReadingsStyle["min-max"]}>

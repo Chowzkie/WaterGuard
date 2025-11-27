@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, CircleCheckBig, CircleAlert } from 'lucide-react';
+import { ChevronDown, ChevronUp, CircleCheckBig, CircleAlert, HelpCircle } from 'lucide-react';
 import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/ActiveAlerts.module.css';
+import AlertsInfoModal from '../AlertsInfoModal/AlertsInfoModal'; // Import Modal
 
 const ActiveAlerts = ({
   activeAlerts,
@@ -15,18 +16,13 @@ const ActiveAlerts = ({
 }) => {
   const [expandedAlertId, setExpandedAlertId] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); // Modal State
 
-    // This effect handles the new-alert animation
   useEffect(() => {
-    // If there is an alert to animate...
     if (newlyAddedId) {
-        // ...start a timer that matches the CSS animation duration.
         const timer = setTimeout(() => {
-            // When the timer is done, call the parent's function to set newlyAddedId back to null.
             onAnimationComplete();
         }, 1200);
-
-        // This cleans up the timer if the component unmounts before the animation is done.
         return () => clearTimeout(timer);
     }
   }, [newlyAddedId, onAnimationComplete]);
@@ -42,7 +38,6 @@ const ActiveAlerts = ({
   const toggleDropdown = (alertId) => setExpandedAlertId(prev => (prev === alertId ? null : alertId));
   const toggleDeviceDropdown = () => setDropdownOpen(prev => !prev);
   
-  // --- Use device._id ---
   const handleDeviceSelect = (deviceId) => { onDeviceFilterChange({ target: { value: deviceId } }); setDropdownOpen(false); };
   
   const handleAcknowledgeClick = (alertId) => { onAcknowledgeAlert(alertId); setExpandedAlertId(null); };
@@ -55,13 +50,21 @@ const ActiveAlerts = ({
   return (
     <div className={styles['alerts-section']}>
         <div className={styles['section-header']}>
-            <h3>Active Alerts</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3>Active Alerts</h3>
+                {/* Help Icon Trigger */}
+                <HelpCircle 
+                    size={18} 
+                    className={styles.helpIcon} 
+                    style={{ cursor: 'pointer', color: '#6b7280' }}
+                    onClick={() => setIsInfoModalOpen(true)}
+                />
+            </div>
             {showFilter && (
                 <div className={styles['device-filter-group']}>
                     <label>Filter by Device:</label>
                     <div className={styles['custom-dropdown']}>
                         <div className={styles['dropdown-header']} onClick={toggleDeviceDropdown}>
-                            {/* --- Find by device._id --- */}
                             {(devices || []).find(d => d._id === selectedDevice)?.label || 'All Devices'}
                             <span className={styles['dropdown-arrow']}>
                                 {dropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -72,7 +75,6 @@ const ActiveAlerts = ({
                                 All Devices
                             </div>
                             {(devices || []).map(device => (
-                                /* --- Use key={device._id} and pass device._id --- */
                                 <div key={device._id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device._id)}>
                                     {device.label}
                                 </div>
@@ -95,7 +97,6 @@ const ActiveAlerts = ({
             <div className={styles['alerts-body']}>
                 {filteredAlerts.length > 0 ? (
                     filteredAlerts.map(alert => (
-                        // This key={alert._id} was already correct!
                         <div key={alert._id}>
                             <div 
                                 className={`${styles['alerts-row']} ${alert._id === newlyAddedId ? styles['new-alert'] : ''} ${alert.acknowledged ? styles['alert-acknowledged'] : ''}`} 
@@ -137,6 +138,12 @@ const ActiveAlerts = ({
                 )}
             </div>
         </div>
+
+        {/* Info Modal Component */}
+        <AlertsInfoModal 
+            isOpen={isInfoModalOpen} 
+            onClose={() => setIsInfoModalOpen(false)} 
+        />
     </div>
   );
 };

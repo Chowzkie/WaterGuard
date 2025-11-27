@@ -1,7 +1,8 @@
 import React, { useState, } from 'react';
-import { ChevronDown, ChevronUp, CircleCheckBig, CircleAlert } from 'lucide-react';
+import { ChevronDown, ChevronUp, CircleCheckBig, CircleAlert, HelpCircle } from 'lucide-react';
 import { formatDateTime } from '../../utils/formatDateTime';
 import styles from '../../Styles/RecentAlerts.module.css';
+import AlertsInfoModal from '../AlertsInfoModal/AlertsInfoModal'; // Import Modal
 
 const RecentAlerts = ({ 
   recentAlerts, 
@@ -11,6 +12,7 @@ const RecentAlerts = ({
   showFilter = true 
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); // Modal State
 
   const getSeverityClass = (severity) => {
     switch (severity.toLowerCase()) {
@@ -22,7 +24,6 @@ const RecentAlerts = ({
 
   const toggleDeviceDropdown = () => setDropdownOpen(prev => !prev);
   
-  // --- Use device._id ---
   const handleDeviceSelect = (deviceId) => {
     onDeviceFilterChange({ target: { value: deviceId } });
     setDropdownOpen(false);
@@ -36,13 +37,21 @@ const RecentAlerts = ({
   return (
     <div className={styles['alerts-section']}>
       <div className={styles['section-header']}>
-        <h3>Recent Alerts</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3>Recent Alerts</h3>
+            {/* Help Icon Trigger */}
+            <HelpCircle 
+                size={18} 
+                className={styles.helpIcon} 
+                style={{ cursor: 'pointer', color: '#6b7280' }}
+                onClick={() => setIsInfoModalOpen(true)}
+            />
+        </div>
         {showFilter && (
           <div className={styles['device-filter-group']}>
             <label>Filter by Device:</label>
             <div className={styles['custom-dropdown']}>
               <div className={styles['dropdown-header']} onClick={toggleDeviceDropdown}>
-                {/* --- Find by device._id --- */}
                 {(devices || []).find(d => d._id === selectedDevice)?.label || 'All Devices'}
                 <span className={styles['dropdown-arrow']}>
                     {dropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -51,7 +60,6 @@ const RecentAlerts = ({
               <div className={`${styles['dropdown-list']} ${dropdownOpen ? styles['dropdown-open'] : ''}`}>
                 <div className={styles['dropdown-item']} onClick={() => handleDeviceSelect('All Devices')}>All Devices</div>
                 {(devices || []).map(device => (
-                  /* --- Use key={device._id} and pass device._id --- */
                   <div key={device._id} className={styles['dropdown-item']} onClick={() => handleDeviceSelect(device._id)}>{device.label}</div>
                 ))}
               </div>
@@ -71,7 +79,6 @@ const RecentAlerts = ({
         <div className={styles['alerts-body']}>
           {filteredAlerts.length > 0 ? (
             filteredAlerts.map(alert => (
-              // This key={alert._id} was already correct!
               <div key={alert._id} className={styles['alerts-row']}>
                 <div>{formatDateTime(alert.dateTime)}</div>
                 <div>{alert.originator}</div>
@@ -99,6 +106,12 @@ const RecentAlerts = ({
           )}
         </div>
       </div>
+
+        {/* Info Modal Component */}
+        <AlertsInfoModal 
+            isOpen={isInfoModalOpen} 
+            onClose={() => setIsInfoModalOpen(false)} 
+        />
     </div>
   );
 };

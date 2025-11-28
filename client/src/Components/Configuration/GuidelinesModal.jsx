@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
     X, 
     BookOpen, 
@@ -9,9 +9,23 @@ import {
     Thermometer, 
     Droplets 
 } from 'lucide-react';
-import styles from '../../Styles/GuidelinesModalStyle/GuidelinesModal.module.css';
+import styles from './GuidelinesModal.module.css';
 
-const GuidelinesModal = ({ onClose }) => {
+const GuidelinesModal = ({ onClose, initialSection }) => {
+    
+    // Auto-scroll to the specific section if requested
+    useEffect(() => {
+        if (initialSection) {
+            const element = document.getElementById(initialSection);
+            if (element) {
+                // Small delay to ensure modal render is complete
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+    }, [initialSection]);
+
     return (
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
@@ -30,7 +44,7 @@ const GuidelinesModal = ({ onClose }) => {
                 <div className={styles.content}>
                     
                     {/* 1. THRESHOLD RULES */}
-                    <section className={styles.section}>
+                    <section id="guide-thresholds" className={styles.section}>
                         <h4 className={styles.sectionTitle}>
                             <AlertTriangle size={18} /> Alert Threshold Logic
                         </h4>
@@ -73,7 +87,7 @@ const GuidelinesModal = ({ onClose }) => {
                     <div className={styles.divider}></div>
 
                     {/* 2. LOGGING INTERVALS */}
-                    <section className={styles.section}>
+                    <section id="guide-logging" className={styles.section}>
                         <h4 className={styles.sectionTitle}>
                             <History size={18} /> Logging Intervals
                         </h4>
@@ -92,7 +106,7 @@ const GuidelinesModal = ({ onClose }) => {
                     <div className={styles.divider}></div>
 
                     {/* 3. PUMP CYCLES */}
-                    <section className={styles.section}>
+                    <section id="guide-pump" className={styles.section}>
                         <h4 className={styles.sectionTitle}>
                             <RefreshCw size={18} /> Pump Cycle Phases
                         </h4>
@@ -115,7 +129,7 @@ const GuidelinesModal = ({ onClose }) => {
                     <div className={styles.divider}></div>
 
                     {/* 4. VALVE AUTOMATION */}
-                    <section className={styles.section}>
+                    <section id="guide-valve" className={styles.section}>
                         <h4 className={styles.sectionTitle}>
                             <PowerOff size={18} /> Valve Automation Rules
                         </h4>

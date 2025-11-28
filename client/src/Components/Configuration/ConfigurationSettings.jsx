@@ -74,7 +74,10 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
     const [imbalanceDetails, setImbalanceDetails] = useState(null); 
 
     const initializedDeviceIdRef = useRef(null);
+    
+    // --- GUIDELINES MODAL STATE ---
     const [showGuidelines, setShowGuidelines] = useState(false);
+    const [guidelinesSection, setGuidelinesSection] = useState(null); // Track which section to scroll to
 
     // --- LIFECYCLE HOOKS ---
 
@@ -579,8 +582,9 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
      * @function handleShowGuidelines - Opens the guidelines modal.
      * It stops event propagation to prevent the collapsible panel from toggling.
      */
-    const handleShowGuidelines = (e) => {
+    const handleShowGuidelines = (e, sectionId) => {
         e.stopPropagation(); // This is crucial!
+        setGuidelinesSection(sectionId);
         setShowGuidelines(true);
     };
 
@@ -617,7 +621,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                     </button>
                 </div>
 
-                {deviceStatus === 'Offline' || 'Maintenance' ? (
+                {deviceStatus === 'Online' || 'Maintenance' ? (
                     <div className={styles['settings-container']}>
                         {/* --- Alert Thresholds Panel --- */}
                         <CollapsiblePanel
@@ -627,7 +631,7 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                                     <HelpCircle 
                                         size={16} 
                                         className={styles['guidelines-icon']} 
-                                        onClick={handleShowGuidelines} 
+                                        onClick={(e) => handleShowGuidelines(e, 'guide-thresholds')} 
                                     />
                                 </div>
                             }
@@ -706,7 +710,16 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
                         {/* --- Alert Logging Intervals Panel --- */}
                         <CollapsiblePanel
-                            title="Alert Logging Intervals"
+                            title={
+                                <div className={styles['header-with-icon']}>
+                                    <span>Alert Logging Intervals</span>
+                                    <HelpCircle 
+                                        size={16} 
+                                        className={styles['guidelines-icon']} 
+                                        onClick={(e) => handleShowGuidelines(e, 'guide-logging')} 
+                                    />
+                                </div>
+                            }
                             icon={<History size={18} className={`${styles['header-icon']} ${styles['icon-logging']}`} />}
                             isOpen={openPanels.logging}
                             onToggle={() => handleTogglePanel('logging')}
@@ -721,7 +734,16 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
                         {/* --- Pump Cycle Intervals Panel --- */}
                         <CollapsiblePanel
-                            title="Pump Cycle Intervals"
+                            title={
+                                <div className={styles['header-with-icon']}>
+                                    <span>Pump Cycle Intervals</span>
+                                    <HelpCircle 
+                                        size={16} 
+                                        className={styles['guidelines-icon']} 
+                                        onClick={(e) => handleShowGuidelines(e, 'guide-pump')} 
+                                    />
+                                </div>
+                            }
                             icon={<RefreshCw size={18} className={`${styles['header-icon']} ${styles['icon-testing']}`} />}
                             isOpen={openPanels.testing}
                             onToggle={() => handleTogglePanel('testing')}
@@ -739,7 +761,16 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
                         
                         {/* --- Valve Shut-off Panel --- */}
                         <CollapsiblePanel
-                            title="Valve Rules & Thresholds" 
+                            title={
+                                <div className={styles['header-with-icon']}>
+                                    <span>Valve Rules & Thresholds</span>
+                                    <HelpCircle 
+                                        size={16} 
+                                        className={styles['guidelines-icon']} 
+                                        onClick={(e) => handleShowGuidelines(e, 'guide-valve')} 
+                                    />
+                                </div>
+                            }
                             icon={<PowerOff size={18} className={`${styles['header-icon']} ${styles['icon-shutoff']}`} />}
                             isOpen={openPanels.shutoff}
                             onToggle={() => handleTogglePanel('shutoff')}
@@ -969,7 +1000,12 @@ const ConfigurationSettings = ({ device, onSave, onBack }) => {
 
 
             {/* --- GUIDELINES MODAL --- */}
-            {showGuidelines && <GuidelinesModal onClose={() => setShowGuidelines(false)} />}
+            {showGuidelines && (
+                <GuidelinesModal 
+                    onClose={() => setShowGuidelines(false)} 
+                    initialSection={guidelinesSection} // Pass the section ID here
+                />
+            )}
         </>
     );
 };

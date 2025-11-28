@@ -1,5 +1,6 @@
 const Device = require('../models/Device');
 const Alert = require('../models/Alert');
+const Station = require('../models/Station');
 const { evaluateSensorReading } = require('../utils/SensorLogic'); 
 const { createSystemLogs } = require('../helpers/createSystemLogs'); 
 
@@ -127,6 +128,23 @@ exports.processReading = async (req, res) => {
       device.currentState.valve = 'CLOSED';
       device.currentState.status = 'Maintenance';
 
+      // UPDATE STATION TO MAINTENANCE 
+      // Auto-fill the maintenance info so the dashboard displays why it happened
+      await Station.findOneAndUpdate(
+        { deviceId: deviceId },
+        { 
+          $set: { 
+            operation: 'Maintenance',
+            maintenanceInfo: {
+                cause: `Auto-Protection: Critical ${shutOffCauses.join(" & ")}`,
+                date: new Date().toLocaleDateString(),
+                startTime: new Date().toLocaleTimeString(),
+                endTime: 'Pending'
+            }
+          } 
+        }
+      );
+
       const commandPayload = { type: "setValve", value: "CLOSED" };
 
       // Emit command specifically to the device's room (managed in server.js 'joinRoom')
@@ -153,6 +171,17 @@ exports.processReading = async (req, res) => {
       device.commands.setValve = 'OPEN';
       device.currentState.valve = 'OPEN';
       device.currentState.status = 'Online';
+
+      // UPDATE STATION BACK TO ON-GOING
+      await Station.findOneAndUpdate(
+        { deviceId: deviceId },
+        { 
+          $set: { 
+            operation: 'On-going',
+            maintenanceInfo: null // Clear the maintenance log
+          } 
+        }
+      );
 
       const commandPayload = { type: "setValve", value: "OPEN" };
 

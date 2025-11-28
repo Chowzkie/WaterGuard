@@ -183,6 +183,26 @@
     }
 }
 
+.forgotPasswordContainer {
+    width: 100%;
+    text-align: right;
+    margin-top: 10px;    /* Space between password line and link */
+    margin-bottom: 20px; /* Space between link and Login button */
+}
+
+.forgotPasswordLink {
+    color: #007bff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgotPasswordLink:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
 /* Hide the default password reveal icon from Microsoft Edge/Chromium
   and the 'x' clear button from Internet Explorer.
 */

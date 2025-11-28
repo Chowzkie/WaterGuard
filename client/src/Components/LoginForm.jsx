@@ -81,14 +81,14 @@ function LoginForm({ onLogin }) {
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className={loginStyle['eye-button']}>
                         {showPassword ? <Eye /> : <EyeClosed />}
                     </button>
-                    <div style={{ width: '100%', textAlign: 'right', marginTop: '-15px', marginBottom: '20px' }}>
-                        <span 
-                            onClick={() => navigate('/forgot-password')} 
-                            style={{ color: '#007bff', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }}
-                        >
-                            Forgot Password?
-                        </span>
-                    </div>
+                    <div className={loginStyle['forgotPasswordContainer']}>
+                    <span 
+                        onClick={() => navigate('/forgot-password')} 
+                        className={loginStyle['forgotPasswordLink']}
+                    >
+                        Forgot Password?
+                    </span>
+                </div>
                 </div>
 
                 <div className={loginStyle['button-box']}>

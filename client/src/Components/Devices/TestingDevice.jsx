@@ -66,8 +66,9 @@ function TestingDevice({ deviceData }) {
                                         <div className={Style['card-location']}>{device.location}</div>
                                     </div>
                                     {/* Use the safe status variable */}
-                                    <div className={`${Style['status-badge']} ${Style[status.toLowerCase()]}`}>
-                                        {status}
+                                    <div className={`${Style['status-indicator']} ${Style[status.toLowerCase()]}`}>
+                                        <div className={Style['status-dot']}></div>
+                                        <span>{status}</span>
                                     </div>
                                 </div>
                             );

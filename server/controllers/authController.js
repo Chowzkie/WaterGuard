@@ -451,7 +451,7 @@ exports.sendForgotPasswordOTP = async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
         // Set Expiration (10 Minutes from now)
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         // Save to DB
         user.resetPasswordOTP = otp;
@@ -459,7 +459,7 @@ exports.sendForgotPasswordOTP = async (req, res) => {
         await user.save();
 
         // Send Email
-        const message = `Your Password Reset Code is: ${otp}\n\nThis code expires in 10 minutes.`;
+        const message = `Your Password Reset Code is: ${otp}\n\nThis code expires in 5 minutes.`;
         await sendEmail(user.email, "WaterGuard - Password Reset Code", message);
 
         res.status(200).json({ message: "OTP sent to your email." });

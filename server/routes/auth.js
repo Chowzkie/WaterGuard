@@ -15,4 +15,8 @@ router.put("/update-email", authMiddleware, authController.updateEmail);
 router.put("/update-password", authMiddleware, authController.updatePassword);
 router.put('/upload-image/:userId', authMiddleware, upload.single('profileImage'), authController.uploadProfileImage);
 
+router.post("/forgot-password/find", authController.findUserByEmail);
+router.post("/forgot-password/send-otp", authController.sendForgotPasswordOTP);
+router.post("/forgot-password/reset", authController.resetPasswordWithOTP);
+
 module.exports = router;

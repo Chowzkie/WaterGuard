@@ -5,6 +5,8 @@ const { validateUsername, validateEmail, validateName, validatePassword } = requ
 const cloudinary = require("../config/cloudinaryConfig")
 const fs = require("fs")
 const {createUserlog} = require('../helpers/createUserlog')
+const sendEmail = require("../utils/emailService");
+const crypto = require("crypto"); // Built-in Node module for generating random codes
 
 
 // Load secret key from environment variables or fallback to a default (only for development)
@@ -59,7 +61,7 @@ exports.loginUser = async (req, res) => {
             id: user._id,
             username: user.username,
             name: user.name,
-            contact: user.contact
+            email: user.email
         };
 
         // --- Audit Logging ---
@@ -410,5 +412,106 @@ exports.uploadProfileImage = async (req, res) => {
     } catch (error) {
         console.error("An internal server error occurred:", error);
         res.status(500).json({ message: 'Failed to upload image', error: error.message });
+    }
+};
+
+/**
+ * @desc    Step 1: Find User by Email
+ * @route   POST /api/auth/forgot-password/find
+ */
+exports.findUserByEmail = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "No account found with this email." });
+        }
+        // Return username for the "Is this you?" confirmation step
+        res.status(200).json({ 
+            found: true, 
+            username: user.username,
+            message: "Account found." 
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error." });
+    }
+};
+
+/**
+ * @desc    Step 2: Generate & Send OTP
+ * @route   POST /api/auth/forgot-password/send-otp
+ */
+exports.sendForgotPasswordOTP = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await UserModel.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Set Expiration (10 Minutes from now)
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        // Save to DB
+        user.resetPasswordOTP = otp;
+        user.resetPasswordExpires = expiresAt;
+        await user.save();
+
+        // Send Email
+        const message = `Your Password Reset Code is: ${otp}\n\nThis code expires in 10 minutes.`;
+        await sendEmail(user.email, "WaterGuard - Password Reset Code", message);
+
+        res.status(200).json({ message: "OTP sent to your email." });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to send OTP." });
+    }
+};
+
+/**
+ * @desc    Step 3: Verify OTP & Reset Password
+ * @route   POST /api/auth/forgot-password/reset
+ */
+exports.resetPasswordWithOTP = async (req, res) => {
+    const { email, otp, newPassword, confirmPassword } = req.body;
+
+    // 1. Basic Validation
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match." });
+    }
+    
+    const passwordValidation = validatePassword(newPassword); // Reuse your validator
+    if (!passwordValidation.isValid) {
+        return res.status(400).json({ message: passwordValidation.message });
+    }
+
+    try {
+        // 2. Find User with matching Email AND OTP
+        const user = await UserModel.findOne({ 
+            email,
+            resetPasswordOTP: otp,
+            resetPasswordExpires: { $gt: Date.now() } // Check if expiration is in the future
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired OTP." });
+        }
+
+        // 3. Hash New Password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+
+        // 4. Clear OTP fields so it can't be reused
+        user.resetPasswordOTP = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+        await createUserlog(user._id, "Reset password via Forgot Password feature", "Password Reset");
+
+        res.status(200).json({ message: "Password reset successful! You can now login." });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error during reset." });
     }
 };

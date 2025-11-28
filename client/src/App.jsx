@@ -17,6 +17,7 @@ import ProtectedRoute from './Components/Auth/ProtectedRoute';
 import SpecificDevice from './Components/Devices/SpecificDevice/SpecificDevice';
 import Logs from './Components/WebLogs/Logs';
 import AccountSettings from './Components/AccountSettings/AccountSettings';
+import ForgotPassword from './Components/ForgotPassword';
 
 import routeTitleMap from './utils/routeTitleMap';
 
@@ -28,8 +29,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 function App() {
     const location = useLocation();
 
-    const noHeaderPaths = ['/login'];
-    const noNavPaths = ['/login', '/account-settings', '/logs'];
+    const noHeaderPaths = ['/login', '/forgot-password'];
+    const noNavPaths = ['/login', '/account-settings', '/logs', '/forgot-password'];
 
     const showHeader = !noHeaderPaths.includes(location.pathname);
     const showNavigation = !noNavPaths.includes(location.pathname);
@@ -811,6 +812,8 @@ function App() {
             <main>
                 <Routes>
                     <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    
                     <Route
                         path="/account-settings"
                         element={

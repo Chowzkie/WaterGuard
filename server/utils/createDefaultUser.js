@@ -1,3 +1,4 @@
+// createDefaultUser.js
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User.js");
 
@@ -10,11 +11,11 @@ async function createDefaultUser() {
             name: "Admin",
             username: "Admin123",
             password: hashedPassword,
-            contact: "09000000000"
+            email: "ChangeThis@gmail.com"
         });
         console.log("Default user has been created: username:Admin123 password:password123");
     } else {
-        console.log("Default user is already existed");
+        console.log("Default user already exists");
     }
 }
 

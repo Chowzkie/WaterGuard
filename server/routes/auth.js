@@ -11,7 +11,7 @@ router.post("/logout", authMiddleware, authController.logoutUser);
 router.get("/user", authMiddleware, authController.getUser);
 router.put("/update-name", authMiddleware, authController.updateName);
 router.put("/update-username", authMiddleware, authController.updateUsername);
-router.put("/update-contact", authMiddleware, authController.updateContact);
+router.put("/update-email", authMiddleware, authController.updateEmail);
 router.put("/update-password", authMiddleware, authController.updatePassword);
 router.put('/upload-image/:userId', authMiddleware, upload.single('profileImage'), authController.uploadProfileImage);
 

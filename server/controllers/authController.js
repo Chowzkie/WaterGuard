@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/User");
 const jwt = require("jsonwebtoken"); 
-const { validateUsername, validateContact, validateName, validatePassword } = require( "../validator/userValidator");
+const { validateUsername, validateEmail, validateName, validatePassword } = require( "../validator/userValidator");
 const cloudinary = require("../config/cloudinaryConfig")
 const fs = require("fs")
 const {createUserlog} = require('../helpers/createUserlog')
@@ -244,60 +244,53 @@ exports.updateUsername = async (req, res) => {
 };
 
 /**
- * @desc    Update Contact Number
- * @route   PUT /api/auth/update-contact
+ * @desc    Update Email Address
+ * @route   PUT /api/auth/update-email
  * @access  Private
- * Function to update the user's contact information.
- * Includes checks for uniqueness.
  */
-exports.updateContact = async (req, res) => {
-    const { contact } = req.body;
+exports.updateEmail = async (req, res) => {
+    const { email } = req.body;
     const userID = req.userID;
     
-    // Basic input check
-    if (!contact) {
-        return res.status(400).json({ message: "No contact provided for the update." });
+    if (!email) {
+        return res.status(400).json({ message: "No email provided for the update." });
     }
     
     // --- Validation ---
-    const contactValidation = validateContact(contact);
-    if (!contactValidation.isValid) {
-        return res.status(400).json({ message: contactValidation.message });
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+        return res.status(400).json({ message: emailValidation.message });
     }
 
     try {
-        // Retrieve user
         const user = await UserModel.findById(userID);
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
 
-        // Check if identical
-        if (contact === user.contact) {
-            return res.status(200).json({ message: "Contact is already up to date." });
+        if (email === user.email) {
+            return res.status(200).json({ message: "Email is already up to date." });
         }
         
         // --- Uniqueness Check ---
-        const existingContact = await UserModel.findOne({ contact });
-        if (existingContact) {
-            return res.status(409).json({ message: "Contact number is already taken." });
+        const existingEmail = await UserModel.findOne({ email });
+        if (existingEmail) {
+            return res.status(409).json({ message: "Email address is already taken." });
         }
 
-        const oldContact = user.contact; // Cache old value
-        user.contact = contact; // Apply update
+        const oldEmail = user.email;
+        user.email = email;
         
-        // --- Database Storage ---
         await user.save();
         
-        // Log the change
-        await createUserlog(userID, `Changed contact from ${oldContact} to ${contact}`);
+        await createUserlog(userID, `Changed email from ${oldEmail} to ${email}`);
 
         const updatedUser = await UserModel.findById(userID).select("-password");
         return res.status(200).json(updatedUser);
 
     } catch (error) {
-        console.error("Error updating contact:", error);
-        res.status(500).json({ message: "Server error during contact update." });
+        console.error("Error updating email:", error);
+        res.status(500).json({ message: "Server error during email update." });
     }
 };
 

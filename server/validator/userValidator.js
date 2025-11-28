@@ -1,5 +1,5 @@
 const usernameRegex = /^[a-zA-Z0-9_]{5,20}$/;
-const contactRegex = /^(09|\+639)\d{9}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 exports.validateName = (name) => {
     if (!name) {
@@ -29,14 +29,14 @@ exports.validateUsername = (username) => {
     return { isValid: true };
 };
 
-exports.validateContact = (contact) => {
-    if (!contact) {
-        return { isValid: false, message: "Contact number is required." };
+exports.validateEmail = (email) => {
+    if (!email) {
+        return { isValid: false, message: "Email is required." };
     }
-    if (!contactRegex.test(contact)) {
+    if (!emailRegex.test(email)) {
         return {
             isValid: false,
-            message: "Invalid Philippine phone number format. It must be 11 digits starting with '09' or 13 digits starting with '+639'."
+            message: "Invalid email format. Please provide a valid email address (e.g., user@example.com)."
         };
     }
     return { isValid: true };

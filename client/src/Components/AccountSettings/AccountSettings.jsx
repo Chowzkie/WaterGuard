@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
+// AccountSettings.jsx
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Imported specific icons for the UI and the Toast notification system
 import { User, Lock, Edit2, ArrowLeft, Camera, Check, X, Eye, EyeOff, CheckCircle2, ShieldAlert } from 'lucide-react';
@@ -64,9 +65,9 @@ const AccountSettings = () => {
     // Centralized state for handling toast notifications
     const [toast, setToast] = useState(null); 
 
-    // State for Phone Number editing
-    const [isEditingPhone, setIsEditingPhone] = useState(false);
-    const [phoneNumber, setPhoneNumber] = useState('');
+    // REFACTOR: State for Email Address editing (Replaces Phone Number)
+    const [isEditingEmail, setIsEditingEmail] = useState(false);
+    const [email, setEmail] = useState('');
 
     // State variables for Full Name editing
     const [isEditingFullname, setIsEditingFullname] = useState(false);
@@ -113,7 +114,8 @@ const AccountSettings = () => {
                 // Initialize local state with the fetched data
                 setFullname(response.data.name);
                 setUsername(response.data.username);
-                setPhoneNumber(response.data.contact);
+                // REFACTOR: Set email from response instead of contact
+                setEmail(response.data.email || '');
 
             } catch (error) {
                 console.error("AccountSettings.jsx: Failed to fetch user profile:", error.response?.data?.message || error.message);
@@ -231,28 +233,28 @@ const AccountSettings = () => {
         setUsername(currentUser.username);
     };
 
-    // Submits the updated Phone Number to the API
-    const handleSavePhone = async (e) => {
+    // REFACTOR: Submits the updated Email to the API
+    const handleSaveEmail = async (e) => {
         e.preventDefault();
         try{
             const result = await axios.put(
-                `${API_BASE_URL}/auth/update-contact`, 
-                {contact: phoneNumber}, 
+                `${API_BASE_URL}/api/auth/update-email`, 
+                {email: email}, 
                 {headers : {Authorization: `Bearer ${localStorage.getItem("token")}` }}
             );
             setCurrentUser(result.data);
-            setIsEditingPhone(false);
-            showToast("Phone number updated Successfully", 'success');
+            setIsEditingEmail(false);
+            showToast("Email address updated successfully", 'success');
         }catch(err){
             console.error(err);
-            showToast(err.response?.data?.message || "Failed to Update Contact Number", 'error');
+            showToast(err.response?.data?.message || "Failed to update email address", 'error');
         };
     };
 
-    // Reverts changes to Phone Number and exits edit mode
-    const handleCancelPhone = () => {
-        setIsEditingPhone(false);
-        setPhoneNumber(currentUser.contact);
+    // REFACTOR: Reverts changes to Email and exits edit mode
+    const handleCancelEmail = () => {
+        setIsEditingEmail(false);
+        setEmail(currentUser.email);
     };
 
     // Validates and submits password changes
@@ -345,7 +347,8 @@ const AccountSettings = () => {
                         </div>
                         <h2 className={Styles['profileName']}>{currentUser.name}</h2>
                         <p className={Styles['profilePhone']}>@{currentUser.username}</p>
-                        <p className={Styles['profilePhone']}>{currentUser.contact}</p>
+                        {/* REFACTOR: Changed contact to email */}
+                        <p className={Styles['profilePhone']}>{currentUser.email}</p>
                     </div>
                     <nav className={Styles['sidebarNav']}>
                         <button onClick={() => setActiveTab('profile')} className={`${Styles['navLink']} ${activeTab === 'profile' ? Styles['navLinkActive'] : ''}`}>
@@ -428,27 +431,33 @@ const AccountSettings = () => {
                                     )}
                                 </div>
 
-                                {/* Phone Number Section */}
+                                {/* REFACTOR: Email Address Section (Replaces Phone Number) */}
                                 <div className={Styles['cardRow']}>
-                                    <p className={Styles['rowLabel']}>Phone Number</p>
+                                    <p className={Styles['rowLabel']}>Email Address</p>
                                     <div className={Styles['rowDetails']}>
-                                        {isEditingPhone ? (
+                                        {isEditingEmail ? (
                                             <form className={Styles['inlineEdit']}>
-                                                <input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className={Styles['input']} />
-                                                <p className={Styles['helperText']}>Must be 11 digits (e.g., 09xxxxxxxxx) or 13 digits (e.g., +639xxxxxxxxx) for SMS alerts.</p>
-                                                <button onClick={handleSavePhone} className={`${Styles['button']} ${Styles['iconButton']}`}>
+                                                <input 
+                                                    id="email" 
+                                                    type="email" 
+                                                    value={email} 
+                                                    onChange={(e) => setEmail(e.target.value)} 
+                                                    className={Styles['input']}
+                                                    placeholder="user@example.com"
+                                                />
+                                                <button onClick={handleSaveEmail} className={`${Styles['button']} ${Styles['iconButton']}`}>
                                                     <Check size={16} />
                                                 </button>
-                                                <button onClick={handleCancelPhone} className={`${Styles['button']} ${Styles['iconButton']}`}>
+                                                <button onClick={handleCancelEmail} className={`${Styles['button']} ${Styles['iconButton']}`}>
                                                     <X size={16} />
                                                 </button>
                                             </form>
                                         ) : (
-                                            <p className={Styles['rowValue']}>{currentUser.contact}</p>
+                                            <p className={Styles['rowValue']}>{currentUser.email || "No email set"}</p>
                                         )}
                                     </div>
-                                    {!isEditingPhone && (
-                                        <button onClick={() => setIsEditingPhone(true)} className={Styles['editButton']}>
+                                    {!isEditingEmail && (
+                                        <button onClick={() => setIsEditingEmail(true)} className={Styles['editButton']}>
                                             <Edit2 size={16} />
                                         </button>
                                     )}

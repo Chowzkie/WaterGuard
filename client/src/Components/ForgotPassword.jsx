@@ -93,7 +93,7 @@ function ForgotPassword() {
                 confirmPassword
             });
             setStep(5); // Success
-            setMessage(res.data.message);
+            setMessage('');
         } catch (err) {
             setIsError(true);
             setMessage(err.response?.data?.message || "Failed to reset password.");
@@ -115,9 +115,11 @@ function ForgotPassword() {
                 </div>
 
                 {/* Header Text */}
-                <h3 style={{ textAlign: 'center', margin: '0 0 20px 0', color: '#333' }}>
-                    {step === 5 ? "Password Reset!" : "Account Recovery"}
-                </h3>
+                {step !== 5 && (
+                    <h3 style={{ textAlign: 'center', margin: '0 0 20px 0', color: '#333' }}>
+                        Account Recovery
+                    </h3>
+                )}
 
                 {/* Message Box */}
                 {message && (
@@ -238,9 +240,31 @@ function ForgotPassword() {
 
                 {/* --- Step 5: Success --- */}
                 {step === 5 && (
-                    <div style={{ textAlign: 'center' }}>
-                        <CheckCircle2 size={60} color="#22c55e" style={{ marginBottom: '20px' }} />
-                        <p style={{ marginBottom: '30px' }}>Your password has been successfully reset.</p>
+                    <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                        {/* Animated Checkmark with Ring */}
+                        <div style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            width: '80px', 
+                            height: '80px', 
+                            borderRadius: '50%', 
+                            backgroundColor: '#dcfce7', // Light green ring
+                            marginBottom: '20px'
+                        }}>
+                            <CheckCircle2 size={40} color="#22c55e" />
+                        </div>
+                        
+                        {/* Main Success Message */}
+                        <h3 style={{ margin: '0 0 10px 0', color: '#111827', fontSize: '1.25rem' }}>
+                            Password Reset!
+                        </h3>
+                        
+                        <p style={{ marginBottom: '30px', color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                            Your password has been successfully updated. <br />
+                            You can now log in with your new credentials.
+                        </p>
+                        
                         <div className={loginStyle['button-box']}>
                             <button onClick={() => navigate('/')}>Go to Login</button>
                         </div>

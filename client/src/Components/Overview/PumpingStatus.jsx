@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import {  SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare, CheckCircle2, ShieldAlert } from 'lucide-react';
 import '../../Styles/PumpingStatus.css';
+// --- NEW IMPORT: Import the socket instance ---
+// Adjust the path "../../socket" if your directory structure is different
+import socket from '../../socket'; 
 
 // --- NotificationToast Component ---
 const NotificationToast = ({ message, type, onClose }) => {
@@ -43,6 +46,10 @@ const NotificationToast = ({ message, type, onClose }) => {
 
 const PumpingStatus = ({ stations, onSave, devices = [] }) => { 
     
+    // --- 1. LOCAL STATE FOR LIVE UPDATES ---
+    // Initialize with the props passed from parent, but allow internal updates via socket
+    const [liveStations, setLiveStations] = useState(stations || []);
+
     const [isEditing, setIsEditing] = useState(false);
     const [draftStations, setDraftStations] = useState(null);
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
@@ -60,6 +67,34 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
     // --- Toast State ---
     const [toast, setToast] = useState(null);
 
+    // --- 2. SYNC WITH PARENT PROPS ---
+    // If the parent component passes a new list (e.g., after a manual save), sync local state
+    useEffect(() => {
+        if (stations) {
+            setLiveStations(stations);
+        }
+    }, [stations]);
+
+    // --- 3. SOCKET IO LISTENER (THE FIX) ---
+    // Listen for real-time station updates directly in this component
+    useEffect(() => {
+        const handleStationUpdate = (updatedList) => {
+            console.log("⚡ PumpingStatus received direct socket update:", updatedList);
+            if (updatedList && Array.isArray(updatedList)) {
+                setLiveStations(updatedList);
+            }
+        };
+
+        // Attach listener
+        socket.on('stationsUpdate', handleStationUpdate);
+
+        // Cleanup listener on unmount to prevent memory leaks or double updates
+        return () => {
+            socket.off('stationsUpdate', handleStationUpdate);
+        };
+    }, []);
+
+    // Helper to calculate available devices
     const availableDevices = useMemo(() => {
         if (!draftStations) return []; 
         
@@ -86,11 +121,13 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
 
     const hasUnsavedChanges = () => {
         if (!draftStations) return false;
-        return JSON.stringify(stations) !== JSON.stringify(draftStations);
+        // Compare against liveStations now, as that is our source of truth
+        return JSON.stringify(liveStations) !== JSON.stringify(draftStations);
     };
 
     const handleOpenEditModal = () => {
-        setDraftStations(JSON.parse(JSON.stringify(stations)));
+        // --- UPDATED: Create draft from liveStations ---
+        setDraftStations(JSON.parse(JSON.stringify(liveStations)));
         setIsEditing(true);
     };
 
@@ -116,7 +153,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
         }
     };
 
-    // --- Async to handle API result and trigger Toast ---
     const handleSaveChanges = async () => {
         if (detailsForStationId) {
             alert('Please save or cancel the details for the selected station first.');
@@ -129,11 +165,8 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
         }));
         
         try {
-            // await the parent's onSave function.
-            // If App.jsx throws an error, it will be caught here.
             await onSave(stationsToSave);
             
-            // --- Trigger Success Toast ---
             setToast({
                 id: Date.now(),
                 message: 'Pumping stations updated successfully.',
@@ -143,7 +176,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
             closeAndCleanup();
         } catch (error) {
             console.error("Failed to save stations:", error);
-            // --- Trigger Error Toast ---
             setToast({
                 id: Date.now(),
                 message: 'Failed to save changes. Please try again.',
@@ -260,7 +292,8 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
                             <div>Label</div><div>Location</div><div>Device</div><div>Operation</div>
                         </div>
                         <div className="station-list-items">
-                            {stations.map((s) => (
+                            {/* --- UPDATED: Use liveStations instead of stations prop --- */}
+                            {liveStations.map((s) => (
                                 <div key={s._id} className="station-item">
                                     <div>{s.label}</div>
                                     <div>{s.location}</div>

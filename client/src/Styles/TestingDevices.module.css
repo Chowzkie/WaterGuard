@@ -124,6 +124,15 @@
     background-color: #ef4444;
 }
 
+.status-indicator.maintenance {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-indicator.maintenance .status-dot {
+    background-color: #dfab0f;
+}
+
 .no-devices {
   padding: 10px;
   font-size: 13px;

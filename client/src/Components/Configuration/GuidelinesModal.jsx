@@ -9,7 +9,7 @@ import {
     Thermometer, 
     Droplets 
 } from 'lucide-react';
-import styles from './GuidelinesModal.module.css';
+import styles from '../../Styles/GuidelinesModalStyle/GuidelinesModal.module.css';
 
 const GuidelinesModal = ({ onClose, initialSection }) => {
     

@@ -1,5 +1,4 @@
 const Device = require('../models/Device');
-const Station = require('../models/Station');
 const {createUserlog} = require('../helpers/createUserlog');
 const {compareConfigs} = require('../helpers/configDiff');
 
@@ -184,18 +183,6 @@ const sendValveCommand = async (req, res) => {
       updateOps['currentState.status'] = 'Online';
       // Optional: We can also optimisticly update the valve state immediately
       updateOps['currentState.valve'] = 'OPEN'; 
-
-      // SYNC STATION STATUS 
-      // If user forces valve OPEN, Station is considered operational again
-      await Station.findOneAndUpdate(
-        { deviceId: deviceId },
-        { 
-            $set: { 
-                operation: 'On-going',
-                maintenanceInfo: null 
-            } 
-        }
-      );
     }
 
     // Update the database to reflect the pending command (and status change if OPEN)

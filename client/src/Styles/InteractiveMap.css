@@ -555,6 +555,29 @@
     animation: none;
     display: none;
 }
+
+/* Style for Maintenance pins (Dark Orange) */
+.marker-pin.maintenance {
+    background: #ea580c; /* Dark Orange / Amber-600 */
+}
+
+/* Add the pulse animation for Maintenance so it looks active */
+.marker-pin.maintenance::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #ea580c;
+    animation: pulse 1.75s infinite ease-in-out;
+}
+
+/* Text color for the Info Modal */
+.status-text.maintenance {
+    color: #ea580c;
+    font-weight: 700;
+}
+
 .toastContainerWrapper {
     position: fixed;
     top: 20px;

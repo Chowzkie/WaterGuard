@@ -17,7 +17,7 @@ const initializeDeviceStatusCheck = (io) => {
 
       // Find devices marked 'Online' that have not sent a heartbeat since the cutoff
       const offlineDevices = await Device.find({
-        "currentState.status": "Online",
+        "currentState.status": { $in: ["Online", "Maintenance"] },
         "currentState.lastContact": { $lt: cutoff },
       });
 

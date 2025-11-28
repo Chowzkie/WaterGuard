@@ -125,6 +125,7 @@ exports.processReading = async (req, res) => {
       // Update database state immediately to reflect intended state
       device.commands.setValve = 'CLOSED';
       device.currentState.valve = 'CLOSED';
+      device.currentState.status = 'Maintenance';
 
       const commandPayload = { type: "setValve", value: "CLOSED" };
 
@@ -151,6 +152,7 @@ exports.processReading = async (req, res) => {
       
       device.commands.setValve = 'OPEN';
       device.currentState.valve = 'OPEN';
+      device.currentState.status = 'Online';
 
       const commandPayload = { type: "setValve", value: "OPEN" };
 

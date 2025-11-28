@@ -170,10 +170,23 @@ const sendValveCommand = async (req, res) => {
       return res.status(400).json({ message: 'Invalid command value.' });
     }
 
-    // Update the database to reflect the pending command
-    // This ensures the state is preserved even if the server restarts
+    // --- PREPARE UPDATE OBJECT ---
+    const updateOps = {
+      'commands.setValve': commandValue
+    };
+
+    // *** NEW LOGIC ADDED HERE ***
+    // If the user manually sends an "OPEN" command, we assume maintenance/issues are resolved.
+    // We strictly set the status back to 'Online'.
+    if (commandValue === 'OPEN') {
+      updateOps['currentState.status'] = 'Online';
+      // Optional: We can also optimisticly update the valve state immediately
+      updateOps['currentState.valve'] = 'OPEN'; 
+    }
+
+    // Update the database to reflect the pending command (and status change if OPEN)
     await Device.findByIdAndUpdate(deviceId, {
-      $set: { 'commands.setValve': commandValue }
+      $set: updateOps
     });
 
     // --- Socket retrieval ---
@@ -182,10 +195,16 @@ const sendValveCommand = async (req, res) => {
 
     // --- Real-time Transmission ---
     // Emit the 'command' event specifically to the room matching the deviceId
-    // The ESP32 listens for this specific event to trigger hardware actuation
     io.to(deviceId).emit('command', { type: 'setValve', value: commandValue });
     
     console.log(`📢 Emitted command to ${deviceId}: setValve to ${commandValue}`);
+
+    // If we changed status to Online, we should broadcast a full device update to the frontend
+    // so the map pin color changes immediately from Orange (Maintenance) to Green (Online)
+    if (commandValue === 'OPEN') {
+      const updatedDevice = await Device.findById(deviceId);
+      io.emit("deviceUpdate", updatedDevice);
+    }
 
     // Log the user's action
     await createUserlog(userID, `sent command to set valve to ${commandValue} for device ${deviceId}`, "Valve");

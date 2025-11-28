@@ -27,7 +27,7 @@ const deviceSchema = new mongoose.Schema({
     required: true,
   },
   currentState: {
-    status: { type: String, enum: ['Online', 'Offline', 'Error', 'Maintenace'], default: 'Offline' },
+    status: { type: String, enum: ['Online', 'Offline', 'Error', 'Maintenance'], default: 'Offline' },
     pump: { type: String, enum: ['IDLE', 'FILLING', 'DRAINING', 'DELAY', 'OFF'], default: 'IDLE' },
     valve: { type: String, enum: ['OPEN', 'CLOSED'], default: 'CLOSED' },
     lastContact: { type: Date, default: () => new Date() }, // Sets current time on creation

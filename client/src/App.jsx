@@ -78,6 +78,12 @@ function App() {
             });
         });
 
+        // When backend says stations changed, update the state immediately
+        socket.on("stationsUpdate", (updatedStationsList) => {
+            console.log("Real-time station update received");
+            setPumpingStations(updatedStationsList);
+        });
+
         socket.on("newReading", (payload) => {
         });
 

@@ -195,6 +195,8 @@ const sendValveCommand = async (req, res) => {
             } 
         }
       );
+      const updatedStations = await Station.find({}).populate('deviceId', '_id label');
+      io.emit('stationsUpdate', updatedStations);
     }
 
     // Update the database to reflect the pending command (and status change if OPEN)

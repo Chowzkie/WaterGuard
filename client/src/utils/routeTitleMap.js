@@ -6,7 +6,8 @@ const routeTitleMap = {
   "/configurations": "Configuration",
   "/logs": "Logs",
   "/account-settings": "Account Settings",
-  "/login": "Login"
+  "/login": "Login",
+  "/forgot-password": "Password Reset",
 };
 
 export default routeTitleMap;

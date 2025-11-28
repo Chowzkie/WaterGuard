@@ -145,13 +145,6 @@ exports.processReading = async (req, res) => {
         }
       );
 
-      // Broadcast the update to Frontend 
-      // Fetch fresh list and emit
-      const updatedStations = await Station.find({}).populate('deviceId', '_id label');
-      if (io) {
-          io.emit('stationsUpdate', updatedStations); // <--- EMIT THIS EVENT
-      }
-
       const commandPayload = { type: "setValve", value: "CLOSED" };
 
       // Emit command specifically to the device's room (managed in server.js 'joinRoom')

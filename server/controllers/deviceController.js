@@ -162,9 +162,6 @@ const updateDeviceConfiguration = async (req, res) => {
  */
 const sendValveCommand = async (req, res) => {
   try {
-    // --- Socket retrieval ---
-    // Access the Socket.IO instance attached to the Express app
-    const io = req.app.get('io');
 
     // Extract parameters and command value
     const { deviceId } = req.params;
@@ -199,14 +196,16 @@ const sendValveCommand = async (req, res) => {
             } 
         }
       );
-      const updatedStations = await Station.find({}).populate('deviceId', '_id label');
-      io.emit('stationsUpdate', updatedStations);
     }
 
     // Update the database to reflect the pending command (and status change if OPEN)
     await Device.findByIdAndUpdate(deviceId, {
       $set: updateOps
     });
+
+    // --- Socket retrieval ---
+    // Access the Socket.IO instance attached to the Express app
+    const io = req.app.get('io');
 
     // --- Real-time Transmission ---
     // Emit the 'command' event specifically to the room matching the deviceId

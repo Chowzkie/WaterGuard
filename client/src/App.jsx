@@ -77,12 +77,18 @@ function App() {
             return copy;
             });
         });
+
+        socket.on("stationsUpdate", (updatedStationsList) => {
+            console.log("Real-time station update received");
+            setPumpingStations(updatedStationsList);
+        });
         
         socket.on("newReading", (payload) => {
         });
 
         return () => {
             socket.off("deviceUpdate");
+            socket.off("stationsUpdate");
             socket.off("newReading");
         };
     }, []);

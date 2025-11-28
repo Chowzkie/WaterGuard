@@ -185,7 +185,7 @@
 
 .forgotPasswordContainer {
     width: 100%;
-    text-align: right;
+    text-align: left;
     margin-top: 10px;    /* Space between password line and link */
     margin-bottom: 20px; /* Space between link and Login button */
 }

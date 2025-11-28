@@ -41,6 +41,7 @@ function TestingDevice({ deviceData }) {
                                     <div onClick={() => setStatusFilter('')} className={Style["menu-option-clear"]}>Show All</div>
                                     <div onClick={() => setStatusFilter('online')} className={Style["menu-option"]} id={Style['online']}>Online</div>
                                     <div onClick={() => setStatusFilter('offline')} className={Style["menu-option"]} id={Style['offline']}>Offline</div>
+                                    <div onClick={() => setStatusFilter('maintenance')} className={Style["menu-option"]} id={Style['offline']}>Maintenance</div>
                                 </div>
                             )}
                         </div>

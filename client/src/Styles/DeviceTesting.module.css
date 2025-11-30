@@ -202,9 +202,49 @@
     letter-spacing: 0.05em;
 }
 
-.status-badge.online { background-color: #dcfce7; color: #15803d; }
-.status-badge.offline { background-color: #fee2e2; color: #dc2626; }
-.status-badge.maintenance { background-color: #ffedd5; color: #ea580c; }
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    color: #166534;
+    background-color: #dcfce7;
+}
+
+.status-indicator.online .status-dot {
+    background-color: #22c55e;
+}
+
+.status-indicator.offline {
+    color: #991b1b;
+    background-color: #fee2e2;
+}
+
+.status-indicator.offline .status-dot {
+    background-color: #ef4444;
+}
+
+.status-indicator.maintenance {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-indicator.maintenance .status-dot {
+    background-color: #dfab0f;
+}
 
 .no-devices {
     padding: 20px;

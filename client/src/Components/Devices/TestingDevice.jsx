@@ -41,6 +41,7 @@ function TestingDevice({ deviceData }) {
                                     <div onClick={() => setStatusFilter('')} className={Style["menu-option-clear"]}>Show All</div>
                                     <div onClick={() => setStatusFilter('online')} className={Style["menu-option"]} id={Style['online']}>Online</div>
                                     <div onClick={() => setStatusFilter('offline')} className={Style["menu-option"]} id={Style['offline']}>Offline</div>
+                                    <div onClick={() => setStatusFilter('maintenance')} className={Style["menu-option"]} id={Style['maintenance']}>Maintenance</div>
                                 </div>
                             )}
                         </div>
@@ -66,8 +67,9 @@ function TestingDevice({ deviceData }) {
                                         <div className={Style['card-location']}>{device.location}</div>
                                     </div>
                                     {/* Use the safe status variable */}
-                                    <div className={`${Style['status-badge']} ${Style[status.toLowerCase()]}`}>
-                                        {status}
+                                    <div className={`${Style['status-indicator']} ${Style[status.toLowerCase()]}`}>
+                                        <div className={Style['status-dot']}></div>
+                                        <span>{status}</span>
                                     </div>
                                 </div>
                             );

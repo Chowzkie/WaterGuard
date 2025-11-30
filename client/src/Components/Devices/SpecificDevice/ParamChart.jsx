@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler } from 'chart.js';
 import Style from '../../../Styles/SpecificDeviceStyle/ParameterChart.module.css';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, HelpCircle, X, LineChart, BookOpen } from 'lucide-react';
 
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend, Filler);
 
-// --- UPDATED: Added 'unit' for better Y-Axis labeling ---
 const PARAM_MAP = {
     ph: { key: 'PH', label: 'pH Level', color: '#FFA500', unit: '' },
     turbidity: { key: 'TURBIDITY', label: 'Turbidity', color: '#4CAF50', unit: ' (NTU)' },
@@ -14,9 +13,55 @@ const PARAM_MAP = {
     tds: { key: 'TDS', label: 'TDS', color: '#E91E63', unit: ' (ppm)' },
 };
 
+// --- INTERNAL COMPONENT: Chart Guidelines Modal ---
+const ChartGuidelinesModal = ({ onClose }) => {
+    return (
+        <div className={Style['guidelines-overlay']} onClick={onClose}>
+            <div className={Style['guidelines-modal']} onClick={e => e.stopPropagation()}>
+                <div className={Style['guidelines-header']}>
+                    <div className={Style['guidelines-title-wrapper']}>
+                        <BookOpen size={24} color="#3b82f6" />
+                        <h3>Chart Guide</h3>
+                    </div>
+                    <button className={Style['modal-close-button']} onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className={Style['guidelines-content']}>
+                    <h4 className={Style['guidelines-section-title']}>
+                        <LineChart size={18} /> Understanding Historical Data
+                    </h4>
+                    
+                    <div className={Style['definition-list']}>
+                        <div className={Style['definition-item']}>
+                            <strong>Solid Line (Average)</strong>
+                            <p>The bold colored line connects the <b>average values</b> calculated for each time interval. It shows the general trend of the readings.</p>
+                        </div>
+                        
+                        <div className={Style['definition-item']}>
+                            <strong>Shaded Area (Range)</strong>
+                            <p>The light shaded background behind the line represents the full <b>Min/Max range</b> of readings. This highlights volatility—a wider shaded area means readings were fluctuating significantly.</p>
+                        </div>
+                        
+                        <div className={Style['definition-item']}>
+                            <strong>Time Filters</strong>
+                            <p>
+                                <b>24H:</b> Shows detailed hourly data from the past day.<br/>
+                                <b>7D / 30D:</b> Shows aggregated daily trends to spot long-term patterns.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRange, deviceStatus}) {
     const [selectedParam, setSelectedParam] = useState('ph');
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
+    const [showGuidelines, setShowGuidelines] = useState(false);
 
     useEffect(() => {
         if (!historicalData || historicalData.length === 0) {
@@ -101,30 +146,20 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         scales: {
             y: {
                 beginAtZero: false,
-                // --- ADDED Y-AXIS LABEL ---
                 title: {
                     display: true,
                     text: `${PARAM_MAP[selectedParam]?.label}${PARAM_MAP[selectedParam]?.unit || ''}`,
-                    font: {
-                        weight: 'bold',
-                        size: 13
-                    },
-                    padding: { bottom: 10 } // Adds some space between label and numbers
+                    font: { weight: 'bold', size: 13 },
+                    padding: { bottom: 10 }
                 }
             },
             x: {
-                ticks: {
-                    maxTicksLimit: 10 
-                },
-                // --- ADDED X-AXIS LABEL ---
+                ticks: { maxTicksLimit: 10 },
                 title: {
                     display: true,
                     text: 'Date and Time',
-                    font: {
-                        weight: 'bold',
-                        size: 13
-                    },
-                    padding: { top: 10 } // Adds some space between label and dates
+                    font: { weight: 'bold', size: 13 },
+                    padding: { top: 10 }
                 }
             }
         },
@@ -150,7 +185,16 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         <div className={Style['panel-container']}>
             <div className={Style['panel-header']}>
                 <button className={Style['back-button']} onClick={onGoBack}>Go Back</button>
-                <h2 className={Style['panel-title']}>Historical Data</h2>
+                
+                {/* Title and Icon Wrapper */}
+                <div className={Style['title-with-icon']}>
+                    <h2 className={Style['panel-title']}>Historical Data</h2>
+                    <HelpCircle 
+                        size={20} 
+                        className={Style['guidelines-icon']} 
+                        onClick={() => setShowGuidelines(true)}
+                    />
+                </div>
                 
                 <div className={Style['time-range-selector']}>
                     <button onClick={() => setTimeRange('24h')} className={timeRange === '24h' ? Style.active : ''}>24H</button>
@@ -176,6 +220,11 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
                     <div className={Style['no-data-message']}>No historical data available for this range.</div>
                 )}
             </div>
+
+            {/* Render Internal Modal */}
+            {showGuidelines && (
+                <ChartGuidelinesModal onClose={() => setShowGuidelines(false)} />
+            )}
         </div>
     );
 }

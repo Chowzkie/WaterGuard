@@ -215,8 +215,7 @@ const AlertsHistory = ({
                     {/* Help Icon Trigger */}
                     <HelpCircle 
                         size={18} 
-                        className={styles.helpIcon} 
-                        style={{ cursor: 'pointer', color: '#6b7280' }}
+                        className={styles['guidelines-icon']} 
                         onClick={() => setIsInfoModalOpen(true)}
                     />
                 </div>

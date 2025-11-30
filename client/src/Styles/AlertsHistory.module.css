@@ -1071,3 +1071,15 @@ RESPONSIVE STYLES FOR TABLE
         opacity: 0;
     }
 }
+
+.guidelines-icon {
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    /* Optional: fine-tune vertical alignment */
+    margin-top: 2px; 
+}
+
+.guidelines-icon:hover {
+    color: #3b82f6; /* Blue hover effect */
+}

@@ -31,11 +31,11 @@ const PumpingGuidelinesModal = ({ onClose }) => {
                         
                         <div className="definition-item">
                             <strong><span style={{color: '#991b1b'}}>●</span> Offline</strong>
-                            <p>The station has been disconnected or manually switched off. No data is being received, and no pumping is occurring.</p>
+                            <p>The station is operationally inactive. Pumping operations have ceased, and the facility is currently idle.</p>
                         </div>
                         
                         <div className="definition-item">
-                            <strong><span style={{color: '#9a3412'}}>●</span> Maintenance</strong>
+                            <strong><span style={{color: '#d2a615ff'}}>●</span> Maintenance</strong>
                             <p>
                                 The station is currently under repair or scheduled service. 
                                 <br />

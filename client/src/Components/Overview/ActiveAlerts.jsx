@@ -54,9 +54,8 @@ const ActiveAlerts = ({
                 <h3>Active Alerts</h3>
                 {/* Help Icon Trigger */}
                 <HelpCircle 
-                    size={18} 
-                    className={styles.helpIcon} 
-                    style={{ cursor: 'pointer', color: '#6b7280' }}
+                    size={16} 
+                    className={styles['guidelines-icon']} 
                     onClick={() => setIsInfoModalOpen(true)}
                 />
             </div>

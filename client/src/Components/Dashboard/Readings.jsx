@@ -136,7 +136,7 @@ const ReadingCard = ({ title, paramKey, value, min, max, unit, status, selectedD
                     {thresholds && thresholds[paramKey.toLowerCase()] && (
                     <HelpCircle 
                         size={16} 
-                        className={ReadingsStyle['help-icon']} 
+                        className={ReadingsStyle['guidelines-icon']} 
                         onClick={() => setIsModalOpen(true)}
                     />
                     )}

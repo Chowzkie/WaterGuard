@@ -1,9 +1,55 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { SquarePen, X, AlertTriangle, Calendar, Clock, MessageSquare, CheckCircle2, ShieldAlert, HelpCircle, Activity, BookOpen } from 'lucide-react';
 import '../../Styles/PumpingStatus.css';
-// --- NEW IMPORT: Import the socket instance ---
-// Adjust the path "../../socket" if your directory structure is different
 import socket from '../../socket'; 
+
+// --- INTERNAL COMPONENT: Pumping Guidelines Modal ---
+const PumpingGuidelinesModal = ({ onClose }) => {
+    return (
+        <div className="guidelines-overlay" onClick={onClose}>
+            <div className="guidelines-modal" onClick={e => e.stopPropagation()}>
+                <div className="guidelines-header">
+                    <div className="guidelines-title-wrapper">
+                        <BookOpen size={24} color="#3b82f6" />
+                        <h3>Pumping Station Guide</h3>
+                    </div>
+                    <button className="modal-close-button" onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="guidelines-content">
+                    <h4 className="guidelines-section-title">
+                        <Activity size={18} /> Operational Status Definitions
+                    </h4>
+                    
+                    <div className="definition-list">
+                        <div className="definition-item">
+                            <strong><span style={{color: '#166534'}}>●</span> On-going</strong>
+                            <p>The station is fully operational and currently actively pumping water. This is the standard healthy state.</p>
+                        </div>
+                        
+                        <div className="definition-item">
+                            <strong><span style={{color: '#991b1b'}}>●</span> Offline</strong>
+                            <p>The station has been disconnected or manually switched off. No data is being received, and no pumping is occurring.</p>
+                        </div>
+                        
+                        <div className="definition-item">
+                            <strong><span style={{color: '#9a3412'}}>●</span> Maintenance</strong>
+                            <p>
+                                The station is currently under repair or scheduled service. 
+                                <br />
+                                <span style={{fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', marginTop: '4px', display:'block'}}>
+                                    * Requires logging a specific cause (e.g., "Pipe Leak"), date, and estimated time range.
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // --- NotificationToast Component ---
 const NotificationToast = ({ message, type, onClose }) => {
@@ -46,49 +92,44 @@ const NotificationToast = ({ message, type, onClose }) => {
 
 const PumpingStatus = ({ stations, onSave, devices = [] }) => { 
     
-    // --- 1. LOCAL STATE FOR LIVE UPDATES ---
-    // Initialize with the props passed from parent, but allow internal updates via socket
+    // --- 1. LOCAL STATE ---
     const [liveStations, setLiveStations] = useState(stations || []);
-
     const [isEditing, setIsEditing] = useState(false);
     const [draftStations, setDraftStations] = useState(null);
     const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
     
+    // Form States
     const [newLabel, setNewLabel] = useState('');
     const [newLocation, setNewLocation] = useState('');
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
     const [newOperation, setNewOperation] = useState('On-going');
     const [error, setError] = useState('');
 
+    // Maintenance Details States
     const [detailsForStationId, setDetailsForStationId] = useState(null);
     const [draftDetails, setDraftDetails] = useState({ cause: '', date: '', startTime: '', endTime: '' });
     const [stationBeingDetailed, setStationBeingDetailed] = useState(null);
     
-    // --- Toast State ---
     const [toast, setToast] = useState(null);
 
+    // --- NEW: Guidelines Modal State ---
+    const [showGuidelines, setShowGuidelines] = useState(false);
+
     // --- 2. SYNC WITH PARENT PROPS ---
-    // If the parent component passes a new list (e.g., after a manual save), sync local state
     useEffect(() => {
         if (stations) {
             setLiveStations(stations);
         }
     }, [stations]);
 
-    // --- 3. SOCKET IO LISTENER (THE FIX) ---
-    // Listen for real-time station updates directly in this component
+    // --- 3. SOCKET IO LISTENER ---
     useEffect(() => {
         const handleStationUpdate = (updatedList) => {
-            console.log("⚡ PumpingStatus received direct socket update:", updatedList);
             if (updatedList && Array.isArray(updatedList)) {
                 setLiveStations(updatedList);
             }
         };
-
-        // Attach listener
         socket.on('stationsUpdate', handleStationUpdate);
-
-        // Cleanup listener on unmount to prevent memory leaks or double updates
         return () => {
             socket.off('stationsUpdate', handleStationUpdate);
         };
@@ -97,23 +138,18 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
     // Helper to calculate available devices
     const availableDevices = useMemo(() => {
         if (!draftStations) return []; 
-        
         const assignedDeviceIds = new Set(
             draftStations.map(s => s.deviceId?._id || s.deviceId).filter(Boolean)
         );
-        
         return devices.filter(d => !assignedDeviceIds.has(d._id));
     }, [devices, draftStations]); 
 
     const handleDeviceSelectChange = (e) => {
         const deviceId = e.target.value;
         setSelectedDeviceId(deviceId);
-
         if (deviceId) {
             const selectedDevice = devices.find(d => d._id === deviceId);
-            if (selectedDevice) {
-                setNewLocation(selectedDevice.location);
-            }
+            if (selectedDevice) setNewLocation(selectedDevice.location);
         } else {
             setNewLocation('');
         }
@@ -121,12 +157,10 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
 
     const hasUnsavedChanges = () => {
         if (!draftStations) return false;
-        // Compare against liveStations now, as that is our source of truth
         return JSON.stringify(liveStations) !== JSON.stringify(draftStations);
     };
 
     const handleOpenEditModal = () => {
-        // --- UPDATED: Create draft from liveStations ---
         setDraftStations(JSON.parse(JSON.stringify(liveStations)));
         setIsEditing(true);
     };
@@ -166,13 +200,11 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
         
         try {
             await onSave(stationsToSave);
-            
             setToast({
                 id: Date.now(),
                 message: 'Pumping stations updated successfully.',
                 type: 'success'
             });
-            
             closeAndCleanup();
         } catch (error) {
             console.error("Failed to save stations:", error);
@@ -204,7 +236,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
             operation: newOperation
         };
         setDraftStations([...draftStations, newStation]);
-        
         setNewLabel('');
         setNewLocation('');
         setSelectedDeviceId('');
@@ -241,14 +272,12 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
             alert("Please fill in all detail fields.");
             return;
         }
-        
         setDraftStations(draftStations.map(s =>
             (s._id || s.tempId) === detailsForStationId ? {
                 ...s,
                 maintenanceInfo: { ...draftDetails }
             } : s
         ));
-        
         setDetailsForStationId(null);
         setStationBeingDetailed(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
@@ -258,7 +287,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
         setDraftStations(draftStations.map(s =>
             (s._id || s.tempId) === stationBeingDetailed.id ? { ...s, operation: stationBeingDetailed.originalOp, maintenanceInfo: null } : s
         ));
-        
         setDetailsForStationId(null);
         setStationBeingDetailed(null);
         setDraftDetails({ cause: '', date: '', startTime: '', endTime: '' });
@@ -266,9 +294,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
     
     const getDeviceLabel = (deviceId) => {
         if (!deviceId) return 'N/A';
-        if (typeof deviceId === 'object' && deviceId.label) {
-            return deviceId.label;
-        }
+        if (typeof deviceId === 'object' && deviceId.label) return deviceId.label;
         if (typeof deviceId === 'string') {
             const device = devices.find(d => d._id === deviceId);
             return device ? device.label : 'Unknown';
@@ -276,13 +302,20 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
         return 'N/A';
     };
 
-
     return (
         <>
             <div className="component-wrapper-pumpingstatus">
                 <div className="station-status-card">
                     <div className="card-header">
-                        <h2>Pumping Stations Status</h2>
+                        <div className="header-with-icon">
+                            <h2>Pumping Stations Status</h2>
+                            {/* Help Icon triggers local modal state */}
+                            <HelpCircle 
+                                size={16} 
+                                className="guidelines-icon" 
+                                onClick={() => setShowGuidelines(true)} 
+                            />
+                        </div>
                         <button onClick={handleOpenEditModal} className="edit-toggle-button">
                             <SquarePen size={18} />
                         </button>
@@ -292,7 +325,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
                             <div>Label</div><div>Location</div><div>Device</div><div>Operation</div>
                         </div>
                         <div className="station-list-items">
-                            {/* --- UPDATED: Use liveStations instead of stations prop --- */}
                             {liveStations.map((s) => (
                                 <div key={s._id} className="station-item">
                                     <div>{s.label}</div>
@@ -310,6 +342,7 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
                 </div>
             </div>
 
+            {/* Edit Modal */}
             {isEditing && (
                 <div className="modal-backdrop" onClick={handleAttemptClose}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -382,46 +415,21 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
                                 <h4 className="form-title">Add New Station</h4>
                                 <div className="form-inputs">
                                     <div className="form-input-group">
-                                        <input
-                                            type="text"
-                                            placeholder="Station Label"
-                                            value={newLabel}
-                                            onChange={e => setNewLabel(e.target.value)}
-                                            className="form-input"
-                                        />
+                                        <input type="text" placeholder="Station Label" value={newLabel} onChange={e => setNewLabel(e.target.value)} className="form-input" />
                                     </div>
-                                    
                                     <div className="form-input-group">
-                                        <select
-                                            value={selectedDeviceId}
-                                            onChange={handleDeviceSelectChange}
-                                            className="form-select"
-                                        >
+                                        <select value={selectedDeviceId} onChange={handleDeviceSelectChange} className="form-select">
                                             <option value="">Select a Device</option>
                                             {availableDevices.map(device => (
-                                                <option key={device._id} value={device._id}>
-                                                    {device.label}
-                                                </option>
+                                                <option key={device._id} value={device._id}>{device.label}</option>
                                             ))}
                                         </select>
                                     </div>
-
                                     <div className="form-input-group">
-                                        <input
-                                            type="text"
-                                            placeholder="Location (from device)"
-                                            value={newLocation}
-                                            onChange={e => setNewLocation(e.target.value)}
-                                            className="form-input"
-                                        />
+                                        <input type="text" placeholder="Location (from device)" value={newLocation} onChange={e => setNewLocation(e.target.value)} className="form-input" />
                                     </div>
-                                    
                                     <div className="form-input-group">
-                                        <select
-                                            value={newOperation}
-                                            onChange={e => setNewOperation(e.target.value)}
-                                            className="form-select"
-                                        >
+                                        <select value={newOperation} onChange={e => setNewOperation(e.target.value)} className="form-select">
                                             <option>On-going</option>
                                             <option>Offline</option>
                                             <option>Maintenance</option>
@@ -432,7 +440,6 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
                                 <button type="submit" className="add-button">Add Station</button>
                             </form>
                         </div>
-
                         <div className="modal-footer">
                             <button onClick={handleAttemptClose} className="button-secondary">Cancel</button>
                             <button onClick={handleSaveChanges} className="button-primary">Save Changes</button>
@@ -455,16 +462,15 @@ const PumpingStatus = ({ stations, onSave, devices = [] }) => {
                 </div>
             )}
 
-            {/* --- Render Toast Container --- */}
             {toast && (
                 <div className="toastContainerWrapper">
-                    <NotificationToast
-                        key={toast.id}
-                        message={toast.message}
-                        type={toast.type}
-                        onClose={() => setToast(null)}
-                    />
+                    <NotificationToast key={toast.id} message={toast.message} type={toast.type} onClose={() => setToast(null)} />
                 </div>
+            )}
+
+            {/* --- NEW: Guidelines Modal Rendered Internally --- */}
+            {showGuidelines && (
+                <PumpingGuidelinesModal onClose={() => setShowGuidelines(false)} />
             )}
         </>
     );

@@ -41,7 +41,7 @@ const RecentAlerts = ({
             <h3>Recent Alerts</h3>
             {/* Help Icon Trigger */}
             <HelpCircle 
-                size={18} 
+                size={16} 
                 className={styles['guidelines-icon']} 
                 onClick={() => setIsInfoModalOpen(true)}
             />

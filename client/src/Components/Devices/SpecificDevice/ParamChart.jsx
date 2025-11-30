@@ -165,7 +165,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         },
     };
 
-    if (deviceStatus === 'Offline') {
+    if (deviceStatus === 'Online') {
         return (
             <div className={Style.container}>
                 <div className={Style.statusMessage}>

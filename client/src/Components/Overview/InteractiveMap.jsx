@@ -199,7 +199,7 @@ const AddDeviceModal = ({ onAddDevice, onCancel, existingDevices, showToast }) =
                     </div>
                     <div className="form-group">
                         <label htmlFor="address">Address</label>
-                        <input id="address" type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="e.g., Brgy. San Nicolas, Gerona" />
+                        <input id="address" type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="e.g., Brgy. Poblacion Uno, Moncada" />
                     </div>
                     <div className="form-group">
                         <label htmlFor="lat">Latitude</label><input id="lat" type="text" value={lat} onChange={e => setLat(e.target.value)} placeholder="e.g., 15.63" />

@@ -165,7 +165,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
         },
     };
 
-    if (deviceStatus === 'Online') {
+    if (deviceStatus === 'Offline') {
         return (
             <div className={Style.container}>
                 <div className={Style.statusMessage}>
@@ -190,7 +190,7 @@ function ParamChart({ historicalData, isLoading, onGoBack, timeRange, setTimeRan
                 <div className={Style['title-with-icon']}>
                     <h2 className={Style['panel-title']}>Historical Data</h2>
                     <HelpCircle 
-                        size={20} 
+                        size={16} 
                         className={Style['guidelines-icon']} 
                         onClick={() => setShowGuidelines(true)}
                     />

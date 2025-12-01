@@ -182,3 +182,36 @@
         font-size: 10px;
     }
 }
+
+/* Structure the itemRight content vertically */
+.itemRight {
+    flex: 1;
+    display: flex; 
+    flex-direction: column; 
+}
+
+/* Style for the main alert message */
+.itemRight .mainMessage {
+    font-weight: 500; 
+    color: #333;
+    line-height: 1.3;
+}
+
+/* Style for the device context/identifier */
+.itemRight .deviceContext {
+    font-size: 11px;
+    color: #6c757d; 
+    margin-top: 2px;
+    margin-bottom: 4px; 
+}
+
+/* Update itemRight .meta to ensure it aligns properly */
+.itemRight .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+}
+
+.dropdownItemN.critical .itemRight .deviceContext {
+    color: #9a4f55; 
+}

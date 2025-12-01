@@ -86,7 +86,14 @@ const Notifications = ({
                         >
                             <div className={styles.itemLeft}>{getIcon(notif.type)}</div>
                             <div className={styles.itemRight}>
-                                <span>{notif.message}</span>
+                                {/* Display the main alert message */}
+                                <span className={styles.mainMessage}>{notif.message}</span>
+                                
+                                {/* Display the device identifier using 'notif.details' */}
+                                <span className={styles.deviceContext}>
+                                    **Device: {notif.details || 'N/A'}**
+                                </span>
+                                
                                 <div className={styles.meta}>
                                     {/* --- Use createdAt from DB --- */}
                                     <small>{formatTimeAgo(notif.createdAt)}</small>

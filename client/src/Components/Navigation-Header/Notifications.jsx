@@ -89,9 +89,9 @@ const Notifications = ({
                                 {/* Display the main alert message */}
                                 <span className={styles.mainMessage}>{notif.message}</span>
                                 
-                                {/* Display the device identifier using 'notif.details' */}
+                                {/* 🎯 CORRECTED LINE: Use 'notif.deviceId' for the device context */}
                                 <span className={styles.deviceContext}>
-                                    **Device: {notif.details || 'N/A'}**
+                                    **Origin Device: {notif.deviceId || 'N/A'}**
                                 </span>
                                 
                                 <div className={styles.meta}>

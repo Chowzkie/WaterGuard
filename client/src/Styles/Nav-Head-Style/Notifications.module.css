@@ -1,18 +1,20 @@
 .notifDropdown {
+    /* Updated appearance for a more modern, softer look */
     position: absolute;
     top: 55px;
     right: 0;
     background: white;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    width: 320px;
-    max-height: 400px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Use a softer border color and subtle shadow for depth */
+    border: 1px solid #e0e0e0; /* Softer border */
+    border-radius: 12px; /* Increased border-radius for modern feel */
+    width: 340px; /* Slightly wider for better content space */
+    max-height: 450px; /* Slightly taller */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); /* Deeper, softer shadow */
     z-index: 1000;
     opacity: 0;
     transform: translateY(-10px);
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease; /* Slightly slower transition */
     display: flex;
     flex-direction: column;
 }
@@ -23,18 +25,20 @@
     pointer-events: auto;
 }
 
+/* Header & Title Styling */
 .dropdownHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #eee;
-    background-color: hsl(201, 86%, 54%);
+    padding: 15px 20px; /* Increased padding */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Soft white line */
+    background-color: hsl(201, 86%, 54%); /* Primary Blue */
+    border-radius: 12px 12px 0 0; /* Match top corners */
 }
 
 .dropdownTitle {
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700; /* Bolder title */
+    font-size: 16px;
     color: white;
 }
 
@@ -49,72 +53,143 @@
   margin: 0 10px;
 }
 
+/* Mark All Button Styling */
 .markAllBtn {
     font-size: 11px;
     font-weight: 600;
-    background: none;
+    background: hsla(204, 100%, 79%, 0.432); /* Existing light blue background */
     color: hsl(0, 0%, 100%);
     border: none;
     cursor: pointer;
-    background-color: hsla(204, 100%, 79%, 0.432);
-    border-radius: 3px;
-    padding: 4px;
+    border-radius: 6px; /* Slightly rounder button */
+    padding: 6px 10px;
+    transition: background-color 0.2s;
 }
 
+.markAllBtn:hover:not(:disabled) {
+    background-color: hsla(204, 100%, 79%, 0.6);
+}
+
+.markAllBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+
+/* Wrapper and Item List */
 .dropdownWrapper {
     overflow-y: auto;
-    max-height: 340px;
+    max-height: 380px; /* Adjusted max height */
     display: flex;
     flex-direction: column;
-    padding: 8px;
+    padding: 10px; /* Increased padding */
 }
 
 .dropdownItemN {
     display: flex;
-    gap: 12px;
+    gap: 15px; /* Increased gap */
     align-items: flex-start;
-    background-color: #fff;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    font-size: 13px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background-color: #f7f9fc; /* Very light subtle background for all */
+    padding: 14px 16px; /* Increased internal padding */
+    border-radius: 10px; /* Modern, rounded corners */
+    margin-bottom: 8px;
+    font-size: 14px;
+    border-left: 4px solid transparent; /* Prepare for color cue */
+    transition: background-color 0.2s, border-left-color 0.2s;
+    cursor: default;
 }
 
+/* Hover effect */
+.dropdownItemN:hover {
+    background-color: #f0f3f7; 
+}
+
+/* Critical Alert Styles */
 .dropdownItemN.critical {
-    background-color: #ffeaea;
+    background-color: #ffeaea; /* Existing light red background */
+    border-left-color: #dc3545; /* Strong visual cue */
 }
 
+/* Read Notification Styles */
 .dropdownItemN.read {
-    opacity: 0.6;
+    opacity: 1; 
+    background-color: #f5f5f5; /* Light gray background for read */
+    color: #999;
+    border-left-color: #ccc;
 }
 
+
+/* Item Content Structure */
 .itemLeft {
-    margin-top: 2px;
+    margin-top: 0px;
+    padding-top: 2px;
 }
 
 .itemRight {
     flex: 1;
+    display: flex; 
+    flex-direction: column; 
 }
 
+.itemRight .mainMessage {
+    font-weight: 600; /* Main message slightly bolder */
+    color: #333;
+    line-height: 1.3;
+}
+
+.dropdownItemN.critical .itemRight .mainMessage {
+    font-weight: 700;
+    color: #a72332;
+}
+
+/* Device Context/ID Styling */
+.itemRight .deviceContext {
+    font-size: 12px;
+    color: #6c757d; 
+    margin-top: 4px;
+    margin-bottom: 6px; 
+    font-weight: 500;
+}
+
+.dropdownItemN.critical .itemRight .deviceContext {
+    color: #9a4f55; /* Darker red/gray for readability on light red background */
+}
+
+.dropdownItemN.read .itemRight .deviceContext {
+    color: #aaa;
+}
+
+/* Meta Line Styling (Time and Mark as Read) */
 .itemRight .meta {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
-    margin-top: 4px;
+    align-items: center;
+    font-size: 12px;
+    color: #888;
+}
+
+.itemRight .meta small {
+    /* style time text if needed */
 }
 
 .itemRight .meta button {
     background: none;
-    color: hsla(0, 0%, 18%, 0.411);
+    color: #5a74df; /* Subtle blue link */
     border: none;
     font-size: 11px;
     cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
 }
 
+.itemRight .meta button:hover {
+    color: #3f55b1;
+}
+
+/* Icon Colors and Size */
 .notifIcon {
-    width: 16px;
-    height: 16px;
+    width: 20px; /* Slightly larger icon */
+    height: 20px;
 }
 
 .notifIcon.critical {
@@ -137,6 +212,7 @@
     padding: 16px;
 }
 
+/* Scrollbar Styling */
 .dropdownWrapper::-webkit-scrollbar {
     width: 8px;
 }
@@ -147,26 +223,27 @@
 }
 
 .dropdownWrapper::-webkit-scrollbar-thumb {
-    background-color: #999;
+    background-color: #ccc; /* Lighter scrollbar color */
     border-radius: 4px;
     border: 2px solid #f0f0f0;
 }
 
 .dropdownWrapper::-webkit-scrollbar-thumb:hover {
-    background-color: #666;
+    background-color: #999;
 }
 
 .dropdownWrapper {
     scrollbar-width: thin;
-    scrollbar-color: #999 #f0f0f0;
+    scrollbar-color: #ccc #f0f0f0;
 }
 
 /* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 480px) {
     .notifDropdown {
-        width: 280px; /* Reduced width for very small screens */
-        right: 5px; /* Adjust position to avoid hitting screen edge */
-        top: 65px; /* Adjusted top position to account for the new 60px header */
+        width: 300px; 
+        right: 5px; 
+        top: 65px; 
+        border-radius: 8px;
     }
 
     .dropdownTitle, .markAllBtn {
@@ -175,43 +252,11 @@
     
     .dropdownItemN {
         font-size: 12px; 
-        padding: 8px;
+        padding: 10px 12px;
+        gap: 10px;
     }
     
     .itemRight .meta small, .itemRight .meta button {
         font-size: 10px;
     }
-}
-
-/* Structure the itemRight content vertically */
-.itemRight {
-    flex: 1;
-    display: flex; 
-    flex-direction: column; 
-}
-
-/* Style for the main alert message */
-.itemRight .mainMessage {
-    font-weight: 500; 
-    color: #333;
-    line-height: 1.3;
-}
-
-/* Style for the device context/identifier */
-.itemRight .deviceContext {
-    font-size: 11px;
-    color: #6c757d; 
-    margin-top: 2px;
-    margin-bottom: 4px; 
-}
-
-/* Update itemRight .meta to ensure it aligns properly */
-.itemRight .meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-}
-
-.dropdownItemN.critical .itemRight .deviceContext {
-    color: #9a4f55; 
 }

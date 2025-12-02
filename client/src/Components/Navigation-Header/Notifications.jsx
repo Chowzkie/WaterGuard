@@ -91,7 +91,7 @@ const Notifications = ({
                                 
                                 {/* 🎯 CORRECTED LINE: Use 'notif.deviceId' for the device context */}
                                 <span className={styles.deviceContext}>
-                                    **Origin Device: {notif.deviceId || 'N/A'}**
+                                    Origin Device: {notif.deviceId || 'N/A'}
                                 </span>
                                 
                                 <div className={styles.meta}>

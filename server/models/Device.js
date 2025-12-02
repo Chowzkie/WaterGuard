@@ -84,13 +84,13 @@ const deviceSchema = new mongoose.Schema({
       turbidity: {
         normalLow: { type: Number, default: 0 },
         normalHigh: { type: Number, default: 5 },
-        warn: { type: Number, default: 5 },
+        warn: { type: Number, default: 5.1 },
         crit: { type: Number, default: 10 },
       },
       tds: {
         normalLow: { type: Number, default: 0 },
         normalHigh: { type: Number, default: 500 },
-        warn: { type: Number, default: 500 },
+        warn: { type: Number, default: 501 },
         crit: { type: Number, default: 1000 },
       },
       temp: {

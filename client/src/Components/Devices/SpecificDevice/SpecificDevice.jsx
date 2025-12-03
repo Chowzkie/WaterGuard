@@ -134,13 +134,13 @@ function SensorStatusPanel({ device }) {
         <>
             <div className={Style['details-card']}>
                 <div className={Style['card-header-wrapper']}>
+                    <h3 className={Style['card-title']}>Sensor Status</h3>
                     {/* Help Icon added here before the title */}
                     <HelpCircle 
-                        size={18} 
+                        size={16} 
                         className={Style['guidelines-icon']} 
                         onClick={() => setShowValidation(true)} 
                     />
-                    <h3 className={Style['card-title']}>Sensor Status</h3>
                 </div>
                 
                 <div className={Style['sensor-grid']}>

@@ -1072,14 +1072,33 @@ RESPONSIVE STYLES FOR TABLE
     }
 }
 
+/* --- ANIMATED GUIDELINES ICON --- */
 .guidelines-icon {
     color: #9ca3af;
     cursor: pointer;
     transition: color 0.2s ease;
-    /* Optional: fine-tune vertical alignment */
-    margin-top: 2px; 
+    margin-top: 2px;
+    
+    /* Animation: Runs infinitely, taking 60s per cycle */
+    animation: attentionGrabber 20s infinite ease-in-out;
 }
 
 .guidelines-icon:hover {
-    color: #3b82f6; /* Blue hover effect */
+    color: #3b82f6; /* Blue hover effect overrides animation color */
+    animation: none; /* Stop shaking on hover */
+}
+
+/* Keyframes: 
+   - From 0% to 5% (approx 3 seconds), it shakes and turns blue.
+   - From 5% to 100% (rest of the minute), it stays idle gray.
+*/
+@keyframes attentionGrabber {
+    0% { transform: rotate(0deg); color: #9ca3af; }
+    0.5% { transform: rotate(-15deg); color: #3b82f6; } /* Light up blue */
+    1.5% { transform: rotate(15deg); }
+    2.5% { transform: rotate(-15deg); }
+    3.5% { transform: rotate(15deg); }
+    4.5% { transform: rotate(0deg); color: #3b82f6; }
+    5% { transform: rotate(0deg); color: #9ca3af; } /* Back to gray */
+    100% { transform: rotate(0deg); color: #9ca3af; } /* Idle */
 }

@@ -141,20 +141,37 @@
   margin-left: 7px;
 }
 
+/* --- ANIMATED GUIDELINES ICON --- */
 .guidelines-icon {
     color: #9ca3af;
     cursor: pointer;
     transition: color 0.2s ease;
-    /* Optional: fine-tune vertical alignment */
-    margin-top: 2px; 
+    margin-top: 2px;
+    
+    /* Animation: Runs infinitely, taking 60s per cycle */
+    animation: attentionGrabber 60s infinite ease-in-out;
 }
 
 .guidelines-icon:hover {
-    color: #3b82f6; /* Blue hover effect */
+    color: #3b82f6; /* Blue hover effect overrides animation color */
+    animation: none; /* Stop shaking on hover */
 }
 
-/* It lowers the opacity to make the alert appear "muted" or "grayed out".
+/* Keyframes: 
+   - From 0% to 5% (approx 3 seconds), it shakes and turns blue.
+   - From 5% to 100% (rest of the minute), it stays idle gray.
 */
+@keyframes attentionGrabber {
+    0% { transform: rotate(0deg); color: #9ca3af; }
+    0.5% { transform: rotate(-15deg); color: #3b82f6; } /* Light up blue */
+    1.5% { transform: rotate(15deg); }
+    2.5% { transform: rotate(-15deg); }
+    3.5% { transform: rotate(15deg); }
+    4.5% { transform: rotate(0deg); color: #3b82f6; }
+    5% { transform: rotate(0deg); color: #9ca3af; } /* Back to gray */
+    100% { transform: rotate(0deg); color: #9ca3af; } /* Idle */
+}
+
 .alert-acknowledged {
   opacity: 0.6; 
 }
@@ -163,7 +180,6 @@
   background-color: #f5f5f5;
 }
 
-/* We still want hover to be obvious, even on acknowledged alerts */
 .alert-acknowledged:hover {
   opacity: 0.8;
 }
@@ -235,9 +251,8 @@
   background-color: #0056b3;
 }
 
-/* Style for the button when it's disabled */
 .acknowledge-btn:disabled {
-  background-color: #6c757d; /* A muted gray */
+  background-color: #6c757d; 
   cursor: not-allowed;
 }
 
@@ -248,19 +263,16 @@
   text-align: center;
 }
 
-/* Slide, Fade & Highlight
-  Replace your old @keyframes bounceIn with this.
-*/
 @keyframes slideFadeInHighlight {
   from {
     opacity: 0;
     transform: translateX(-20px);
-    background-color: #e0f2fe; /* A modern, light cyan/blue highlight */
+    background-color: #e0f2fe; 
   }
   to {
     opacity: 1;
     transform: translateX(0);
-    background-color: #fff; /* The default row color */
+    background-color: #fff; 
   }
 }
 
@@ -268,29 +280,26 @@
   animation: slideFadeInHighlight 1.2s ease-out;
 }
 
-/* Styles for the new Action column text */
 .action-acknowledged {
   font-weight: 500;
-  color: #099268; /* A pleasant green */
+  color: #099268;
 }
 
 .action-unacknowledged {
   font-weight: 500;
-  color: #c92a2a; /* A noticeable red */
+  color: #c92a2a; 
 }
 
 /* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 600px) {
     .alerts-header-row,
     .alerts-row {
-        /* 4 columns: Date/Time, Type, Severity, Action. Origin (2) and Status (5) are hidden below. */
         grid-template-columns: 1.2fr 1.8fr 1fr 1fr; 
         column-gap: 8px;
         padding: 6px 5px;
-        font-size: 11px; /* Smaller font */
+        font-size: 11px; 
     }
 
-    /* Hide the 'Origin' (2nd column) and 'Status' (5th column) cells and headers */
     .alerts-header-row div:nth-child(2), 
     .alerts-header-row div:nth-child(5),
     .alerts-row div:nth-child(2),
@@ -298,7 +307,6 @@
         display: none;
     }
 
-    /* Adjust the header and filter group */
     .section-header {
         flex-direction: column;
         align-items: flex-start;
@@ -314,54 +322,4 @@
         flex-grow: 1;
         width: auto;
     }
-}
-
-/* === NEW: Tooltip Wrapper & Animation === */
-.help-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.help-tooltip {
-    position: absolute;
-    bottom: 100%; /* Position above the icon */
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #1f2937; /* Dark background */
-    color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 500;
-    white-space: nowrap;
-    pointer-events: none; /* Let clicks pass through */
-    opacity: 0;
-    margin-bottom: 8px; /* Spacing from icon */
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    
-    /* The loop animation: 5s total duration */
-    animation: tooltipPulse 5s infinite ease-in-out;
-}
-
-/* Little arrow pointing down */
-.help-tooltip::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -4px;
-    border-width: 4px;
-    border-style: solid;
-    border-color: #1f2937 transparent transparent transparent;
-}
-
-@keyframes tooltipPulse {
-    0% { opacity: 0; transform: translate(-50%, 0); }
-    10% { opacity: 1; transform: translate(-50%, -3px); } /* Fade in & slide up */
-    40% { opacity: 1; transform: translate(-50%, -3px); } /* Stay visible */
-    50% { opacity: 0; transform: translate(-50%, 0); } /* Fade out */
-    100% { opacity: 0; transform: translate(-50%, 0); } /* Stay hidden rest of cycle */
 }

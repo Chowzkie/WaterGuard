@@ -149,7 +149,7 @@
     margin-top: 2px;
     
     /* Animation: Runs infinitely, taking 60s per cycle */
-    animation: attentionGrabber 20s infinite ease-in-out;
+    animation: attentionGrabber 10s infinite ease-in-out;
 }
 
 .guidelines-icon:hover {

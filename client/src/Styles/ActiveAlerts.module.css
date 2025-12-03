@@ -141,35 +141,33 @@
   margin-left: 7px;
 }
 
-/* --- ANIMATED GUIDELINES ICON --- */
 .guidelines-icon {
     color: #9ca3af;
     cursor: pointer;
     transition: color 0.2s ease;
     margin-top: 2px;
     
-    /* Animation: Runs infinitely, taking 60s per cycle */
+    /* Cycle runs every 10 seconds */
     animation: attentionGrabber 10s infinite ease-in-out;
 }
 
 .guidelines-icon:hover {
-    color: #3b82f6; /* Blue hover effect overrides animation color */
-    animation: none; /* Stop shaking on hover */
+    color: #3b82f6; 
+    animation: none;
 }
 
-/* Keyframes: 
-   - From 0% to 5% (approx 3 seconds), it shakes and turns blue.
-   - From 5% to 100% (rest of the minute), it stays idle gray.
+/* Recalculated Keyframes for 10s duration:
+   - To keep the movement slow (approx 1s per swing), we use 10% steps.
 */
 @keyframes attentionGrabber {
     0% { transform: rotate(0deg); color: #9ca3af; }
-    0.5% { transform: rotate(-15deg); color: #3b82f6; } /* Light up blue */
-    1.5% { transform: rotate(15deg); }
-    2.5% { transform: rotate(-15deg); }
-    3.5% { transform: rotate(15deg); }
-    4.5% { transform: rotate(0deg); color: #3b82f6; }
-    5% { transform: rotate(0deg); color: #9ca3af; } /* Back to gray */
-    100% { transform: rotate(0deg); color: #9ca3af; } /* Idle */
+    10% { transform: rotate(-15deg); color: #3b82f6; } /* 1s to tilt left */
+    20% { transform: rotate(15deg); }                  /* 1s to tilt right */
+    30% { transform: rotate(-15deg); }                 /* 1s to tilt left */
+    40% { transform: rotate(15deg); }                  /* 1s to tilt right */
+    50% { transform: rotate(0deg); color: #3b82f6; }   /* 1s to center */
+    60% { transform: rotate(0deg); color: #9ca3af; }   /* Fade color out */
+    100% { transform: rotate(0deg); color: #9ca3af; }  /* Rest for 4s */
 }
 
 .alert-acknowledged {

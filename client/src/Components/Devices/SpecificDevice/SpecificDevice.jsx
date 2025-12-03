@@ -7,14 +7,15 @@ import ControlPanel from './controlPanel';
 import Style from '../../../Styles/SpecificDeviceStyle/Specific.module.css';
 import ToastStyle from '../../../Styles/ToastStyle/Toast.module.css'
 import AlertsContext from '../../../utils/AlertsContext';
-import { CheckCircle2, ShieldAlert, Waves, Thermometer, TestTube2, Gauge, X } from 'lucide-react';
+import { 
+    CheckCircle2, ShieldAlert, Waves, Thermometer, TestTube2, Gauge, X, 
+    HelpCircle, ClipboardCheck, BookOpen 
+} from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // --- Toast Component ---
-// Handles visual rendering and exit animations for notifications
 const NotificationToast = ({ message, type, status, onClose }) => {
-    // Stops event bubbling and triggers unmount only when the exit animation completes
     const handleAnimationEnd = (e) => {
         e.stopPropagation(); 
         if (status === 'exiting') {
@@ -47,15 +48,68 @@ const NotificationToast = ({ message, type, status, onClose }) => {
     );
 };
 
+// --- INTERNAL COMPONENT: Sensor Validation Modal ---
+const SensorValidationModal = ({ onClose }) => {
+    return (
+        <div className={Style['guidelines-overlay']} onClick={onClose}>
+            <div className={Style['guidelines-modal']} onClick={e => e.stopPropagation()}>
+                <div className={Style['guidelines-header']}>
+                    <div className={Style['guidelines-title-wrapper']}>
+                        <ClipboardCheck size={24} color="#3b82f6" />
+                        <h3>Accuracy Validation Procedures</h3>
+                    </div>
+                    <button className={Style['modal-close-button']} onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className={Style['guidelines-content']}>
+                    <h4 className={Style['guidelines-section-title']}>
+                        <BookOpen size={18} /> Sensor Testing & Calibration
+                    </h4>
+                    
+                    <div className={Style['definition-list']}>
+                        <div className={Style['definition-item']}>
+                            <strong><Gauge size={16} /> pH Sensor</strong>
+                            <p>
+                                The accuracy of the pH sensor was validated using standard buffer powder solutions prepared at three distinct pH levels: acidic (4.01), neutral (6.86), and alkaline (9.18). Prior to testing, the sensor probe was rinsed thoroughly with distilled water to prevent cross-contamination. The probe was first immersed in the neutral solution to establish a baseline, followed by the acidic and alkaline solutions. For each test point, the sensor settled for approximately 60 seconds. Five consecutive data points were recorded to calculate the average measured value, which was then compared against the standard buffer rating.
+                            </p>
+                        </div>
+
+                        <div className={Style['definition-item']}>
+                            <strong><TestTube2 size={16} /> TDS Sensor</strong>
+                            <p>
+                                To verify the Total Dissolved Solids (TDS) sensor, a comparative analysis was conducted using a factory-calibrated commercial handheld TDS meter as the ground truth reference. Testing involved three distinct samples: distilled water, tap water, and a high-salinity solution. For each sample, the TDS meter was first used to obtain the reference reading. Immediately following this, the IoT TDS sensor was submerged in the same sample. This simultaneous measurement approach ensured that temperature variations or particulate settling did not affect the comparison.
+                            </p>
+                        </div>
+
+                        <div className={Style['definition-item']}>
+                            <strong><Waves size={16} /> Turbidity Sensor</strong>
+                            <p>
+                                The turbidity sensor was calibrated for high sensitivity within the critical low-turbidity range (0–10 NTU). Due to the hazardous nature of standard Formazine solutions, a relative calibration method was used. First, a baseline reading of 0 NTU was established using clear distilled water. Second, to validate the upper detection limit, a sediment-rich "muddy" water sample was used to exceed the system's saturation point, ensuring the sensor correctly identified high turbidity and capped the reading at the maximum limit of 10 NTU.
+                            </p>
+                        </div>
+
+                        <div className={Style['definition-item']}>
+                            <strong><Thermometer size={16} /> Temperature Sensor</strong>
+                            <p>
+                                <em>Validation procedure details will be added upon completion of thermal calibration testing.</em>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- Sensor Status Panel ---
-// Renders the grid of sensor connectivity statuses (Online/Offline)
 function SensorStatusPanel({ device }) {
-    // Safely access nested state to prevent crashes during initial load
+    const [showValidation, setShowValidation] = useState(false);
     const sensorStatus = device?.currentState?.sensorStatus;
 
     const formatSensorName = (name) => name.charAt(0) + name.slice(1).toLowerCase();
 
-    // Maps backend sensor keys to specific Lucide icons
     const iconMap = {
         TURBIDITY: <Waves size={20} className={Style['sensor-icon']} />,
         TEMP: <Thermometer size={20} className={Style['sensor-icon']} />,
@@ -67,7 +121,6 @@ function SensorStatusPanel({ device }) {
         return status === 'Online' ? Style.statusOnline : Style.statusOffline;
     };
 
-    // Fallback UI if sensor status is undefined or null
     if (!sensorStatus) {
         return (
             <div className={Style['details-card']}>
@@ -78,33 +131,49 @@ function SensorStatusPanel({ device }) {
     }
 
     return (
-        <div className={Style['details-card']}>
-            <h3 className={Style['card-title']}>Sensor Status</h3>
-            <div className={Style['sensor-grid']}>
-                {/* Iterates through the sensorStatus object to render dynamic cards */}
-                {Object.entries(sensorStatus).map(([sensor, data]) => (
-                    <div key={sensor} className={Style['sensor-card']}>
-                        <div className={Style['sensor-card-header']}>
-                            {iconMap[sensor]}
-                            <span className={Style['sensor-name']}>{formatSensorName(sensor)}</span>
+        <>
+            <div className={Style['details-card']}>
+                <div className={Style['card-header-wrapper']}>
+                    {/* Help Icon added here before the title */}
+                    <HelpCircle 
+                        size={18} 
+                        className={Style['guidelines-icon']} 
+                        onClick={() => setShowValidation(true)} 
+                    />
+                    <h3 className={Style['card-title']}>Sensor Status</h3>
+                </div>
+                
+                <div className={Style['sensor-grid']}>
+                    {Object.entries(sensorStatus).map(([sensor, data]) => (
+                        <div key={sensor} className={Style['sensor-card']}>
+                            <div className={Style['sensor-card-header']}>
+                                {iconMap[sensor]}
+                                <span className={Style['sensor-name']}>{formatSensorName(sensor)}</span>
+                            </div>
+                            <div className={Style['status-indicator']}>
+                                <span className={`${Style['status-dot']} ${getStatusClass(data.status)}`}></span>
+                                <span>{data.status}</span>
+                            </div>
                         </div>
-                        <div className={Style['status-indicator']}>
-                            <span className={`${Style['status-dot']} ${getStatusClass(data.status)}`}></span>
-                            <span>{data.status}</span>
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
-        </div>
+
+            {/* Render Internal Modal */}
+            {showValidation && (
+                <SensorValidationModal onClose={() => setShowValidation(false)} />
+            )}
+        </>
     );
 }
 
 // --- Details Panel ---
-// Displays static or semi-static device metadata
 function DetailsPanel({ device }) {
     return (
         <div className={Style['details-card']}>
-            <h3 className={Style['card-title']}>Device Details</h3>
+            <div className={Style['card-header-wrapper']}>
+                <h3 className={Style['card-title']}>Device Details</h3>
+            </div>
             <div className={Style['device-info']}>
                 <p><strong>Label:</strong> {device.label}</p>
                 <p><strong>Status:</strong> {device.currentState?.status || 'N/A'}</p>
@@ -116,7 +185,6 @@ function DetailsPanel({ device }) {
 
 // --- Main Component ---
 function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
-    // Context provides the live list of devices, updated via global socket listeners
     const { devices } = useContext(AlertsContext);
     const { deviceId } = useParams();
     const navigate = useNavigate();
@@ -124,14 +192,12 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
     const [currentDevice, setCurrentDevice] = useState(null);
     const [toasts, setToasts] = useState([]);
     
-    // Ref tracks timeouts to prevent memory leaks when clearing toasts
     const toastTimeouts = useRef({});
 
     const [historicalData, setHistoricalData] = useState([]);
     const [isChartLoading, setIsChartLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('7d'); 
 
-    // Removes a toast from state and clears its specific timeout
     const removeToast = useCallback((id) => {
         setToasts((curr) => curr.filter(t => t.id !== id));
         if (toastTimeouts.current[id]) {
@@ -140,18 +206,15 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         }
     }, []);
 
-    // Triggers the 'exiting' animation state
     const startToastExit = useCallback((id) => {
         setToasts(curr => curr.map(t => t.id === id ? { ...t, status: 'exiting' } : t));
     }, []);
 
-    // Adds a new toast and sets the auto-dismiss timer
     const addToast = useCallback((message, type = 'success') => {
         const id = Date.now();
         const exitTimer = 5000; 
         
         setToasts(curr => [
-            // Force existing toasts to exit immediately to prevent stacking overlap issues
             ...curr.map(t => ({ ...t, status: 'exiting' })), 
             { id, message, type, status: 'entering' }
         ]);
@@ -159,7 +222,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         toastTimeouts.current[id] = setTimeout(() => startToastExit(id), exitTimer);
     }, [startToastExit]);
 
-    // Sends API command to toggle valve; UI updates via Context/Socket propagation
     const handleValveToggle = async (deviceId, isNowOpen) => {
         const newCommandValue = isNowOpen ? 'OPEN' : 'CLOSED';
         try {
@@ -174,9 +236,7 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         }
     };
 
-    // Sends API command to toggle pump cycle
     const handlePumpToggle = async (deviceId, isNowOn) => {
-        // Logic: Turning ON starts 'FILL' cycle; Turning OFF sets state to 'IDLE'
         const newCommandValue = isNowOn ? 'FILL' : 'IDLE';
         try {
             await axios.put(`${API_BASE_URL}/api/devices/${deviceId}/pumpCommand`, {
@@ -190,7 +250,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         }
     };
 
-    // Effect: Syncs local state with the global devices list from Context
     useEffect(() => {
         const foundDevice = devices.find(d => d._id === deviceId);
         setCurrentDevice(foundDevice);
@@ -200,7 +259,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
         }
     }, [deviceId, devices, onSetHeaderDeviceLabel]);
 
-    // Effect: Fetches historical data when device ID or time range filter changes
     useEffect(() => {
         if (deviceId) {
             const fetchHistoricalData = async () => {
@@ -221,7 +279,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
 
     const handleGoBack = () => navigate('/devices');
 
-    // Early return to prevent rendering children before data is available
     if (!currentDevice) {
         return <div className={Style['loading-container']}>Loading device data or Device not found...</div>;
     }
@@ -259,7 +316,6 @@ function SpecificDevice({ onSetHeaderDeviceLabel, userID }) {
                 />
             </div>
 
-            {/* Toast container */}
             <div className={ToastStyle.toastContainerWrapper}>
                 <div className={ToastStyle.toastContainer}>
                     {toasts.map(t => (

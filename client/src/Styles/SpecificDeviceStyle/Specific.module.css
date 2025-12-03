@@ -43,103 +43,110 @@
   overflow: hidden; 
 }
 
-.card-title {
-  font-size: 1.1rem;
+/* --- UPDATED HEADER STYLES --- */
+.card-header-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 0 0.75rem 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 
-.alert-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 0.9rem;
-  overflow-y: auto;
-  flex-grow: 1;
-  padding-right: 5px;
-}
-
-.alert-list::-webkit-scrollbar {
-  width: 5px;
-}
-.alert-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-.alert-list::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 10px;
-}
-.alert-list::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
-}
-
-.alert {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease-in-out;
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-}
-.alert:last-child {
-  margin-bottom: 0;
-}
-.alert span:first-child {
+.card-title {
+  font-size: 1.1rem;
+  margin: 0; /* Removed margin to let wrapper handle layout */
   font-weight: 600;
-  min-width: 80px;
-}
-.alert span:nth-child(2) {
-  flex-grow: 1;
-  margin: 0 10px;
-}
-.alert span:last-child {
-  font-weight: 500;
-  text-align: right;
-  min-width: 60px;
+  color: #1f2937;
 }
 
-.alertNormal {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border-left: 3px solid #a5d6a7;
-}
-.alertWarning {
-  background-color: #fffde7;
-  color: #f9a825;
-  border-left: 3px solid #ffee58;
-}
-.alertCritical {
-  background-color: #ffebee;
-  color: #b71c1c;
-  border-left: 3px solid #ef9a9a;
+/* --- ANIMATED GUIDELINES ICON --- */
+.guidelines-icon {
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    margin-top: 2px;
+    animation: attentionGrabber 60s infinite ease-in-out;
 }
 
-
-.alert:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+.guidelines-icon:hover {
+    color: #3b82f6; 
+    animation: none;
 }
 
-.no-alerts {
-  color: #9ca3af;
+@keyframes attentionGrabber {
+    0% { transform: rotate(0deg); color: #9ca3af; }
+    2% { transform: rotate(-15deg); color: #3b82f6; } 
+    4% { transform: rotate(15deg); }                  
+    6% { transform: rotate(-15deg); }                 
+    8% { transform: rotate(15deg); }                  
+    10% { transform: rotate(0deg); color: #3b82f6; }  
+    12% { transform: rotate(0deg); color: #9ca3af; }  
+    100% { transform: rotate(0deg); color: #9ca3af; } 
 }
-.device-info p {
-  margin: 4px 0;
-  font-size: 0.9rem;
+
+/* ... (Existing Sensor Grid Styles) ... */
+.sensor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  padding-top: 0.25rem;
 }
-.device-info strong {
-  color: #374151;
+
+.sensor-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.2s ease-in-out;
 }
-.loading-container {
-  padding: 2rem;
-  font-size: 1.2rem;
-  color: #555;
+
+.sensor-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
+
+.sensor-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sensor-icon {
+  color: #495057;
+}
+
+.sensor-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #343a40;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  padding-left: 2px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.statusOnline { background-color: #22c55e; }
+.statusOffline { background-color: #ef4444; }
+
+/* ... (Existing Device Info & Loading Styles) ... */
+.device-info p { margin: 4px 0; font-size: 0.9rem; }
+.device-info strong { color: #374151; }
+.loading-container { padding: 2rem; font-size: 1.2rem; color: #555; }
 
 @media (max-width: 1024px) {
   .page-container {
@@ -157,76 +164,131 @@
   }
 }
 
-.page-container::-webkit-scrollbar {
-  width: 6px;
-}
-.page-container::-webkit-scrollbar-track {
-  background: #f5f5f5;
-}
-.page-container::-webkit-scrollbar-thumb {
-  background-color: #bbb;
-  border-radius: 4px;
+.page-container::-webkit-scrollbar { width: 6px; }
+.page-container::-webkit-scrollbar-track { background: #f5f5f5; }
+.page-container::-webkit-scrollbar-thumb { background-color: #bbb; border-radius: 4px; }
+
+/* === NEW: GUIDELINES MODAL STYLES === */
+.guidelines-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.2s ease-out;
 }
 
-/* Specific.module.css */
-
-.sensor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem; /* MODIFIED: Reduced gap between cards */
-  padding-top: 0.25rem;
+.guidelines-modal {
+    background-color: #ffffff;
+    width: 90%;
+    max-width: 600px; /* Wider for text content */
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease-out;
+    max-height: 85vh; /* Prevent overflow on small screens */
 }
 
-.sensor-card {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 0.6rem; /* MODIFIED: Significantly reduced padding */
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* MODIFIED: Helps align content vertically */
-  gap: 0.4rem; /* MODIFIED: Reduced internal gap */
-  border: 1px solid #e9ecef;
-  transition: box-shadow 0.2s ease-in-out;
+.guidelines-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
 }
 
-.sensor-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.guidelines-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1f2937;
 }
 
-.sensor-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; /* MODIFIED: Reduced gap between icon and text */
+.guidelines-title-wrapper h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
-.sensor-icon {
-  color: #495057;
+.modal-close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
 }
 
-.sensor-name {
-  font-weight: 600;
-  font-size: 0.85rem; /* MODIFIED: Reduced font size */
-  color: #343a40;
+.modal-close-button:hover {
+    background-color: #e5e7eb;
+    color: #111827;
 }
 
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px; /* MODIFIED: Reduced gap */
-  font-size: 0.8rem; /* MODIFIED: Reduced font size */
-  padding-left: 2px;
+.guidelines-content {
+    padding: 24px;
+    overflow-y: auto;
 }
 
-.status-dot {
-  width: 9px; /* MODIFIED: Made dot smaller */
-  height: 9px; /* MODIFIED: Made dot smaller */
-  border-radius: 50%;
+.guidelines-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: #374151;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-left: 3px solid #3b82f6;
+    padding-left: 8px;
+    margin-top: 0;
 }
 
-.statusOnline {
-  background-color: #22c55e;
+.definition-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Increased gap for paragraphs */
 }
 
-.statusOffline {
-  background-color: #ef4444;
+.definition-item {
+    background-color: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #f1f5f9;
+}
+
+.definition-item strong {
+    color: #1f2937;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+}
+
+.definition-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #4b5563;
+    line-height: 1.6;
+    text-align: justify;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }

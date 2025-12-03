@@ -52,12 +52,16 @@ const ActiveAlerts = ({
         <div className={styles['section-header']}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h3>Active Alerts</h3>
-                {/* Help Icon Trigger */}
-                <HelpCircle 
-                    size={16} 
-                    className={styles['guidelines-icon']} 
-                    onClick={() => setIsInfoModalOpen(true)}
-                />
+                
+                {/* --- NEW WRAPPER FOR TOOLTIP --- */}
+                <div className={styles['help-wrapper']} onClick={() => setIsInfoModalOpen(true)}>
+                    <HelpCircle 
+                        size={16} 
+                        className={styles['guidelines-icon']} 
+                    />
+                    <span className={styles['help-tooltip']}>Click here to view guide</span>
+                </div>
+
             </div>
             {showFilter && (
                 <div className={styles['device-filter-group']}>

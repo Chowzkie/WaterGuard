@@ -93,7 +93,7 @@ const SensorValidationModal = ({ onClose }) => {
                         <div className={Style['definition-item']}>
                             <strong><Thermometer size={16} /> Temperature Sensor</strong>
                             <p>
-                                <em>Validation procedure details will be added upon completion of thermal calibration testing.</em>
+                                <em>The DS18B20 sensor was calibrated by comparing its readings to a reference thermometer. Tests were conducted in an ice slurry (for the lower bound) and boiling water (for the upper bound). In both trials, the sensor and the thermometer were immersed simultaneously and allowed to reach thermal equilibrium to ensure the sensor’s accuracy against the baseline thermometer readings.</em>
                             </p>
                         </div>
                     </div>
